@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import axios from 'axios';
 import { motion } from 'framer-motion';
@@ -10,39 +10,41 @@ import {
     FaTrashAlt,
     FaTimes,
     FaEdit,
-    FaImage,
     FaChevronRight,
-    FaChevronLeft
+    FaChevronLeft,
+    FaLock,
+    FaLockOpen
 } from 'react-icons/fa';
 
-export default function IntegrationsDataTable({ integrations, loading, refetch }) {
+export default function AdminsDataTable({ admins, allPermissions, loading, refetch }) {
     const navigate = useNavigate();
     const [filters, setFilters] = useState({
         global: '',
         name: '',
-        order: '',
-        status: ''
+        email: '',
+        status: '',
+        role: ''
     });
     const [currentPage, setCurrentPage] = useState(1);
     const [rowsPerPage] = useState(10);
-    const [togglingIntegrationId, setTogglingIntegrationId] = useState(null);
-    const [deletingIntegrationId, setDeletingIntegrationId] = useState(null);
+    const [togglingAdminId, setTogglingAdminId] = useState(null);
+    const [deletingAdminId, setDeletingAdminId] = useState(null);
     const [showAddModal, setShowAddModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
-    const [selectedIntegration, setSelectedIntegration] = useState(null);
+    const [showPermissionsModal, setShowPermissionsModal] = useState(false);
+    const [selectedAdmin, setSelectedAdmin] = useState(null);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-    const [integrationToDelete, setIntegrationToDelete] = useState(null);
-    const [updatingIntegration, setUpdatingIntegration] = useState(false);
+    const [adminToDelete, setAdminToDelete] = useState(null);
+    const [updatingAdmin, setUpdatingAdmin] = useState(false);
 
-    // Form state for add/edit
+    // Form states
     const [formData, setFormData] = useState({
         name: '',
-        description: '',
-        display_order: '',
-        is_active: true
+        email: '',
+        password: '',
+        confirmPassword: '',
+        permissions: []
     });
-    const [logoFile, setLogoFile] = useState(null);
-    const [logoPreview, setLogoPreview] = useState('');
 
     const handleFilterChange = (field, value) => {
         setFilters(prev => ({
@@ -52,19 +54,20 @@ export default function IntegrationsDataTable({ integrations, loading, refetch }
         setCurrentPage(1);
     };
 
-    const handleToggleStatus = async (integrationId) => {
-        setTogglingIntegrationId(integrationId);
+    const handleToggleStatus = async (adminId, currentStatus) => {
+        setTogglingAdminId(adminId);
         try {
+            const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
             await axios.patch(
-                `https://propxpro.run.place/api/admin/integrations/${integrationId}/toggle-status`,
-                {},
+                `https://propxpro.run.place/api/admins/${adminId}/toggle-status`,
+                { status: newStatus },
                 {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem('userToken')}`
                     }
                 }
             );
-            toast.success('Integration status updated successfully', { duration: 2000 });
+            toast.success(`Admin ${newStatus === 'active' ? 'activated' : 'deactivated'} successfully`, { duration: 2000 });
             refetch();
         } catch (error) {
             toast.error(error.response?.data?.message || 'An unexpected error occurred', { duration: 3000 });
@@ -73,31 +76,31 @@ export default function IntegrationsDataTable({ integrations, loading, refetch }
                 navigate('/login')
             }
         } finally {
-            setTogglingIntegrationId(null);
+            setTogglingAdminId(null);
         }
     };
 
-    const handleDeleteClick = (integrationId) => {
-        setIntegrationToDelete(integrationId);
+    const handleDeleteClick = (adminId) => {
+        setAdminToDelete(adminId);
         setShowDeleteConfirm(true);
     };
 
     const handleConfirmDelete = async () => {
-        if (!integrationToDelete) return;
+        if (!adminToDelete) return;
 
-        setDeletingIntegrationId(integrationToDelete);
+        setDeletingAdminId(adminToDelete);
         setShowDeleteConfirm(false);
 
         try {
             await axios.delete(
-                `https://propxpro.run.place/api/admin/integrations/${integrationToDelete}`,
+                `https://propxpro.run.place/api/admins/${adminToDelete}`,
                 {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem('userToken')}`
                     }
                 }
             );
-            toast.success('Integration deleted successfully', { duration: 2000 });
+            toast.success('Admin deleted successfully', { duration: 2000 });
             refetch();
         } catch (error) {
             toast.error(error.response?.data?.message || 'An unexpected error occurred', { duration: 3000 });
@@ -106,26 +109,9 @@ export default function IntegrationsDataTable({ integrations, loading, refetch }
                 navigate('/login')
             }
         } finally {
-            setDeletingIntegrationId(null);
-            setIntegrationToDelete(null);
+            setDeletingAdminId(null);
+            setAdminToDelete(null);
         }
-    };
-
-    const handleFileChange = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setLogoFile(file);
-                setLogoPreview(reader.result);
-            };
-            reader.readAsDataURL(file);
-        }
-    };
-
-    const handleRemoveFile = () => {
-        setLogoFile(null);
-        setLogoPreview('');
     };
 
     const handleFormChange = (e) => {
@@ -137,140 +123,195 @@ export default function IntegrationsDataTable({ integrations, loading, refetch }
         }));
     };
 
-    const handleAddIntegration = async (e) => {
-        e.preventDefault();
-        setUpdatingIntegration(true);
-        try {
-            const formDataToSend = new FormData();
-
-            // Append text fields
-            formDataToSend.append('name', formData.name);
-            formDataToSend.append('description', formData.description);
-            formDataToSend.append('display_order', formData.display_order);
-            formDataToSend.append('is_active', formData.is_active ? 1 : 0);
-
-            // Append file if it exists
-            if (logoFile) formDataToSend.append('logo', logoFile);
-
-            await axios.post(
-                'https://propxpro.run.place/api/admin/integrations',
-                formDataToSend,
-                {
-                    headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('userToken')}`,
-                        'Content-Type': 'multipart/form-data'
-                    }
-                }
-            );
-            setUpdatingIntegration(false);
-            toast.success('Integration added successfully', { duration: 2000 });
-            setShowAddModal(false);
-            resetForm();
-            refetch();
-        } catch (error) {
-            setUpdatingIntegration(false);
-            toast.error(error.response?.data?.message || 'An unexpected error occurred', { duration: 3000 });
-            if (error.response?.status === 401) {
-                localStorage.removeItem('userToken')
-                navigate('/login')
+    const handlePermissionChange = (permission, isChecked) => {
+        setFormData(prev => {
+            if (isChecked) {
+                return {
+                    ...prev,
+                    permissions: [...prev.permissions, permission]
+                };
+            } else {
+                return {
+                    ...prev,
+                    permissions: prev.permissions.filter(p => p !== permission)
+                };
             }
-        }
-    };
-
-    const handleEditIntegration = async (e) => {
-        e.preventDefault();
-        setUpdatingIntegration(true);
-        try {
-            const formDataToSend = new FormData();
-
-            // Append text fields
-            formDataToSend.append('name', formData.name);
-            formDataToSend.append('description', formData.description);
-            formDataToSend.append('display_order', formData.display_order);
-            formDataToSend.append('is_active', formData.is_active ? 1 : 0);
-
-            // Append file if it exists
-            if (logoFile) formDataToSend.append('logo', logoFile);
-
-            await axios.post(
-                `https://propxpro.run.place/api/admin/integrations/${selectedIntegration.id}`,
-                formDataToSend,
-                {
-                    headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('userToken')}`,
-                        'Content-Type': 'multipart/form-data'
-                    }
-                }
-            );
-            setUpdatingIntegration(false);
-            toast.success('Integration updated successfully', { duration: 2000 });
-            setShowEditModal(false);
-            resetForm();
-            refetch();
-        } catch (error) {
-            setUpdatingIntegration(false);
-            toast.error(error.response?.data?.message || 'An unexpected error occurred', { duration: 3000 });
-            if (error.response?.status === 401) {
-                localStorage.removeItem('userToken')
-                navigate('/login')
-            }
-        }
+        });
     };
 
     const resetForm = () => {
         setFormData({
             name: '',
-            description: '',
-            display_order: '',
-            is_active: true
+            email: '',
+            password: '',
+            confirmPassword: '',
+            permissions: []
         });
-        setLogoFile(null);
-        setLogoPreview('');
     };
 
-
-    const prepareEditForm = (integration) => {
-        setSelectedIntegration(integration);
+    const prepareEditForm = (admin) => {
+        setSelectedAdmin(admin);
         setFormData({
-            name: integration.name,
-            description: integration.description,
-            display_order: integration.display_order,
-            is_active: integration.is_active
+            name: admin.name,
+            email: admin.email,
+            password: '',
+            confirmPassword: '',
+            permissions: [...admin.permissions]
         });
-        // Reset file state
-        setLogoFile(null);
-        // Set preview from existing image
-        setLogoPreview(integration.logo_url || '');
         setShowEditModal(true);
     };
 
-    // Filter integrations based on all filter criteria
-    const filteredIntegrations = integrations?.filter(integration => {
+    const preparePermissionsForm = (admin) => {
+        setSelectedAdmin(admin);
+        setFormData({
+            ...formData,
+            permissions: [...admin.permissions]
+        });
+        setShowPermissionsModal(true);
+    };
+
+    const handleAddAdmin = async (e) => {
+        e.preventDefault();
+
+        if (formData.password !== formData.confirmPassword) {
+            toast.error('Passwords do not match', { duration: 3000 });
+            return;
+        }
+
+        setUpdatingAdmin(true);
+        try {
+            await axios.post(
+                'https://propxpro.run.place/api/admins',
+                {
+                    name: formData.name,
+                    email: formData.email,
+                    password: formData.password,
+                    permissions: formData.permissions
+                },
+                {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem('userToken')}`
+                    }
+                }
+            );
+            setUpdatingAdmin(false);
+            toast.success('Admin added successfully', { duration: 2000 });
+            setShowAddModal(false);
+            resetForm();
+            refetch();
+        } catch (error) {
+            setUpdatingAdmin(false);
+            toast.error(error.response?.data?.message || 'An unexpected error occurred', { duration: 3000 });
+            if (error.response?.status === 401) {
+                localStorage.removeItem('userToken')
+                navigate('/login')
+            }
+        }
+    };
+
+    const handleUpdateAdmin = async (e) => {
+        e.preventDefault();
+
+        if (formData.password && formData.password !== formData.confirmPassword) {
+            toast.error('Passwords do not match', { duration: 3000 });
+            return;
+        }
+
+        setUpdatingAdmin(true);
+        try {
+            const payload = {
+                name: formData.name,
+                email: formData.email
+            };
+
+            if (formData.password) {
+                payload.password = formData.password;
+            }
+
+            await axios.post(
+                `https://propxpro.run.place/api/admins/${selectedAdmin.id}`,
+                payload,
+                {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem('userToken')}`
+                    }
+                }
+            );
+            setUpdatingAdmin(false);
+            toast.success('Admin updated successfully', { duration: 2000 });
+            setShowEditModal(false);
+            resetForm();
+            refetch();
+        } catch (error) {
+            setUpdatingAdmin(false);
+            toast.error(error.response?.data?.message || 'An unexpected error occurred', { duration: 3000 });
+            if (error.response?.status === 401) {
+                localStorage.removeItem('userToken')
+                navigate('/login')
+            }
+        }
+    };
+
+    const handleUpdatePermissions = async (e) => {
+        e.preventDefault();
+
+        setUpdatingAdmin(true);
+        try {
+            await axios.put(
+                `https://propxpro.run.place/api/admins/${selectedAdmin.id}/permissions`,
+                {
+                    permissions: formData.permissions
+                },
+                {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem('userToken')}`
+                    }
+                }
+            );
+            setUpdatingAdmin(false);
+            toast.success('Permissions updated successfully', { duration: 2000 });
+            setShowPermissionsModal(false);
+            resetForm();
+            refetch();
+        } catch (error) {
+            setUpdatingAdmin(false);
+            toast.error(error.response?.data?.message || 'An unexpected error occurred', { duration: 3000 });
+            if (error.response?.status === 401) {
+                localStorage.removeItem('userToken')
+                navigate('/login')
+            }
+        }
+    };
+
+    // Filter admins based on all filter criteria
+    const filteredAdmins = admins?.filter(admin => {
         return (
             (filters.global === '' ||
-                integration.name.toLowerCase().includes(filters.global.toLowerCase()) ||
-                integration.display_order.toString().includes(filters.global)) &&
+                admin.name.toLowerCase().includes(filters.global.toLowerCase()) ||
+                admin.email.toLowerCase().includes(filters.global.toLowerCase())) &&
             (filters.name === '' ||
-                integration.name.toLowerCase().includes(filters.name.toLowerCase())) &&
-            (filters.order === '' || integration.display_order.toString().includes(filters.order)) &&
-            (filters.status === '' || (integration.is_active ? 'active' : 'inactive').includes(filters.status.toLowerCase()))
+                admin.name.toLowerCase().includes(filters.name.toLowerCase())) &&
+            (filters.email === '' ||
+                admin.email.toLowerCase().includes(filters.email.toLowerCase())) &&
+            (filters.status === '' || admin.status.includes(filters.status.toLowerCase())) &&
+            (filters.role === '' || admin.role.includes(filters.role.toLowerCase()))
         );
     }) || [];
 
     // Pagination logic
-    const totalPages = Math.ceil(filteredIntegrations.length / rowsPerPage);
-    const paginatedIntegrations = filteredIntegrations.slice(
+    const totalPages = Math.ceil(filteredAdmins.length / rowsPerPage);
+    const paginatedAdmins = filteredAdmins.slice(
         (currentPage - 1) * rowsPerPage,
         currentPage * rowsPerPage
     );
 
-    const statusBadge = (isActive) => {
-        const statusClass = isActive
+    const statusBadge = (status) => {
+        const statusClass = status === 'active'
             ? 'bg-[#009379] text-white'
             : 'bg-[#930002] text-white';
         return (
             <span className={`flex justify-center w-fit items-center px-2.5 py-1 rounded-md text-xs font-medium ${statusClass} min-w-16 text-center`}>
-                {isActive ? 'Active' : 'Inactive'}
+                {status === 'active' ? 'Active' : 'Inactive'}
             </span>
         );
     };
@@ -281,7 +322,7 @@ export default function IntegrationsDataTable({ integrations, loading, refetch }
         return (
             <div className="flex justify-between items-center mt-4 px-4 pb-1">
                 <div className='text-xs'>
-                    Showing {((currentPage - 1) * rowsPerPage + 1)}-{Math.min(currentPage * rowsPerPage, filteredIntegrations.length)} of {filteredIntegrations.length} entries
+                    Showing {((currentPage - 1) * rowsPerPage + 1)}-{Math.min(currentPage * rowsPerPage, filteredAdmins.length)} of {filteredAdmins.length} entries
                 </div>
                 <div className="flex gap-1">
                     <button
@@ -314,7 +355,7 @@ export default function IntegrationsDataTable({ integrations, loading, refetch }
                     type="text"
                     value={filters.global}
                     onChange={(e) => handleFilterChange('global', e.target.value)}
-                    placeholder="Search integrations..."
+                    placeholder="Search admins..."
                     className="px-3 py-2 rounded-xl shadow-sm focus:outline-2 focus:outline-primary w-full border border-primary transition-all"
                 />
                 <button
@@ -322,7 +363,7 @@ export default function IntegrationsDataTable({ integrations, loading, refetch }
                     className="bg-primary hover:bg-darkBlue transition-all text-white px-3 py-2 rounded-xl shadow-sm min-w-max flex items-center gap-2"
                 >
                     <FaPlus size={18} />
-                    <span>Add Integration</span>
+                    <span>Add Admin</span>
                 </button>
             </div>
 
@@ -343,11 +384,14 @@ export default function IntegrationsDataTable({ integrations, loading, refetch }
                             <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 <input
                                     type="text"
-                                    placeholder="Order"
-                                    value={filters.order}
-                                    onChange={(e) => handleFilterChange('order', e.target.value)}
+                                    placeholder="Email"
+                                    value={filters.email}
+                                    onChange={(e) => handleFilterChange('email', e.target.value)}
                                     className="text-xs p-1 border rounded w-full"
                                 />
+                            </th>
+                            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Role
                             </th>
                             <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 <input
@@ -366,69 +410,68 @@ export default function IntegrationsDataTable({ integrations, loading, refetch }
                     <tbody className="bg-white divide-y divide-gray-200 text-sm">
                         {loading ? (
                             <tr>
-                                <td colSpan="4" className="px-3 py-4 text-center">
+                                <td colSpan="5" className="px-3 py-4 text-center">
                                     <div className="flex justify-center items-center gap-2">
                                         <FaSpinner className="animate-spin" size={18} />
-                                        Loading integrations...
+                                        Loading admins...
                                     </div>
                                 </td>
                             </tr>
-                        ) : paginatedIntegrations.length === 0 ? (
+                        ) : paginatedAdmins.length === 0 ? (
                             <tr>
-                                <td colSpan="4" className="px-3 py-4 text-center">
-                                    No integrations found
+                                <td colSpan="5" className="px-3 py-4 text-center">
+                                    No admins found
                                 </td>
                             </tr>
                         ) : (
-                            paginatedIntegrations.map((integration) => (
-                                <tr key={integration.id} className="hover:bg-gray-50">
+                            paginatedAdmins.map((admin) => (
+                                <tr key={admin.id} className="hover:bg-gray-50">
                                     <td className="px-3 py-4 whitespace-nowrap">
-                                        <div className="flex items-center gap-2">
-                                            {integration.logo_url && (
-                                                <img
-                                                    src={integration.logo_url}
-                                                    alt="Integration logo"
-                                                    className="w-8 h-8 rounded-full object-cover"
-                                                />
-                                            )}
-                                            <div>
-                                                <div className="font-medium">{integration.name}</div>
-                                            </div>
-                                        </div>
+                                        <div className="font-medium">{admin.name}</div>
                                     </td>
                                     <td className="px-3 py-4 whitespace-nowrap">
-                                        {integration.display_order}
+                                        {admin.email}
+                                    </td>
+                                    <td className="px-3 py-4 whitespace-nowrap capitalize">
+                                        {admin.role}
                                     </td>
                                     <td className="px-3 py-4 whitespace-nowrap">
-                                        {statusBadge(integration.is_active)}
+                                        {statusBadge(admin.status)}
                                     </td>
                                     <td className="px-3 py-4 whitespace-nowrap">
                                         <div className="flex items-center gap-2">
                                             <button
                                                 className="text-blue-500 hover:text-blue-700 p-1"
-                                                onClick={() => prepareEditForm(integration)}
+                                                onClick={() => prepareEditForm(admin)}
                                             >
                                                 <FaEdit size={18} />
                                             </button>
 
                                             <button
-                                                className={`${integration.is_active ? 'text-red-500 hover:text-red-700' : 'text-green-500 hover:text-green-700'} p-1`}
-                                                onClick={() => handleToggleStatus(integration.id, integration.is_active)}
-                                                disabled={togglingIntegrationId === integration.id}
+                                                className="text-purple-500 hover:text-purple-700 p-1"
+                                                onClick={() => preparePermissionsForm(admin)}
                                             >
-                                                {togglingIntegrationId === integration.id ? (
+                                                <FaLock size={18} />
+                                            </button>
+
+                                            <button
+                                                className={`${admin.status === 'active' ? 'text-red-500 hover:text-red-700' : 'text-green-500 hover:text-green-700'} p-1`}
+                                                onClick={() => handleToggleStatus(admin.id, admin.status)}
+                                                disabled={togglingAdminId === admin.id}
+                                            >
+                                                {togglingAdminId === admin.id ? (
                                                     <FaSpinner className="animate-spin" size={18} />
                                                 ) : (
-                                                    integration.is_active ? <FaTimes /> : <FaCheck />
+                                                    admin.status === 'active' ? <FaTimes /> : <FaCheck />
                                                 )}
                                             </button>
 
                                             <button
                                                 className="text-red-500 hover:text-red-700 p-1"
-                                                onClick={() => handleDeleteClick(integration.id)}
-                                                disabled={deletingIntegrationId === integration.id}
+                                                onClick={() => handleDeleteClick(admin.id)}
+                                                disabled={deletingAdminId === admin.id}
                                             >
-                                                {deletingIntegrationId === integration.id ? (
+                                                {deletingAdminId === admin.id ? (
                                                     <FaSpinner className="animate-spin" size={18} />
                                                 ) : (
                                                     <FaTrashAlt size={18} />
@@ -446,7 +489,7 @@ export default function IntegrationsDataTable({ integrations, loading, refetch }
             {/* Pagination */}
             {!loading && renderPagination()}
 
-            {/* Add Integration Modal */}
+            {/* Add Admin Modal */}
             {showAddModal && (
                 <motion.div
                     initial={{ opacity: 0 }}
@@ -463,9 +506,9 @@ export default function IntegrationsDataTable({ integrations, loading, refetch }
                         onClick={(e) => e.stopPropagation()}
                     >
                         <div className="p-6">
-                            <h2 className="text-xl font-bold mb-4">Add New Integration</h2>
-                            <form onSubmit={handleAddIntegration}>
-                                <div className="grid grid-cols-1 gap-4 mb-4">
+                            <h2 className="text-xl font-bold mb-4">Add New Admin</h2>
+                            <form onSubmit={handleAddAdmin}>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
                                         <input
@@ -477,77 +520,63 @@ export default function IntegrationsDataTable({ integrations, loading, refetch }
                                             required
                                         />
                                     </div>
-                                </div>
-
-                                <div className="grid grid-cols-1 gap-4 mb-4">
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                                        <textarea
-                                            name="description"
-                                            value={formData.description}
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                                        <input
+                                            type="email"
+                                            name="email"
+                                            value={formData.email}
                                             onChange={handleFormChange}
                                             className="w-full px-3 py-2 border rounded-md"
-                                            rows={3}
+                                            required
                                         />
                                     </div>
                                 </div>
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Order</label>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
                                         <input
-                                            type="number"
-                                            name="display_order"
-                                            value={formData.display_order}
+                                            type="password"
+                                            name="password"
+                                            value={formData.password}
                                             onChange={handleFormChange}
                                             className="w-full px-3 py-2 border rounded-md"
-                                            min="0"
                                             required
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Logo</label>
-                                        <div className="flex items-center gap-2">
-                                            {logoPreview ? (
-                                                <div className="relative">
-                                                    <img src={logoPreview} alt="Logo preview" className="w-16 h-16 rounded-md object-cover" />
-                                                    <button
-                                                        type="button"
-                                                        onClick={handleRemoveFile}
-                                                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1"
-                                                    >
-                                                        <FaTimes size={14} />
-                                                    </button>
-                                                </div>
-                                            ) : (
-                                                <label className="flex flex-col items-center justify-center w-full h-16 border-2 border-dashed rounded-md cursor-pointer hover:bg-gray-50">
-                                                    <div className="flex flex-col items-center justify-center">
-                                                        <FaImage size={20} className="text-gray-400" />
-                                                        <span className="text-xs text-gray-500">Upload logo</span>
-                                                    </div>
-                                                    <input
-                                                        type="file"
-                                                        accept="image/*"
-                                                        onChange={handleFileChange}
-                                                        className="hidden"
-                                                    />
-                                                </label>
-                                            )}
-                                        </div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
+                                        <input
+                                            type="password"
+                                            name="confirmPassword"
+                                            value={formData.confirmPassword}
+                                            onChange={handleFormChange}
+                                            className="w-full px-3 py-2 border rounded-md"
+                                            required
+                                        />
                                     </div>
                                 </div>
 
-                                <div className="flex items-center mb-4">
-                                    <input
-                                        type="checkbox"
-                                        name="is_active"
-                                        checked={formData.is_active}
-                                        onChange={handleFormChange}
-                                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                                    />
-                                    <label className="ml-2 block text-sm text-gray-700">
-                                        Active Integration
-                                    </label>
+                                <div className="mb-4">
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">Permissions</label>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 max-h-60 overflow-y-auto p-2 border rounded">
+                                        {allPermissions.map(permission => (
+                                            <div key={permission.name} className="flex items-center">
+                                                <input
+                                                    type="checkbox"
+                                                    id={`perm-${permission.name}`}
+                                                    checked={formData.permissions.includes(permission.name)}
+                                                    onChange={(e) => handlePermissionChange(permission.name, e.target.checked)}
+                                                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                                />
+                                                <label htmlFor={`perm-${permission.name}`} className="ml-2 text-sm text-gray-700">
+                                                    <div className="font-medium">{permission.name}</div>
+                                                    <div className="text-xs text-gray-500">{permission.description}</div>
+                                                </label>
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
 
                                 <div className="flex justify-end gap-3 mt-6">
@@ -564,9 +593,9 @@ export default function IntegrationsDataTable({ integrations, loading, refetch }
                                     <button
                                         type="submit"
                                         className="px-4 py-2 bg-primary text-white rounded-md hover:bg-darkBlue transition-all flex items-center justify-center gap-2"
-                                        disabled={updatingIntegration}
+                                        disabled={updatingAdmin}
                                     >
-                                        {updatingIntegration ? (
+                                        {updatingAdmin ? (
                                             <>
                                                 <FaSpinner className="animate-spin" size={18} />
                                                 <span>Adding...</span>
@@ -574,7 +603,7 @@ export default function IntegrationsDataTable({ integrations, loading, refetch }
                                         ) : (
                                             <>
                                                 <FaPlus size={18} />
-                                                <span>Add Integration</span>
+                                                <span>Add Admin</span>
                                             </>
                                         )}
                                     </button>
@@ -585,7 +614,7 @@ export default function IntegrationsDataTable({ integrations, loading, refetch }
                 </motion.div>
             )}
 
-            {/* Edit Integration Modal */}
+            {/* Edit Admin Modal */}
             {showEditModal && (
                 <motion.div
                     initial={{ opacity: 0 }}
@@ -602,9 +631,9 @@ export default function IntegrationsDataTable({ integrations, loading, refetch }
                         onClick={(e) => e.stopPropagation()}
                     >
                         <div className="p-6">
-                            <h2 className="text-xl font-bold mb-4">Edit Integration</h2>
-                            <form onSubmit={handleEditIntegration}>
-                                <div className="grid grid-cols-1 gap-4 mb-4">
+                            <h2 className="text-xl font-bold mb-4">Edit Admin</h2>
+                            <form onSubmit={handleUpdateAdmin}>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
                                         <input
@@ -616,78 +645,40 @@ export default function IntegrationsDataTable({ integrations, loading, refetch }
                                             required
                                         />
                                     </div>
-                                </div>
-
-                                <div className="grid grid-cols-1 gap-4 mb-4">
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                                        <textarea
-                                            name="description"
-                                            value={formData.description}
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                                        <input
+                                            type="email"
+                                            name="email"
+                                            value={formData.email}
                                             onChange={handleFormChange}
                                             className="w-full px-3 py-2 border rounded-md"
-                                            rows={3}
+                                            required
                                         />
                                     </div>
                                 </div>
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Order</label>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">New Password (leave blank to keep current)</label>
                                         <input
-                                            type="number"
-                                            name="display_order"
-                                            value={formData.display_order}
+                                            type="password"
+                                            name="password"
+                                            value={formData.password}
                                             onChange={handleFormChange}
                                             className="w-full px-3 py-2 border rounded-md"
-                                            min="0"
-                                            required
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Logo</label>
-                                        <div className="flex items-center gap-2">
-                                            {logoPreview && (
-                                                <div className="relative">
-                                                    <img src={logoPreview} alt="Logo preview" className="w-16 h-16 rounded-md object-cover" />
-                                                    <button
-                                                        type="button"
-                                                        onClick={handleRemoveFile}
-                                                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1"
-                                                    >
-                                                        <FaTimes size={14} />
-                                                    </button>
-                                                </div>
-                                            )}
-                                            <label className="flex flex-col items-center justify-center w-full h-16 border-2 border-dashed rounded-md cursor-pointer hover:bg-gray-50">
-                                                <div className="flex flex-col items-center justify-center">
-                                                    <FaImage size={20} className="text-gray-400" />
-                                                    <span className="text-xs text-gray-500">
-                                                        {logoPreview ? 'Change logo' : 'Upload logo'}
-                                                    </span>
-                                                </div>
-                                                <input
-                                                    type="file"
-                                                    accept="image/*"
-                                                    onChange={handleFileChange}
-                                                    className="hidden"
-                                                />
-                                            </label>
-                                        </div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
+                                        <input
+                                            type="password"
+                                            name="confirmPassword"
+                                            value={formData.confirmPassword}
+                                            onChange={handleFormChange}
+                                            className="w-full px-3 py-2 border rounded-md"
+                                        />
                                     </div>
-                                </div>
-
-                                <div className="flex items-center mb-4">
-                                    <input
-                                        type="checkbox"
-                                        name="is_active"
-                                        checked={formData.is_active}
-                                        onChange={handleFormChange}
-                                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                                    />
-                                    <label className="ml-2 block text-sm text-gray-700">
-                                        Active Integration
-                                    </label>
                                 </div>
 
                                 <div className="flex justify-end gap-3 mt-6">
@@ -704,9 +695,9 @@ export default function IntegrationsDataTable({ integrations, loading, refetch }
                                     <button
                                         type="submit"
                                         className="px-4 py-2 bg-primary text-white rounded-md hover:bg-darkBlue transition-all flex items-center justify-center gap-2"
-                                        disabled={updatingIntegration}
+                                        disabled={updatingAdmin}
                                     >
-                                        {updatingIntegration ? (
+                                        {updatingAdmin ? (
                                             <>
                                                 <FaSpinner className="animate-spin" size={18} />
                                                 <span>Updating...</span>
@@ -714,7 +705,84 @@ export default function IntegrationsDataTable({ integrations, loading, refetch }
                                         ) : (
                                             <>
                                                 <FaEdit size={18} />
-                                                <span>Update Integration</span>
+                                                <span>Update Admin</span>
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </motion.div>
+                </motion.div>
+            )}
+
+            {/* Permissions Modal */}
+            {showPermissionsModal && (
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+                    onClick={() => setShowPermissionsModal(false)}
+                >
+                    <motion.div
+                        initial={{ y: -50, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        exit={{ y: 50, opacity: 0 }}
+                        className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="p-6">
+                            <h2 className="text-xl font-bold mb-4">
+                                Manage Permissions for {selectedAdmin?.name}
+                            </h2>
+                            <form onSubmit={handleUpdatePermissions}>
+                                <div className="mb-4">
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">Permissions</label>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 max-h-60 overflow-y-auto p-2 border rounded">
+                                        {allPermissions.map(permission => (
+                                            <div key={permission.name} className="flex items-center">
+                                                <input
+                                                    type="checkbox"
+                                                    id={`perm-edit-${permission.name}`}
+                                                    checked={formData.permissions.includes(permission.name)}
+                                                    onChange={(e) => handlePermissionChange(permission.name, e.target.checked)}
+                                                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                                />
+                                                <label htmlFor={`perm-edit-${permission.name}`} className="ml-2 text-sm text-gray-700">
+                                                    <div className="font-medium">{permission.name}</div>
+                                                    <div className="text-xs text-gray-500">{permission.description}</div>
+                                                </label>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="flex justify-end gap-3 mt-6">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setShowPermissionsModal(false);
+                                            resetForm();
+                                        }}
+                                        className="px-4 py-2 border rounded-md text-gray-700 hover:bg-gray-50"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        className="px-4 py-2 bg-primary text-white rounded-md hover:bg-darkBlue transition-all flex items-center justify-center gap-2"
+                                        disabled={updatingAdmin}
+                                    >
+                                        {updatingAdmin ? (
+                                            <>
+                                                <FaSpinner className="animate-spin" size={18} />
+                                                <span>Updating...</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <FaLock size={18} />
+                                                <span>Update Permissions</span>
                                             </>
                                         )}
                                     </button>
@@ -747,10 +815,10 @@ export default function IntegrationsDataTable({ integrations, loading, refetch }
                                     <FaTrashAlt className="h-5 w-5 text-red-600" />
                                 </div>
                                 <div className="ml-4">
-                                    <h3 className="text-lg font-medium text-gray-900">Delete Integration</h3>
+                                    <h3 className="text-lg font-medium text-gray-900">Delete Admin</h3>
                                     <div className="mt-2">
                                         <p className="text-sm text-gray-500">
-                                            Are you sure you want to delete this integration? This action cannot be undone.
+                                            Are you sure you want to delete this admin? This action cannot be undone.
                                         </p>
                                     </div>
                                 </div>

@@ -9,6 +9,7 @@ import { Toaster } from 'react-hot-toast'
 import SidebarContextProvider from './Contexts/SidebarContext'
 import Integrations from './Components/Pages/Integrations'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import Admins from './Components/Pages/Admins'
 
 function App() {
 
@@ -19,6 +20,7 @@ function App() {
         { index: true, element: <ProtectedRoute><Home /></ProtectedRoute> },
         { path: '/home', element: <ProtectedRoute><Home /></ProtectedRoute> },
         { path: '/integrations', element: <ProtectedRoute><Integrations /></ProtectedRoute> },
+        { path: '/admins', element: <ProtectedRoute><Admins /></ProtectedRoute> },
       ]
     },
 

@@ -9,7 +9,7 @@ export default function Integrations() {
 
     function getIntegrationsData() {
         return axios.get(
-            `http://3.19.62.232/api/integrations`,
+            `https://propxpro.run.place/api/admin/integrations`,
             {
                 headers: {
                     Authorization: `Bearer ${localStorage.getItem('userToken')}`
