@@ -58,7 +58,7 @@ export default function Sidebar() {
         },
     ]
     return <>
-        <div className={`h-full bg-background p-5 fixed w-56 left-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} transition-all duration-500 z-50`}>
+        <div className={`h-full bg-tramsparent p-5 fixed w-56 left-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} transition-all duration-500 z-50`}>
             <div className={`absolute z-50 ${sidebarOpen ? 'top-5 right-5 -translate-x-1/2 translate-y-1/2 text-gray-400' : 'top-2 -right-2 translate-x-full p-1.5 flex justify-center items-center bg-white text-gray-700 bg-opacity-90 aspect-square rounded-full cursor-pointer'} transition-all duration-500`}>
                 <button onClick={toggleSidebar} ><GoSidebarExpand className='text-2xl' /></button>
             </div>
