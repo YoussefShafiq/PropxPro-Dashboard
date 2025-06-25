@@ -71,7 +71,7 @@ export default function AdminsDataTable({ admins, allPermissions, loading, refet
             refetch();
         } catch (error) {
             toast.error(error.response?.data?.message || 'An unexpected error occurred', { duration: 3000 });
-            if (error.response?.status === 401) {
+            if (error.response?.status == 401) {
                 localStorage.removeItem('userToken')
                 navigate('/login')
             }
@@ -104,7 +104,7 @@ export default function AdminsDataTable({ admins, allPermissions, loading, refet
             refetch();
         } catch (error) {
             toast.error(error.response?.data?.message || 'An unexpected error occurred', { duration: 3000 });
-            if (error.response?.status === 401) {
+            if (error.response?.status == 401) {
                 localStorage.removeItem('userToken')
                 navigate('/login')
             }
@@ -202,7 +202,7 @@ export default function AdminsDataTable({ admins, allPermissions, loading, refet
         } catch (error) {
             setUpdatingAdmin(false);
             toast.error(error.response?.data?.message || 'An unexpected error occurred', { duration: 3000 });
-            if (error.response?.status === 401) {
+            if (error.response?.status == 401) {
                 localStorage.removeItem('userToken')
                 navigate('/login')
             }
@@ -245,7 +245,7 @@ export default function AdminsDataTable({ admins, allPermissions, loading, refet
         } catch (error) {
             setUpdatingAdmin(false);
             toast.error(error.response?.data?.message || 'An unexpected error occurred', { duration: 3000 });
-            if (error.response?.status === 401) {
+            if (error.response?.status == 401) {
                 localStorage.removeItem('userToken')
                 navigate('/login')
             }
@@ -276,7 +276,7 @@ export default function AdminsDataTable({ admins, allPermissions, loading, refet
         } catch (error) {
             setUpdatingAdmin(false);
             toast.error(error.response?.data?.message || 'An unexpected error occurred', { duration: 3000 });
-            if (error.response?.status === 401) {
+            if (error.response?.status == 401) {
                 localStorage.removeItem('userToken')
                 navigate('/login')
             }

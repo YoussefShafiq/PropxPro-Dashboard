@@ -68,7 +68,7 @@ export default function IntegrationsDataTable({ integrations, loading, refetch }
             refetch();
         } catch (error) {
             toast.error(error.response?.data?.message || 'An unexpected error occurred', { duration: 3000 });
-            if (error.response?.status === 401) {
+            if (error.response?.status == 401) {
                 localStorage.removeItem('userToken')
                 navigate('/login')
             }
@@ -101,7 +101,7 @@ export default function IntegrationsDataTable({ integrations, loading, refetch }
             refetch();
         } catch (error) {
             toast.error(error.response?.data?.message || 'An unexpected error occurred', { duration: 3000 });
-            if (error.response?.status === 401) {
+            if (error.response?.status == 401) {
                 localStorage.removeItem('userToken')
                 navigate('/login')
             }
@@ -170,7 +170,7 @@ export default function IntegrationsDataTable({ integrations, loading, refetch }
         } catch (error) {
             setUpdatingIntegration(false);
             toast.error(error.response?.data?.message || 'An unexpected error occurred', { duration: 3000 });
-            if (error.response?.status === 401) {
+            if (error.response?.status == 401) {
                 localStorage.removeItem('userToken')
                 navigate('/login')
             }
@@ -210,7 +210,7 @@ export default function IntegrationsDataTable({ integrations, loading, refetch }
         } catch (error) {
             setUpdatingIntegration(false);
             toast.error(error.response?.data?.message || 'An unexpected error occurred', { duration: 3000 });
-            if (error.response?.status === 401) {
+            if (error.response?.status == 401) {
                 localStorage.removeItem('userToken')
                 navigate('/login')
             }

@@ -1,15 +1,15 @@
 import { useQuery } from '@tanstack/react-query'
 import axios from 'axios';
-import React from 'react'
+import React, { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom';
-import IntegrationsDataTable from '../DataTables/IntegrationsDataTable';
+import FeaturesDataTable from '../DataTables/FeaturesDataTable';
 
-export default function Integrations() {
+export default function Features() {
     const navigate = useNavigate();
 
-    function getIntegrationsData() {
+    function getAllFeatures() {
         return axios.get(
-            `https://propxpro.run.place/api/admin/integrations`,
+            `https://propxpro.run.place/api/admin/features`,
             {
                 headers: {
                     Authorization: `Bearer ${localStorage.getItem('userToken')}`
@@ -18,9 +18,9 @@ export default function Integrations() {
         );
     }
 
-    const { data: integrations, isLoading, refetch } = useQuery({
-        queryKey: ['integrations'],
-        queryFn: getIntegrationsData,
+    const { data: features, isLoading, refetch } = useQuery({
+        queryKey: ['features'],
+        queryFn: getAllFeatures,
         onError: (error) => {
             if (error.response?.status == 401) {
                 localStorage.removeItem('userToken')
@@ -29,10 +29,14 @@ export default function Integrations() {
         }
     })
 
+    useEffect(() => {
+        console.log('features', features?.data?.data);
+    }, [features])
+
     return (
         <div className="p-4">
-            <IntegrationsDataTable
-                integrations={integrations?.data?.data || []}
+            <FeaturesDataTable
+                features={features?.data?.data || []}
                 loading={isLoading}
                 refetch={refetch}
             />

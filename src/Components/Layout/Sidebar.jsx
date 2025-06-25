@@ -23,7 +23,7 @@ export default function Sidebar() {
             toast.success('logged Out Successfully', { duration: 2000 })
             setloggingOut(false)
         } catch (error) {
-            if (error.status === 401) {
+            if (error.status == 401) {
                 localStorage.removeItem('userToken')
                 navigate('/login')
                 console.log('error to out');
@@ -54,6 +54,16 @@ export default function Sidebar() {
         {
             title: 'Admins',
             path: '/admins',
+            icon: <IoHomeOutline />
+        },
+        {
+            title: 'Features',
+            path: '/features',
+            icon: <IoHomeOutline />
+        },
+        {
+            title: 'Plans',
+            path: '/plans',
             icon: <IoHomeOutline />
         },
     ]

@@ -10,6 +10,8 @@ import SidebarContextProvider from './Contexts/SidebarContext'
 import Integrations from './Components/Pages/Integrations'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import Admins from './Components/Pages/Admins'
+import Features from './Components/Pages/Features'
+import Plans from './Components/Pages/Plans'
 
 function App() {
 
@@ -21,9 +23,10 @@ function App() {
         { path: '/home', element: <ProtectedRoute><Home /></ProtectedRoute> },
         { path: '/integrations', element: <ProtectedRoute><Integrations /></ProtectedRoute> },
         { path: '/admins', element: <ProtectedRoute><Admins /></ProtectedRoute> },
+        { path: '/features', element: <ProtectedRoute><Features /></ProtectedRoute> },
+        { path: '/plans', element: <ProtectedRoute><Plans /></ProtectedRoute> },
       ]
     },
-
   ])
 
   let query = new QueryClient();

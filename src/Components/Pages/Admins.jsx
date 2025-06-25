@@ -19,14 +19,15 @@ export default function Admins() {
         );
     }
 
-    const { data: admins, isLoading, refetch } = useQuery({
+    const { data: admins, isLoading, refetch, error, isError } = useQuery({
         queryKey: ['admins'],
         queryFn: getAdminsData,
-        onError: (error) => {
-            if (error.response?.status === 401) {
-                localStorage.removeItem('userToken')
-                navigate('/login')
-            }
+        onError: () => {
+            console.log(error);
+            // if (error.response?.status == 401) {
+            //     localStorage.removeItem('userToken')
+            //     navigate('/login')
+            // }
         }
     })
 
@@ -45,7 +46,7 @@ export default function Admins() {
         queryKey: ['permissions'],
         queryFn: getpermissionsData,
         onError: (error) => {
-            if (error.response?.status === 401) {
+            if (error.response?.status == 401) {
                 localStorage.removeItem('userToken')
                 navigate('/login')
             }
