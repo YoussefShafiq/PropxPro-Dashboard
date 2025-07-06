@@ -12,6 +12,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import Admins from './Components/Pages/Admins'
 import Features from './Components/Pages/Features'
 import Plans from './Components/Pages/Plans'
+import { FcPrivacy } from 'react-icons/fc'
+import PrivacyPolicy from './Components/Pages/PrivacyPolicy'
 
 function App() {
 
@@ -25,6 +27,7 @@ function App() {
         { path: '/admins', element: <ProtectedRoute><Admins /></ProtectedRoute> },
         { path: '/features', element: <ProtectedRoute><Features /></ProtectedRoute> },
         { path: '/plans', element: <ProtectedRoute><Plans /></ProtectedRoute> },
+        { path: '/Privacy-Policy', element: <ProtectedRoute><PrivacyPolicy /></ProtectedRoute> },
       ]
     },
   ])

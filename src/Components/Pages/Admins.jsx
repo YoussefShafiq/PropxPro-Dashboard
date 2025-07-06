@@ -61,6 +61,7 @@ export default function Admins() {
 
     return (
         <div className="p-4">
+            <h1 className="text-3xl font-bold text-gray-800 mb-8">Admins</h1>
             <AdminsDataTable
                 admins={admins?.data?.data || []}
                 allPermissions={permissions?.data?.data || []}

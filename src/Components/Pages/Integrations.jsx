@@ -31,6 +31,7 @@ export default function Integrations() {
 
     return (
         <div className="p-4">
+            <h1 className="text-3xl font-bold text-gray-800 mb-8">Integrations</h1>
             <IntegrationsDataTable
                 integrations={integrations?.data?.data || []}
                 loading={isLoading}

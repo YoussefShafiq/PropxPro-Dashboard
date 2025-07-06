@@ -42,6 +42,7 @@ export default function Plans() {
 
     return (
         <div className="p-4">
+            <h1 className="text-3xl font-bold text-gray-800 mb-8">Plans</h1>
             <PlansDataTable
                 plans={plans?.data?.data || []}
                 loading={isLoading}

@@ -35,6 +35,7 @@ export default function Features() {
 
     return (
         <div className="p-4">
+            <h1 className="text-3xl font-bold text-gray-800 mb-8">Features</h1>
             <FeaturesDataTable
                 features={features?.data?.data || []}
                 loading={isLoading}

@@ -66,6 +66,11 @@ export default function Sidebar() {
             path: '/plans',
             icon: <IoHomeOutline />
         },
+        {
+            title: 'Privacy Policy',
+            path: '/Privacy-Policy',
+            icon: <IoHomeOutline />
+        },
     ]
     return <>
         <div className={`h-full bg-tramsparent p-5 fixed w-56 left-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} transition-all duration-500 z-50`}>
