@@ -1,8 +1,9 @@
 // src/pages/PrivacyAndTerms.jsx
 import React, { useState } from 'react';
 import Tiptap from '../TextEditor/Tiptap';
+import TiptapWithImg from '../TextEditor/TiptapWithImg';
 
-export default function PrivacyPolicy() {
+export default function TermsOfServices() {
     const [editorContent, setEditorContent] = useState('');
     const [isSaving, setIsSaving] = useState(false);
 
@@ -29,10 +30,10 @@ export default function PrivacyPolicy() {
 
     return (
         <div className="p-4">
-            <h1 className="text-3xl font-bold text-gray-800 mb-8">Privacy Policy</h1>
+            <h1 className="text-3xl font-bold text-gray-800 mb-8">Terms of Services</h1>
 
             <div className="border border-gray-200 rounded-lg shadow-sm p-6 bg-white">
-                <Tiptap
+                <TiptapWithImg
                     content={editorContent}
                     onUpdate={setEditorContent}
                 />

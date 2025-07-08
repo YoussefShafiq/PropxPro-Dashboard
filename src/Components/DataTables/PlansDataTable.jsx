@@ -383,7 +383,13 @@ export default function PlansDataTable({ plans, loading, refetch }) {
         currentPage * rowsPerPage
     );
 
-    const statusBadge = (status) => {
+    const statusBadge = (is_active) => {
+        let status = '';
+        if (is_active == true) {
+            status = 'active';
+        } else {
+            status = 'inactive';
+        }
         const statusClass = status === 'active'
             ? 'bg-[#009379] text-white'
             : 'bg-[#930002] text-white';
@@ -438,6 +444,7 @@ export default function PlansDataTable({ plans, loading, refetch }) {
             {/* Global Search and Add Button */}
             <div className="p-4 border-b flex justify-between items-center gap-4">
                 <input
+                    required
                     type="text"
                     value={filters.global}
                     onChange={(e) => handleFilterChange('global', e.target.value)}
@@ -460,6 +467,7 @@ export default function PlansDataTable({ plans, loading, refetch }) {
                         <tr>
                             <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 <input
+                                    required
                                     type="text"
                                     placeholder="Name"
                                     value={filters.name}
@@ -469,6 +477,7 @@ export default function PlansDataTable({ plans, loading, refetch }) {
                             </th>
                             <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 <input
+                                    required
                                     type="text"
                                     placeholder="Description"
                                     value={filters.description}
@@ -487,6 +496,7 @@ export default function PlansDataTable({ plans, loading, refetch }) {
                             </th>
                             <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 <input
+                                    required
                                     type="text"
                                     placeholder="Status"
                                     value={filters.status}
@@ -542,7 +552,7 @@ export default function PlansDataTable({ plans, loading, refetch }) {
                                         )}
                                     </td>
                                     <td className="px-3 py-4 whitespace-nowrap">
-                                        {statusBadge(plan.status)}
+                                        {statusBadge(plan.is_active)}
                                     </td>
                                     <td className="px-3 py-4 whitespace-nowrap">
                                         <div className="flex items-center gap-2">
@@ -552,18 +562,31 @@ export default function PlansDataTable({ plans, loading, refetch }) {
                                             >
                                                 <FaEdit size={18} />
                                             </button>
-
-                                            <button
-                                                className={`${plan.status === 'active' ? 'text-red-500 hover:text-red-700' : 'text-green-500 hover:text-green-700'} p-1`}
-                                                onClick={() => handleToggleStatus(plan.id, plan.status)}
-                                                disabled={togglingPlanId === plan.id}
-                                            >
-                                                {togglingPlanId === plan.id ? (
-                                                    <FaSpinner className="animate-spin" size={18} />
-                                                ) : (
-                                                    plan.status === 'active' ? <FaTimes /> : <FaCheck />
-                                                )}
-                                            </button>
+                                            {plan.is_active ? <>
+                                                <button
+                                                    className={`${(plan.status || 'active') === 'active' ? 'text-red-500 hover:text-red-700' : 'text-green-500 hover:text-green-700'} p-1`}
+                                                    onClick={() => handleToggleStatus(plan.id, plan.status || 'active')}
+                                                    disabled={togglingPlanId === plan.id}
+                                                >
+                                                    {togglingPlanId === plan.id ? (
+                                                        <FaSpinner className="animate-spin" size={18} />
+                                                    ) : (
+                                                        (plan.status || 'active') === 'active' ? <FaTimes /> : <FaCheck />
+                                                    )}
+                                                </button>
+                                            </> : <>
+                                                <button
+                                                    className={`${plan.status === 'active' ? 'text-red-500 hover:text-red-700' : 'text-green-500 hover:text-green-700'} p-1`}
+                                                    onClick={() => handleToggleStatus(plan.id, plan.status)}
+                                                    disabled={togglingPlanId === plan.id}
+                                                >
+                                                    {togglingPlanId === plan.id ? (
+                                                        <FaSpinner className="animate-spin" size={18} />
+                                                    ) : (
+                                                        plan.status === 'active' ? <FaTimes /> : <FaCheck />
+                                                    )}
+                                                </button>
+                                            </>}
 
                                             <button
                                                 className="text-red-500 hover:text-red-700 p-1"
@@ -611,17 +634,19 @@ export default function PlansDataTable({ plans, loading, refetch }) {
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Name*</label>
                                         <input
+                                            required
                                             type="text"
                                             name="name"
                                             value={formData.name}
                                             onChange={handleFormChange}
                                             className="w-full px-3 py-2 border rounded-md"
-                                            required
+
                                         />
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
                                         <input
+                                            required
                                             type="text"
                                             name="title"
                                             value={formData.title}
@@ -647,6 +672,7 @@ export default function PlansDataTable({ plans, loading, refetch }) {
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Monthly Price*</label>
                                         <input
+                                            required
                                             type="number"
                                             name="monthlyPrice"
                                             value={formData.monthlyPrice}
@@ -654,12 +680,12 @@ export default function PlansDataTable({ plans, loading, refetch }) {
                                             className="w-full px-3 py-2 border rounded-md"
                                             step="0.01"
                                             min="0"
-                                            required
                                         />
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Annual Price*</label>
                                         <input
+                                            required
                                             type="number"
                                             name="annualPrice"
                                             value={formData.annualPrice}
@@ -667,12 +693,12 @@ export default function PlansDataTable({ plans, loading, refetch }) {
                                             className="w-full px-3 py-2 border rounded-md"
                                             step="0.01"
                                             min="0"
-                                            required
                                         />
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Annual Savings</label>
                                         <input
+                                            required
                                             type="text"
                                             name="annualSavings"
                                             value={formData.annualSavings}
@@ -685,6 +711,7 @@ export default function PlansDataTable({ plans, loading, refetch }) {
 
                                 <div className="flex items-center mb-6">
                                     <input
+
                                         type="checkbox"
                                         name="isPopular"
                                         checked={formData.isPopular}
@@ -722,6 +749,7 @@ export default function PlansDataTable({ plans, loading, refetch }) {
                                                             </div>
                                                         ) : (
                                                             <input
+                                                                required
                                                                 type={featureItem.type === 'number' ? 'number' : 'text'}
                                                                 value={featureValue || ''}
                                                                 onChange={(e) => handleFeatureChange(featureItem.key, e.target.value)}
@@ -762,6 +790,7 @@ export default function PlansDataTable({ plans, loading, refetch }) {
                                                             </div>
                                                         ) : (
                                                             <input
+                                                                required
                                                                 type={chargeItem.type === 'number' ? 'number' : 'text'}
                                                                 value={chargeValue || ''}
                                                                 onChange={(e) => handleAdditionalChargeChange(chargeItem.key, e.target.value)}
@@ -834,17 +863,18 @@ export default function PlansDataTable({ plans, loading, refetch }) {
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Name*</label>
                                         <input
+                                            required
                                             type="text"
                                             name="name"
                                             value={formData.name}
                                             onChange={handleFormChange}
                                             className="w-full px-3 py-2 border rounded-md"
-                                            required
                                         />
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
                                         <input
+                                            required
                                             type="text"
                                             name="title"
                                             value={formData.title}
@@ -870,6 +900,7 @@ export default function PlansDataTable({ plans, loading, refetch }) {
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Monthly Price*</label>
                                         <input
+                                            required
                                             type="number"
                                             name="monthlyPrice"
                                             value={formData.monthlyPrice}
@@ -877,12 +908,12 @@ export default function PlansDataTable({ plans, loading, refetch }) {
                                             className="w-full px-3 py-2 border rounded-md"
                                             step="0.01"
                                             min="0"
-                                            required
                                         />
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Annual Price*</label>
                                         <input
+                                            required
                                             type="number"
                                             name="annualPrice"
                                             value={formData.annualPrice}
@@ -890,12 +921,12 @@ export default function PlansDataTable({ plans, loading, refetch }) {
                                             className="w-full px-3 py-2 border rounded-md"
                                             step="0.01"
                                             min="0"
-                                            required
                                         />
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Annual Savings</label>
                                         <input
+                                            required
                                             type="text"
                                             name="annualSavings"
                                             value={formData.annualSavings}
@@ -908,6 +939,7 @@ export default function PlansDataTable({ plans, loading, refetch }) {
 
                                 <div className="flex items-center mb-6">
                                     <input
+
                                         type="checkbox"
                                         name="isPopular"
                                         checked={formData.isPopular}
@@ -932,6 +964,7 @@ export default function PlansDataTable({ plans, loading, refetch }) {
                                                     {feature.type === 'boolean' ? (
                                                         <div className="flex items-center">
                                                             <input
+
                                                                 type="checkbox"
                                                                 checked={formData.features[feature.key]?.value || false}
                                                                 onChange={(e) => handleFeatureChange(feature.key, e.target.checked)}
@@ -943,6 +976,7 @@ export default function PlansDataTable({ plans, loading, refetch }) {
                                                         </div>
                                                     ) : (
                                                         <input
+                                                            required
                                                             type={feature.type === 'number' ? 'number' : 'text'}
                                                             value={formData.features[feature.key]?.value || ''}
                                                             onChange={(e) => handleFeatureChange(feature.key, e.target.value)}
@@ -969,6 +1003,7 @@ export default function PlansDataTable({ plans, loading, refetch }) {
                                                     {charge.type === 'boolean' ? (
                                                         <div className="flex items-center">
                                                             <input
+
                                                                 type="checkbox"
                                                                 checked={formData.additionalUsageCharges[charge.key]?.value || false}
                                                                 onChange={(e) => handleAdditionalChargeChange(charge.key, e.target.checked)}
@@ -980,6 +1015,7 @@ export default function PlansDataTable({ plans, loading, refetch }) {
                                                         </div>
                                                     ) : (
                                                         <input
+                                                            required
                                                             type={charge.type === 'number' ? 'number' : 'text'}
                                                             value={formData.additionalUsageCharges[charge.key]?.value || ''}
                                                             onChange={(e) => handleAdditionalChargeChange(charge.key, e.target.value)}

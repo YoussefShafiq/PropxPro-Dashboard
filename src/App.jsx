@@ -14,6 +14,7 @@ import Features from './Components/Pages/Features'
 import Plans from './Components/Pages/Plans'
 import { FcPrivacy } from 'react-icons/fc'
 import PrivacyPolicy from './Components/Pages/PrivacyPolicy'
+import TermsOfServices from './Components/Pages/TermsOfServices'
 
 function App() {
 
@@ -27,7 +28,8 @@ function App() {
         { path: '/admins', element: <ProtectedRoute><Admins /></ProtectedRoute> },
         { path: '/features', element: <ProtectedRoute><Features /></ProtectedRoute> },
         { path: '/plans', element: <ProtectedRoute><Plans /></ProtectedRoute> },
-        { path: '/Privacy-Policy', element: <ProtectedRoute><PrivacyPolicy /></ProtectedRoute> },
+        { path: '/privacy-Policy', element: <ProtectedRoute><PrivacyPolicy /></ProtectedRoute> },
+        { path: '/terms-of-services', element: <ProtectedRoute><TermsOfServices /></ProtectedRoute> },
       ]
     },
   ])

@@ -280,7 +280,13 @@ export default function FeaturesDataTable({ features, loading, refetch }) {
         );
     };
 
-    const statusBadge = (status) => {
+    const statusBadge = (is_active) => {
+        let status = ''
+        if (is_active == true) {
+            status = 'active'
+        } else {
+            status = 'inactive'
+        }
         const statusClass = (status || 'active') === 'active'
             ? 'bg-[#009379] text-white'
             : 'bg-[#930002] text-white';
@@ -435,7 +441,7 @@ export default function FeaturesDataTable({ features, loading, refetch }) {
                                         {categoryBadge(feature.category)}
                                     </td>
                                     <td className="px-3 py-4 whitespace-nowrap">
-                                        {statusBadge(feature.status)}
+                                        {statusBadge(feature.is_active)}
                                     </td>
                                     <td className="px-3 py-4 whitespace-nowrap">
                                         <div className="flex items-center gap-2">
@@ -445,18 +451,31 @@ export default function FeaturesDataTable({ features, loading, refetch }) {
                                             >
                                                 <FaEdit size={18} />
                                             </button>
-
-                                            <button
-                                                className={`${(feature.status || 'active') === 'active' ? 'text-red-500 hover:text-red-700' : 'text-green-500 hover:text-green-700'} p-1`}
-                                                onClick={() => handleToggleStatus(feature.id, feature.status || 'active')}
-                                                disabled={togglingFeatureId === feature.id}
-                                            >
-                                                {togglingFeatureId === feature.id ? (
-                                                    <FaSpinner className="animate-spin" size={18} />
-                                                ) : (
-                                                    (feature.status || 'active') === 'active' ? <FaTimes /> : <FaCheck />
-                                                )}
-                                            </button>
+                                            {feature.is_active ? <>
+                                                <button
+                                                    className={`${(feature.status || 'active') === 'active' ? 'text-red-500 hover:text-red-700' : 'text-green-500 hover:text-green-700'} p-1`}
+                                                    onClick={() => handleToggleStatus(feature.id, feature.status || 'active')}
+                                                    disabled={togglingFeatureId === feature.id}
+                                                >
+                                                    {togglingFeatureId === feature.id ? (
+                                                        <FaSpinner className="animate-spin" size={18} />
+                                                    ) : (
+                                                        (feature.status || 'active') === 'active' ? <FaTimes /> : <FaCheck />
+                                                    )}
+                                                </button>
+                                            </> : <>
+                                                <button
+                                                    className={`${feature.status === 'active' ? 'text-red-500 hover:text-red-700' : 'text-green-500 hover:text-green-700'} p-1`}
+                                                    onClick={() => handleToggleStatus(feature.id, feature.status)}
+                                                    disabled={togglingFeatureId === feature.id}
+                                                >
+                                                    {togglingFeatureId === feature.id ? (
+                                                        <FaSpinner className="animate-spin" size={18} />
+                                                    ) : (
+                                                        feature.status === 'active' ? <FaTimes /> : <FaCheck />
+                                                    )}
+                                                </button>
+                                            </>}
 
                                             <button
                                                 className="text-red-500 hover:text-red-700 p-1"

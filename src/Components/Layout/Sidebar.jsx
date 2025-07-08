@@ -68,7 +68,12 @@ export default function Sidebar() {
         },
         {
             title: 'Privacy Policy',
-            path: '/Privacy-Policy',
+            path: '/privacy-Policy',
+            icon: <IoHomeOutline />
+        },
+        {
+            title: 'Terms of Services',
+            path: '/terms-of-Services',
             icon: <IoHomeOutline />
         },
     ]
