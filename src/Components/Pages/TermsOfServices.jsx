@@ -31,7 +31,7 @@ export default function TermsOfServices() {
     };
 
     const { data, isLoading, refetch, error, isError } = useQuery({
-        queryKey: ['privacy-policy'],
+        queryKey: ['terms-of-service'],
         queryFn: () => {
             return axios.get('https://propxpro.run.place/api/legal-documents/terms-of-service')
         }
