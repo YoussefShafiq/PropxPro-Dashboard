@@ -66,17 +66,10 @@ export default function PrivacyPolicy() {
                 <div className="flex gap-4 mt-6">
                     <button
                         onClick={handleSave}
-                        disabled={isSaving}
-                        className={`px-6 py-2 rounded-md font-medium text-white ${isSaving ? 'bg-purple-400' : 'bg-purple-600 hover:bg-purple-700'} transition-colors`}
+                        disabled={isSaving || editorContent == data?.data?.data?.content}
+                        className={`px-6 py-2 rounded-md font-medium text-white ${isSaving ? 'bg-blue-400' : 'bg-blue-600 hover:bg-blue-700'} transition-colors`}
                     >
                         {isSaving ? 'Saving...' : 'Save Changes'}
-                    </button>
-
-                    <button
-                        onClick={() => console.log(editorContent)}
-                        className="px-6 py-2 rounded-md font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 transition-colors"
-                    >
-                        View HTML Output
                     </button>
                 </div>
             </div>
