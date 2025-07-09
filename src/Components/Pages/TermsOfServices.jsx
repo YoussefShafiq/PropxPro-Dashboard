@@ -59,6 +59,7 @@ export default function TermsOfServices() {
             <div className="border border-gray-200 rounded-lg shadow-sm p-6 bg-white">
                 {editorContent &&
                     <Tiptap
+                        key={data?.data?.data?.content}
                         content={editorContent}
                         onUpdate={setEditorContent}
                     />}
@@ -66,7 +67,7 @@ export default function TermsOfServices() {
                 <div className="flex gap-4 mt-6">
                     <button
                         onClick={handleSave}
-                        disabled={isSaving || editorContent == data?.data?.data?.content}
+                        disabled={isSaving}
                         className={`px-6 py-2 rounded-md font-medium text-white ${isSaving ? 'bg-blue-400' : 'bg-blue-600 hover:bg-blue-700'} transition-colors`}
                     >
                         {isSaving ? 'Saving...' : 'Save Changes'}

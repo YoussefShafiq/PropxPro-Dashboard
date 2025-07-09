@@ -1,4 +1,3 @@
-// src/components/TextEditor/TiptapWithImage.jsx
 import { EditorProvider, useCurrentEditor, BubbleMenu } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import {
@@ -9,7 +8,8 @@ import {
 } from 'lucide-react';
 import TextAlign from '@tiptap/extension-text-align';
 import ImageExtension from '@tiptap/extension-image';
-import { useCallback, useRef } from 'react';
+import { useCallback, useRef, useState, useEffect } from 'react';
+import axios from 'axios';
 import './styles.scss';
 
 const extensions = [
@@ -23,28 +23,54 @@ const extensions = [
     }),
     ImageExtension.configure({
         inline: true,
-        allowBase64: true,
+        allowBase64: false,
+        HTMLAttributes: {
+            class: 'help-center-image',
+        },
     }),
 ];
 
 const MenuBar = () => {
     const { editor } = useCurrentEditor();
     const fileInputRef = useRef(null);
+    const [isUploading, setIsUploading] = useState(false);
 
     if (!editor) {
         return null;
     }
 
-    const handleImageUpload = (event) => {
+    const handleImageUpload = async (event) => {
         const file = event.target.files[0];
         if (!file) return;
 
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const base64Image = e.target.result;
-            editor.chain().focus().setImage({ src: base64Image }).run();
-        };
-        reader.readAsDataURL(file);
+        setIsUploading(true);
+        try {
+            const formData = new FormData();
+            formData.append('image', file);
+
+            const response = await axios.post(
+                'https://propxpro.run.place/api/help-articles/images/upload',
+                formData,
+                {
+                    headers: {
+                        'Content-Type': 'multipart/form-data',
+                        'Authorization': `Bearer ${localStorage.getItem('userToken')}`
+                    },
+                }
+            );
+
+            if (response.data.success && response.data.data?.url) {
+                editor.chain().focus().setImage({ src: response.data.data.url }).run();
+            } else {
+                throw new Error('Invalid response format');
+            }
+        } catch (error) {
+            console.error('Image upload failed:', error);
+            alert('Failed to upload image. Please try again.');
+        } finally {
+            setIsUploading(false);
+            event.target.value = '';
+        }
     };
 
     return (
@@ -181,12 +207,15 @@ const MenuBar = () => {
                     onChange={handleImageUpload}
                     accept="image/*"
                     style={{ display: 'none' }}
+                    disabled={isUploading}
                 />
                 <button
                     onClick={() => fileInputRef.current.click()}
                     title="Upload Image"
+                    disabled={isUploading}
+                    className={isUploading ? 'is-uploading' : ''}
                 >
-                    <Image size={16} />
+                    {isUploading ? 'Uploading...' : <Image size={16} />}
                 </button>
             </div>
 
@@ -246,12 +275,18 @@ const CustomBubbleMenu = () => {
 };
 
 const TiptapWithImg = ({ content = '', onUpdate }) => {
+    const [initialized, setInitialized] = useState(false);
+
     const handleUpdate = useCallback(({ editor }) => {
-        if (onUpdate) {
+        if (onUpdate && initialized) {
             const html = editor.getHTML();
             onUpdate(html);
         }
-    }, [onUpdate]);
+    }, [onUpdate, initialized]);
+
+    useEffect(() => {
+        setInitialized(true);
+    }, []);
 
     return (
         <div className="tiptap-container">

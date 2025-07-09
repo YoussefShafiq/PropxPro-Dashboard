@@ -15,6 +15,7 @@ import Plans from './Components/Pages/Plans'
 import { FcPrivacy } from 'react-icons/fc'
 import PrivacyPolicy from './Components/Pages/PrivacyPolicy'
 import TermsOfServices from './Components/Pages/TermsOfServices'
+import Test from './Components/Pages/Test'
 
 function App() {
 
@@ -30,6 +31,7 @@ function App() {
         { path: '/plans', element: <ProtectedRoute><Plans /></ProtectedRoute> },
         { path: '/privacy-Policy', element: <ProtectedRoute><PrivacyPolicy /></ProtectedRoute> },
         { path: '/terms-of-services', element: <ProtectedRoute><TermsOfServices /></ProtectedRoute> },
+        { path: '/test', element: <ProtectedRoute><Test /></ProtectedRoute> },
       ]
     },
   ])
