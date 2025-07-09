@@ -54,10 +54,13 @@ export default function Admins() {
     })
 
     useEffect(() => {
-        console.log('permissions', permissions?.data?.data);
-
-    }, [permissions])
-
+        if (isError) {
+            if (error.response?.status == 401) {
+                localStorage.removeItem('userToken')
+                navigate('/login')
+            }
+        }
+    }, [isError])
 
     return (
         <div className="p-4">

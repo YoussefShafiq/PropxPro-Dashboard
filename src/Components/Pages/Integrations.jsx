@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import axios from 'axios';
-import React from 'react'
+import React, { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom';
 import IntegrationsDataTable from '../DataTables/IntegrationsDataTable';
 
@@ -18,7 +18,7 @@ export default function Integrations() {
         );
     }
 
-    const { data: integrations, isLoading, refetch } = useQuery({
+    const { data: integrations, isLoading, refetch, isError, error } = useQuery({
         queryKey: ['integrations'],
         queryFn: getIntegrationsData,
         onError: (error) => {
@@ -28,6 +28,15 @@ export default function Integrations() {
             }
         }
     })
+
+    useEffect(() => {
+        if (isError) {
+            if (error.response?.status == 401) {
+                localStorage.removeItem('userToken')
+                navigate('/login')
+            }
+        }
+    }, [isError])
 
     return (
         <div className="p-4">

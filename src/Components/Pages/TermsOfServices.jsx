@@ -1,42 +1,67 @@
 // src/pages/PrivacyAndTerms.jsx
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Tiptap from '../TextEditor/Tiptap';
-import TiptapWithImg from '../TextEditor/TiptapWithImg';
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import toast from 'react-hot-toast';
+import { useQuery } from '@tanstack/react-query';
 
 export default function TermsOfServices() {
-    const [editorContent, setEditorContent] = useState('');
+    const [editorContent, setEditorContent] = useState(null);
     const [isSaving, setIsSaving] = useState(false);
+    const navigate = useNavigate()
 
     const handleSave = async () => {
         setIsSaving(true);
         try {
-            const response = await fetch('/api/save-privacy-terms', {
-                method: 'POST',
+            const response = await axios.post('https://propxpro.run.place/api/admin/legal-documents/terms-of-service', {
+                content: editorContent
+            }, {
                 headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ content: editorContent }),
+                    Authorization: `Bearer ${localStorage.getItem('userToken')}`
+                }
             });
+            toast.success('Terms of Services saved successfully');
 
-            if (response.ok) {
-                alert('Content saved successfully!');
-            }
         } catch (error) {
-            console.error('Error saving content:', error);
+            toast.error(error.response?.data?.message || 'An unexpected error occurred', { duration: 3000 });
         } finally {
             setIsSaving(false);
         }
     };
+
+    const { data, isLoading, refetch, error, isError } = useQuery({
+        queryKey: ['privacy-policy'],
+        queryFn: () => {
+            return axios.get('https://propxpro.run.place/api/legal-documents/terms-of-service')
+        }
+    })
+
+    useEffect(() => {
+        if (isError) {
+            if (error.response?.status == 401) {
+                localStorage.removeItem('userToken')
+                navigate('/login')
+            }
+        }
+    }, [isError])
+
+    useEffect(() => {
+        if (data?.data?.data?.content) {
+            setEditorContent(data?.data?.data?.content)
+        }
+    }, [data?.data?.data])
 
     return (
         <div className="p-4">
             <h1 className="text-3xl font-bold text-gray-800 mb-8">Terms of Services</h1>
 
             <div className="border border-gray-200 rounded-lg shadow-sm p-6 bg-white">
-                <TiptapWithImg
-                    content={editorContent}
-                    onUpdate={setEditorContent}
-                />
+                {editorContent &&
+                    <Tiptap
+                        content={editorContent}
+                        onUpdate={setEditorContent}
+                    />}
 
                 <div className="flex gap-4 mt-6">
                     <button
