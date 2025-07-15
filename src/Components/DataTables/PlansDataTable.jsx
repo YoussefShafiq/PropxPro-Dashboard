@@ -541,7 +541,7 @@ export default function PlansDataTable({ plans, loading, refetch }) {
                                     <td className="px-3 py-4 whitespace-nowrap">
                                         {priceDisplay(plan.annualPrice)}
                                         {plan.annualSavings && (
-                                            <div className="text-xs text-green-600">Save {plan.annualSavings}</div>
+                                            <div className="text-xs text-green-600"> {plan.annualSavings}</div>
                                         )}
                                     </td>
                                     <td className="px-3 py-4 whitespace-nowrap">

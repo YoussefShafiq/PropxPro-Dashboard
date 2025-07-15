@@ -571,7 +571,7 @@ export default function AdminsDataTable({ admins, allPermissions, loading, refet
                                                     className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                                                 />
                                                 <label htmlFor={`perm-${permission.name}`} className="ml-2 text-sm text-gray-700">
-                                                    <div className="font-medium">{permission.name}</div>
+                                                    <div className="font-medium">{permission.name.replaceAll('_', ' ')}</div>
                                                     <div className="text-xs text-gray-500">{permission.description}</div>
                                                 </label>
                                             </div>
@@ -750,7 +750,7 @@ export default function AdminsDataTable({ admins, allPermissions, loading, refet
                                                     className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                                                 />
                                                 <label htmlFor={`perm-edit-${permission.name}`} className="ml-2 text-sm text-gray-700">
-                                                    <div className="font-medium">{permission.name}</div>
+                                                    <div className="font-medium">{permission.name.replaceAll('_', ' ')}</div>
                                                     <div className="text-xs text-gray-500">{permission.description}</div>
                                                 </label>
                                             </div>
