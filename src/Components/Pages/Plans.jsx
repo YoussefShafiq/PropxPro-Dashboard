@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import axios from 'axios';
 import React, { useEffect } from 'react'
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import FeaturesDataTable from '../DataTables/FeaturesDataTable';
 import PlansDataTable from '../DataTables/PlansDataTable';
 
@@ -42,6 +42,9 @@ export default function Plans() {
 
     return (
         <div className="p-4">
+            <h1 className="text-3xl font-bold text-gray-800 mb-8">Plans Features</h1>
+            <Link to={'/plans/features'} className='bg-primary text-white py-2 px-3 rounded-xl' >Open plans features</Link>
+            <hr className='my-5' />
             <h1 className="text-3xl font-bold text-gray-800 mb-8">Plans</h1>
             <PlansDataTable
                 plans={plans?.data?.data || []}

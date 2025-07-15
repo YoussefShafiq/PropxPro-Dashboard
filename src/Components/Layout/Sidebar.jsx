@@ -57,11 +57,6 @@ export default function Sidebar() {
             icon: <IoHomeOutline />
         },
         {
-            title: 'Features',
-            path: '/features',
-            icon: <IoHomeOutline />
-        },
-        {
             title: 'Plans',
             path: '/plans',
             icon: <IoHomeOutline />

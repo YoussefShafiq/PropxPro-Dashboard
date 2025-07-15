@@ -16,6 +16,10 @@ import {
     FaImage
 } from 'react-icons/fa';
 import Tiptap from '../TextEditor/Tiptap';
+import { Chips } from 'primereact/chips';
+import 'primereact/resources/themes/lara-light-indigo/theme.css';
+import 'primereact/resources/primereact.min.css';
+import 'primeicons/primeicons.css';
 
 export default function BlogsDataTable({ blogs, loading, refetch }) {
     const navigate = useNavigate();
@@ -42,7 +46,8 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
         is_active: true,
         mark_as_hero: false,
         content: '',
-        cover_photo: null
+        cover_photo: null,
+        tags: []
     });
 
     const [editFormData, setEditFormData] = useState({
@@ -53,7 +58,8 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
         mark_as_hero: false,
         content: '',
         cover_photo: null,
-        existing_cover_photo: null
+        existing_cover_photo: null,
+        tags: []
     });
 
     const handleFilterChange = (field, value) => {
@@ -155,6 +161,20 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
         }
     };
 
+    const handletagsChange = (e) => {
+        setFormData(prev => ({
+            ...prev,
+            tags: e.value
+        }));
+    };
+
+    const handleEdittagsChange = (e) => {
+        setEditFormData(prev => ({
+            ...prev,
+            tags: e.value
+        }));
+    };
+
     const resetForm = () => {
         setFormData({
             title: '',
@@ -162,7 +182,8 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
             is_active: true,
             mark_as_hero: true,
             content: '',
-            cover_photo: null
+            cover_photo: null,
+            tags: []
         });
     };
 
@@ -175,7 +196,8 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
             mark_as_hero: blog.mark_as_hero,
             content: blog.content,
             cover_photo: null,
-            existing_cover_photo: blog.cover_photo_url
+            existing_cover_photo: blog.cover_photo_url,
+            tags: blog.tags || []
         });
         setShowEditModal(true);
     };
@@ -191,6 +213,9 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
             formDataToSend.append('is_active', formData.is_active ? 1 : 0);
             formDataToSend.append('mark_as_hero', formData.mark_as_hero ? 1 : 0);
             formDataToSend.append('content', formData.content);
+            formData.tags.forEach(skill => {
+                formDataToSend.append('tags[]', skill);
+            });
             if (formData.cover_photo) {
                 formDataToSend.append('cover_photo', formData.cover_photo);
             }
@@ -231,6 +256,9 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
             formDataToSend.append('is_active', editFormData.is_active ? 1 : 0);
             formDataToSend.append('mark_as_hero', editFormData.mark_as_hero ? 1 : 0);
             formDataToSend.append('content', editFormData.content);
+            editFormData.tags.forEach(skill => {
+                formDataToSend.append('tags[]', skill);
+            });
             formDataToSend.append('_method', 'POST');
             if (editFormData.cover_photo) {
                 formDataToSend.append('cover_photo', editFormData.cover_photo);
@@ -293,14 +321,6 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
             </span>
         );
     };
-
-    // const heroBadge = (isHero) => {
-    //     return (
-    //         <span className={`${isHero ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'} text-xs font-medium px-2.5 py-1 rounded`}>
-    //             {isHero ? 'Hero' : 'Normal'}
-    //         </span>
-    //     );
-    // };
 
     const statusBadge = (is_active) => {
         const statusClass = is_active
@@ -393,9 +413,6 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
                                     <option value="trending">Trending</option>
                                 </select>
                             </th>
-                            {/* <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Hero
-                            </th> */}
                             <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 <select
                                     value={filters.status}
@@ -446,9 +463,6 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
                                     <td className="px-3 py-4 whitespace-nowrap">
                                         {categoryBadge(blog.category)}
                                     </td>
-                                    {/* <td className="px-3 py-4 whitespace-nowrap">
-                                        {heroBadge(blog.mark_as_hero)}
-                                    </td> */}
                                     <td className="px-3 py-4 whitespace-nowrap">
                                         {statusBadge(blog.is_active)}
                                     </td>
@@ -596,20 +610,23 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
                                             Active
                                         </label>
                                     </div>
+                                </div>
 
-                                    {/* <div className="flex items-center">
-                                        <input
-                                            type="checkbox"
-                                            id="mark_as_hero"
-                                            name="mark_as_hero"
-                                            checked={formData.mark_as_hero}
-                                            onChange={handleFormChange}
-                                            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                                        />
-                                        <label htmlFor="mark_as_hero" className="ml-2 text-sm text-gray-700">
-                                            Mark as Hero
-                                        </label>
-                                    </div> */}
+                                <div className="mb-4">
+                                    <label htmlFor="tags" className="block text-sm font-medium mb-1">tags</label>
+                                    <Chips
+                                        id="tags"
+                                        name="tags"
+                                        value={formData.tags}
+                                        onChange={handletagsChange}
+                                        placeholder="Enter tags"
+                                        className="w-full p-chips dark:bg-dark2"
+                                        itemTemplate={(skill) => (
+                                            <div className="bg-gray-200 dark:bg-dark1 rounded-full px-3 py-1 text-sm">
+                                                {skill}
+                                            </div>
+                                        )}
+                                    />
                                 </div>
 
                                 <div className="mb-4">
@@ -772,20 +789,23 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
                                             Active
                                         </label>
                                     </div>
+                                </div>
 
-                                    {/* <div className="flex items-center">
-                                        <input
-                                            type="checkbox"
-                                            id="edit_mark_as_hero"
-                                            name="mark_as_hero"
-                                            checked={editFormData.mark_as_hero}
-                                            onChange={handleEditFormChange}
-                                            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                                        />
-                                        <label htmlFor="edit_mark_as_hero" className="ml-2 text-sm text-gray-700">
-                                            Mark as Hero
-                                        </label>
-                                    </div> */}
+                                <div className="mb-4">
+                                    <label htmlFor="tags" className="block text-sm font-medium mb-1">tags</label>
+                                    <Chips
+                                        id="tags"
+                                        name="tags"
+                                        value={editFormData.tags}
+                                        onChange={handleEdittagsChange}
+                                        placeholder="Enter tags"
+                                        className="w-full p-chips dark:bg-dark2"
+                                        itemTemplate={(skill) => (
+                                            <div className="bg-gray-200 dark:bg-dark1 rounded-full px-3 py-1 text-sm">
+                                                {skill}
+                                            </div>
+                                        )}
+                                    />
                                 </div>
 
                                 <div className="mb-4">
