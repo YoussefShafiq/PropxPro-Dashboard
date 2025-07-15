@@ -77,6 +77,11 @@ export default function Sidebar() {
             icon: <IoHomeOutline />
         },
         {
+            title: 'Blogs',
+            path: '/blogs',
+            icon: <IoHomeOutline />
+        },
+        {
             title: 'Test',
             path: '/test',
             icon: <IoHomeOutline />
