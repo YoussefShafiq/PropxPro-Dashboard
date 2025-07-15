@@ -40,7 +40,7 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
         title: '',
         category: 'guides',
         is_active: true,
-        mark_as_hero: true,
+        mark_as_hero: false,
         content: '',
         cover_photo: null
     });
@@ -50,7 +50,7 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
         title: '',
         category: 'guides',
         is_active: true,
-        mark_as_hero: true,
+        mark_as_hero: false,
         content: '',
         cover_photo: null,
         existing_cover_photo: null
@@ -294,13 +294,13 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
         );
     };
 
-    const heroBadge = (isHero) => {
-        return (
-            <span className={`${isHero ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'} text-xs font-medium px-2.5 py-1 rounded`}>
-                {isHero ? 'Hero' : 'Normal'}
-            </span>
-        );
-    };
+    // const heroBadge = (isHero) => {
+    //     return (
+    //         <span className={`${isHero ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'} text-xs font-medium px-2.5 py-1 rounded`}>
+    //             {isHero ? 'Hero' : 'Normal'}
+    //         </span>
+    //     );
+    // };
 
     const statusBadge = (is_active) => {
         const statusClass = is_active
@@ -393,9 +393,9 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
                                     <option value="trending">Trending</option>
                                 </select>
                             </th>
-                            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            {/* <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Hero
-                            </th>
+                            </th> */}
                             <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 <select
                                     value={filters.status}
@@ -446,9 +446,9 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
                                     <td className="px-3 py-4 whitespace-nowrap">
                                         {categoryBadge(blog.category)}
                                     </td>
-                                    <td className="px-3 py-4 whitespace-nowrap">
+                                    {/* <td className="px-3 py-4 whitespace-nowrap">
                                         {heroBadge(blog.mark_as_hero)}
-                                    </td>
+                                    </td> */}
                                     <td className="px-3 py-4 whitespace-nowrap">
                                         {statusBadge(blog.is_active)}
                                     </td>
@@ -597,7 +597,7 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
                                         </label>
                                     </div>
 
-                                    <div className="flex items-center">
+                                    {/* <div className="flex items-center">
                                         <input
                                             type="checkbox"
                                             id="mark_as_hero"
@@ -609,7 +609,7 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
                                         <label htmlFor="mark_as_hero" className="ml-2 text-sm text-gray-700">
                                             Mark as Hero
                                         </label>
-                                    </div>
+                                    </div> */}
                                 </div>
 
                                 <div className="mb-4">
@@ -773,7 +773,7 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
                                         </label>
                                     </div>
 
-                                    <div className="flex items-center">
+                                    {/* <div className="flex items-center">
                                         <input
                                             type="checkbox"
                                             id="edit_mark_as_hero"
@@ -785,7 +785,7 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
                                         <label htmlFor="edit_mark_as_hero" className="ml-2 text-sm text-gray-700">
                                             Mark as Hero
                                         </label>
-                                    </div>
+                                    </div> */}
                                 </div>
 
                                 <div className="mb-4">
