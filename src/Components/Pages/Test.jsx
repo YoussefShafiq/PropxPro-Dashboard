@@ -6,6 +6,7 @@ export default function Test() {
     const [content, setContent] = useState('<p>Start writing your help article here...</p>');
     const [title, setTitle] = useState('');
     const [status, setStatus] = useState('draft');
+    const [headings, setHeadings] = useState([]);
     const [isSaving, setIsSaving] = useState(false);
     const [editorReady, setEditorReady] = useState(false);
 
@@ -28,6 +29,7 @@ export default function Test() {
                     title: title,
                     content: content,
                     status: status,
+                    headings: headings, // Send headings as separate field
                 },
                 {
                     headers: {
@@ -37,6 +39,7 @@ export default function Test() {
             );
 
             console.log('Article saved:', response.data);
+            console.log('Headings saved:', headings);
             alert('Article saved successfully!');
         } catch (error) {
             console.error('Failed to save article:', error);
@@ -44,6 +47,15 @@ export default function Test() {
         } finally {
             setIsSaving(false);
         }
+    };
+
+    const handleContentUpdate = (html) => {
+        setContent(html);
+        setEditorReady(true);
+    };
+
+    const handleHeadingsUpdate = (extractedHeadings) => {
+        setHeadings(extractedHeadings);
     };
 
     return (
@@ -77,12 +89,25 @@ export default function Test() {
                 <label>Content</label>
                 <TiptapWithImg
                     content={content}
-                    onUpdate={(html) => {
-                        setContent(html);
-                        setEditorReady(true);
-                    }}
+                    onUpdate={handleContentUpdate}
+                    onHeadingsUpdate={handleHeadingsUpdate}
                 />
             </div>
+
+            {/* Display extracted headings for debugging/preview */}
+            {headings.length > 0 && (
+                <div className="form-group">
+                    <label>Table of Contents (Auto-generated)</label>
+                    <div className="headings-preview">
+                        {headings.map((heading, index) => (
+                            <div key={index} className={`heading-item heading-level-${heading.level}`}>
+                                <span className="heading-text">{heading.text}</span>
+                                <span className="heading-id">#{heading.id}</span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
 
             <button
                 onClick={handleSave}

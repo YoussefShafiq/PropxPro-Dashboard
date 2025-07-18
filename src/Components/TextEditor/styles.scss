@@ -1,576 +1,412 @@
 /* src/components/TextEditor/styles.scss */
 
 .tiptap-container {
-
     border: 1px solid #e2e8f0;
-
     border-radius: 0.5rem;
-
     background: white;
-
     margin: 1rem 0;
-
     overflow: hidden;
-
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 
     .tiptap-toolbar {
-
         display: flex;
-
         align-items: center;
-
         padding: 0.25rem 0.5rem;
-
         background: #f8fafc;
-
         border-bottom: 1px solid #e2e8f0;
-
         overflow-x: auto;
-
         white-space: nowrap;
-
         scrollbar-width: none;
-
         height: 42px;
 
         &::-webkit-scrollbar {
-
             display: none;
-
         }
 
         .toolbar-group {
-
             display: flex;
-
             align-items: center;
-
             gap: 0.1rem;
-
         }
 
         .toolbar-divider {
-
             width: 1px;
-
             height: 1.5rem;
-
             background: #cbd5e1;
-
             margin: 0 0.5rem;
-
         }
 
         button {
-
             border: none;
-
             background: none;
-
             color: #64748b;
-
             cursor: pointer;
-
             padding: 0.35rem;
-
             border-radius: 0.25rem;
-
             display: flex;
-
             align-items: center;
-
             justify-content: center;
-
             min-width: 28px;
-
             height: 28px;
-
             transition: all 0.2s ease;
 
             &:hover {
-
                 background: #e2e8f0;
-
                 color: #1e293b;
-
             }
 
             &.is-active {
-
                 background: #ede9fe;
-
                 color: #6d28d9;
-
             }
 
             &:disabled {
-
                 opacity: 0.5;
-
                 cursor: not-allowed;
-
             }
-
         }
-
     }
 
     .bubble-menu {
-
         display: flex;
-
         gap: 0.25rem;
-
         background: #f8fafc;
-
         padding: 0.25rem;
-
         border-radius: 0.25rem;
-
         box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-
         border: 1px solid #e2e8f0;
 
         button {
-
             border: none;
-
             background: none;
-
             color: #64748b;
-
             cursor: pointer;
-
             padding: 0.25rem;
-
             border-radius: 0.25rem;
-
             font-size: 0.8rem;
-
             min-width: 24px;
-
             height: 24px;
-
             display: flex;
-
             align-items: center;
-
             justify-content: center;
 
             &:hover {
-
                 background: #e2e8f0;
-
                 color: #1e293b;
-
             }
 
             &.is-active {
-
                 background: #ede9fe;
-
                 color: #6d28d9;
-
             }
-
         }
-
     }
 
     .tiptap {
-
         padding: 1rem;
-
         min-height: 200px;
-
         outline: none;
 
         :first-child {
-
             margin-top: 0;
-
         }
 
         p {
-
             margin: 0.75rem 0;
-
             line-height: 1.6;
-
         }
 
         h1,
-
         h2,
-
         h3,
-
         h4,
-
         h5,
-
         h6 {
-
             line-height: 1.2;
-
             margin-top: 1.5rem;
-
             margin-bottom: 1rem;
-
             font-weight: 600;
-
+            scroll-margin-top: 2rem; /* For better anchor scrolling */
+            
+            /* Add a subtle hover effect to show the anchor */
+            &:hover::before {
+                content: '#';
+                position: absolute;
+                left: -1.5rem;
+                color: #cbd5e1;
+                font-weight: normal;
+            }
         }
 
         h1 {
-
             font-size: 1.8rem;
-
         }
 
         h2 {
-
             font-size: 1.5rem;
-
         }
 
         h3 {
-
             font-size: 1.3rem;
-
         }
 
         h4 {
-
             font-size: 1.1rem;
-
         }
 
         ul,
-
         ol {
-
             padding: 0 1rem;
-
             margin: 0.75rem 0;
 
             li {
-
                 margin-bottom: 0.5rem;
-
                 line-height: 1.6;
 
                 p {
-
                     margin: 0.25rem 0;
-
                 }
-
             }
-
         }
 
         ul {
-
             list-style-type: disc;
 
             ul {
-
                 list-style-type: circle;
 
                 ul {
-
                     list-style-type: square;
-
                 }
-
             }
-
         }
 
         ol {
-
             list-style-type: decimal;
 
             ol {
-
                 list-style-type: lower-alpha;
 
                 ol {
-
                     list-style-type: lower-roman;
-
                 }
-
             }
-
         }
 
         strong {
-
             font-weight: bold;
-
         }
 
         em {
-
             font-style: italic;
-
         }
 
         code {
-
             background-color: #f1f5f9;
-
             border-radius: 0.25rem;
-
             color: #334155;
-
             font-size: 0.9em;
-
             padding: 0.2em 0.4em;
-
             font-family: 'SFMono-Regular', Menlo, Monaco, Consolas, monospace;
-
         }
 
         pre {
-
             background: #1e293b;
-
             border-radius: 0.5rem;
-
             color: #f8fafc;
-
             font-family: 'SFMono-Regular', Menlo, Monaco, Consolas, monospace;
-
             padding: 1rem;
-
             margin: 1rem 0;
-
             overflow-x: auto;
 
             code {
-
                 background: none;
-
                 color: inherit;
-
                 padding: 0;
-
                 font-size: 0.9rem;
-
             }
-
         }
 
         blockquote {
-
             border-left: 3px solid #cbd5e1;
-
             margin: 1rem 0;
-
             padding-left: 1rem;
-
             color: #64748b;
-
             font-style: italic;
-
         }
 
         hr {
-
             border: none;
-
             border-top: 1px solid #e2e8f0;
-
             margin: 1.5rem 0;
-
         }
 
         img {
-
             max-width: 100%;
-
             height: auto;
-
             margin: 1rem 0;
-
             border-radius: 0.25rem;
-
             border: 1px solid #e2e8f0;
-
         }
 
         .text-align-left {
-
             text-align: left;
-
         }
 
         .text-align-center {
-
             text-align: center;
-
         }
 
         .text-align-right {
-
             text-align: right;
-
         }
 
         ul[data-type="taskList"] {
-
             list-style: none;
-
             padding: 0;
 
             li {
-
                 display: flex;
-
                 align-items: flex-start;
 
-                >label {
-
+                > label {
                     flex: 0 0 auto;
-
                     margin-right: 0.5rem;
-
                     user-select: none;
-
                 }
 
-                >div {
-
+                > div {
                     flex: 1 1 auto;
-
                 }
-
             }
-
         }
-
     }
-
 }
 
 /* Form styles for parent component */
-
 .help-article-form {
-
     max-width: 800px;
-
     margin: 0 auto;
-
     padding: 1rem;
 
     .form-group {
-
         margin-bottom: 1rem;
 
         label {
-
             display: block;
-
             margin-bottom: 0.5rem;
-
             font-weight: 500;
-
             color: #334155;
-
         }
 
         input,
         select {
-
             width: 100%;
-
             padding: 0.5rem;
-
             border: 1px solid #cbd5e1;
-
             border-radius: 0.25rem;
-
             font-size: 1rem;
 
             &:focus {
-
                 outline: none;
-
                 border-color: #6d28d9;
-
                 box-shadow: 0 0 0 1px #6d28d9;
-
             }
-
         }
-
     }
 
     .save-button {
-
         background-color: #6d28d9;
-
         color: white;
-
         border: none;
-
         padding: 0.75rem 1.5rem;
-
         border-radius: 0.25rem;
-
         font-size: 1rem;
-
         font-weight: 500;
-
         cursor: pointer;
-
         margin-top: 1rem;
-
         transition: background-color 0.2s;
 
         &:hover {
-
             background-color: #5b21b6;
-
         }
 
         &:disabled {
-
             background-color: #cbd5e1;
-
             cursor: not-allowed;
-
         }
-
     }
 
+    /* Headings preview styles */
+    .headings-preview {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        max-height: 200px;
+        overflow-y: auto;
+
+        .heading-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #e2e8f0;
+
+            &:last-child {
+                border-bottom: none;
+            }
+
+            .heading-text {
+                font-weight: 500;
+                color: #334155;
+            }
+
+            .heading-id {
+                font-size: 0.8rem;
+                color: #64748b;
+                font-family: 'SFMono-Regular', Menlo, Monaco, Consolas, monospace;
+                background: #e2e8f0;
+                padding: 0.2rem 0.4rem;
+                border-radius: 0.25rem;
+            }
+
+            &.heading-level-1 {
+                .heading-text {
+                    font-size: 1.1rem;
+                    font-weight: 600;
+                }
+            }
+
+            &.heading-level-2 {
+                padding-left: 1rem;
+                .heading-text {
+                    font-size: 1rem;
+                }
+            }
+
+            &.heading-level-3 {
+                padding-left: 2rem;
+                .heading-text {
+                    font-size: 0.9rem;
+                }
+            }
+        }
+    }
 }
 
 @media (max-width: 768px) {
-
     .tiptap-container {
-
         .tiptap-toolbar {
-
             padding: 0.25rem;
 
             .toolbar-divider {
-
                 margin: 0 0.25rem;
-
             }
-
         }
-
     }
 
     .help-article-form {
-
         padding: 0.5rem;
-
     }
-
 }

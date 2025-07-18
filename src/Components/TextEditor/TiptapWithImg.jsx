@@ -12,10 +12,56 @@ import { useCallback, useRef, useState, useEffect } from 'react';
 import axios from 'axios';
 import './styles.scss';
 
+// Utility function to generate slug from text
+const generateSlug = (text) => {
+    return text
+        .toLowerCase()
+        .trim()
+        .replace(/[^\w\s-]/g, '') // Remove special characters
+        .replace(/[\s_-]+/g, '-') // Replace spaces and underscores with hyphens
+        .replace(/^-+|-+$/g, ''); // Remove leading/trailing hyphens
+};
+
+// Custom heading extension with auto-generated IDs
+import { Heading } from '@tiptap/extension-heading';
+
+const HeadingWithId = Heading.extend({
+    addAttributes() {
+        return {
+            ...this.parent?.(),
+            id: {
+                default: null,
+                parseHTML: element => element.getAttribute('id'),
+                renderHTML: attributes => {
+                    if (!attributes.id) {
+                        return {};
+                    }
+                    return {
+                        id: attributes.id,
+                    };
+                },
+            },
+        };
+    },
+
+    addCommands() {
+        return {
+            ...this.parent?.(),
+            setHeadingWithId: (attributes) => ({ commands }) => {
+                return commands.setNode(this.name, attributes);
+            },
+        };
+    },
+});
+
 const extensions = [
     StarterKit.configure({
-        heading: {
-            levels: [1, 2, 3],
+        heading: false, // Disable default heading
+    }),
+    HeadingWithId.configure({
+        levels: [1, 2, 3],
+        HTMLAttributes: {
+            class: 'heading-with-id',
         },
     }),
     TextAlign.configure({
@@ -274,18 +320,120 @@ const CustomBubbleMenu = () => {
     );
 };
 
-const TiptapWithImg = ({ content = '', onUpdate }) => {
+// Function to extract headings from HTML content and ensure IDs are present
+const extractHeadings = (htmlContent) => {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(htmlContent, 'text/html');
+    const headingElements = doc.querySelectorAll('h1, h2, h3, h4, h5, h6');
+
+    return Array.from(headingElements).map(heading => {
+        const text = heading.textContent.trim();
+        const existingId = heading.id;
+        const generatedId = generateSlug(text);
+
+        return {
+            id: existingId || generatedId,
+            text: text,
+            level: parseInt(heading.tagName.substring(1)),
+            tag: heading.tagName.toLowerCase()
+        };
+    });
+};
+
+// Function to ensure all headings in HTML have IDs
+const ensureHeadingIds = (htmlContent) => {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(htmlContent, 'text/html');
+    const headingElements = doc.querySelectorAll('h1, h2, h3, h4, h5, h6');
+
+    let updated = false;
+
+    headingElements.forEach(heading => {
+        const text = heading.textContent.trim();
+        if (text && !heading.id) {
+            heading.id = generateSlug(text);
+            updated = true;
+        }
+    });
+
+    return updated ? doc.body.innerHTML : htmlContent;
+};
+
+const TiptapWithImg = ({ content = '', onUpdate, onHeadingsUpdate }) => {
     const [initialized, setInitialized] = useState(false);
+    const [editor, setEditor] = useState(null);
+    const updateTimeoutRef = useRef(null);
+
+    // Debounced function to update heading IDs
+    const updateHeadingIds = useCallback((editor) => {
+        if (!editor || !initialized) return;
+
+        // Clear any existing timeout
+        if (updateTimeoutRef.current) {
+            clearTimeout(updateTimeoutRef.current);
+        }
+
+        // Set a new timeout to update IDs after user stops typing
+        updateTimeoutRef.current = setTimeout(() => {
+            const { state } = editor;
+            const { tr } = state;
+            let updated = false;
+
+            state.doc.descendants((node, pos) => {
+                if (node.type.name === 'heading' && node.textContent) {
+                    const currentId = node.attrs.id;
+                    const expectedId = generateSlug(node.textContent);
+
+                    if (currentId !== expectedId) {
+                        tr.setNodeMarkup(pos, undefined, { ...node.attrs, id: expectedId });
+                        updated = true;
+                    }
+                }
+            });
+
+            if (updated) {
+                editor.view.dispatch(tr);
+            }
+        }, 500); // Wait 500ms after user stops typing
+    }, [initialized]);
 
     const handleUpdate = useCallback(({ editor }) => {
-        if (onUpdate && initialized) {
-            const html = editor.getHTML();
-            onUpdate(html);
+        if (initialized) {
+            let html = editor.getHTML();
+
+            // Ensure all headings have IDs in the HTML content
+            html = ensureHeadingIds(html);
+
+            // Extract headings from the HTML
+            const headings = extractHeadings(html);
+
+            // Call the update callbacks
+            if (onUpdate) {
+                onUpdate(html);
+            }
+
+            if (onHeadingsUpdate) {
+                onHeadingsUpdate(headings);
+            }
+
+            // Update heading IDs with debounce
+            updateHeadingIds(editor);
         }
-    }, [onUpdate, initialized]);
+    }, [onUpdate, onHeadingsUpdate, initialized, updateHeadingIds]);
+
+    const handleCreate = useCallback(({ editor }) => {
+        setEditor(editor);
+    }, []);
 
     useEffect(() => {
         setInitialized(true);
+
+        // Cleanup timeout on unmount
+        return () => {
+            if (updateTimeoutRef.current) {
+                clearTimeout(updateTimeoutRef.current);
+            }
+        };
     }, []);
 
     return (
@@ -294,6 +442,7 @@ const TiptapWithImg = ({ content = '', onUpdate }) => {
                 extensions={extensions}
                 content={content}
                 onUpdate={handleUpdate}
+                onCreate={handleCreate}
             >
                 <MenuBar />
                 <CustomBubbleMenu />

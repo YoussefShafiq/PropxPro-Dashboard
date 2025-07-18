@@ -15,7 +15,7 @@ import {
     FaEye,
     FaImage
 } from 'react-icons/fa';
-import Tiptap from '../TextEditor/Tiptap';
+import TiptapWithImg from '../TextEditor/TiptapWithImg';
 import { Chips } from 'primereact/chips';
 import 'primereact/resources/themes/lara-light-indigo/theme.css';
 import 'primereact/resources/primereact.min.css';
@@ -38,6 +38,9 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [blogToDelete, setBlogToDelete] = useState(null);
     const [updatingBlog, setUpdatingBlog] = useState(false);
+    const [headings, setHeadings] = useState([]);
+    const [editHeadings, setEditHeadings] = useState([]);
+
 
     // Form states
     const [formData, setFormData] = useState({
@@ -47,7 +50,8 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
         mark_as_hero: false,
         content: '',
         cover_photo: null,
-        tags: []
+        tags: [],
+        headings: [] // Add this line
     });
 
     const [editFormData, setEditFormData] = useState({
@@ -59,8 +63,21 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
         content: '',
         cover_photo: null,
         existing_cover_photo: null,
-        tags: []
+        tags: [],
+        headings: [] // Add this line
     });
+
+    // 4. ADD HEADINGS HANDLERS
+    // Add these handler functions:
+    const handleHeadingsUpdate = (extractedHeadings) => {
+        setHeadings(extractedHeadings);
+        setFormData(prev => ({ ...prev, headings: extractedHeadings }));
+    };
+
+    const handleEditHeadingsUpdate = (extractedHeadings) => {
+        setEditHeadings(extractedHeadings);
+        setEditFormData(prev => ({ ...prev, headings: extractedHeadings }));
+    };
 
     const handleFilterChange = (field, value) => {
         setFilters(prev => ({
@@ -183,8 +200,10 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
             mark_as_hero: true,
             content: '',
             cover_photo: null,
-            tags: []
+            tags: [],
+            headings: [] // Add this line
         });
+        setHeadings([]); // Add this line
     };
 
     const prepareEditForm = (blog) => {
@@ -197,8 +216,10 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
             content: blog.content,
             cover_photo: null,
             existing_cover_photo: blog.cover_photo_url,
-            tags: blog.tags || []
+            tags: blog.tags || [],
+            headings: blog.headings || [] // Add this line
         });
+        setEditHeadings(blog.headings || []); // Add this line
         setShowEditModal(true);
     };
 
@@ -213,6 +234,7 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
             formDataToSend.append('is_active', formData.is_active ? 1 : 0);
             formDataToSend.append('mark_as_hero', formData.mark_as_hero ? 1 : 0);
             formDataToSend.append('content', formData.content);
+            formDataToSend.append('headings', JSON.stringify(formData.headings)); // Add this line
             formData.tags.forEach(skill => {
                 formDataToSend.append('tags[]', skill);
             });
@@ -256,6 +278,7 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
             formDataToSend.append('is_active', editFormData.is_active ? 1 : 0);
             formDataToSend.append('mark_as_hero', editFormData.mark_as_hero ? 1 : 0);
             formDataToSend.append('content', editFormData.content);
+            formDataToSend.append('headings', JSON.stringify(editFormData.headings)); // Add this line
             editFormData.tags.forEach(skill => {
                 formDataToSend.append('tags[]', skill);
             });
@@ -631,9 +654,10 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
 
                                 <div className="mb-4">
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Content</label>
-                                    <Tiptap
+                                    <TiptapWithImg
                                         content={formData.content}
                                         onUpdate={(content) => setFormData(prev => ({ ...prev, content }))}
+                                        onHeadingsUpdate={handleHeadingsUpdate}
                                     />
                                 </div>
 
@@ -810,9 +834,10 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
 
                                 <div className="mb-4">
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Content</label>
-                                    <Tiptap
+                                    <TiptapWithImg
                                         content={editFormData.content}
                                         onUpdate={(content) => setEditFormData(prev => ({ ...prev, content }))}
+                                        onHeadingsUpdate={handleEditHeadingsUpdate}
                                     />
                                 </div>
 
