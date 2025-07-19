@@ -17,6 +17,7 @@ import PrivacyPolicy from './Components/Pages/PrivacyPolicy'
 import TermsOfServices from './Components/Pages/TermsOfServices'
 import Test from './Components/Pages/Test'
 import Blogs from './Components/Pages/Blogs'
+import NewsLetter from './Components/Pages/NewsLetter'
 
 function App() {
 
@@ -33,7 +34,7 @@ function App() {
         { path: '/privacy-Policy', element: <ProtectedRoute><PrivacyPolicy /></ProtectedRoute> },
         { path: '/terms-of-services', element: <ProtectedRoute><TermsOfServices /></ProtectedRoute> },
         { path: '/blogs', element: <ProtectedRoute><Blogs /></ProtectedRoute> },
-        { path: '/test', element: <ProtectedRoute><Test /></ProtectedRoute> },
+        { path: '/news-letter', element: <ProtectedRoute><NewsLetter /></ProtectedRoute> },
       ]
     },
   ])

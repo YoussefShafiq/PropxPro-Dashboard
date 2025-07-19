@@ -13,7 +13,8 @@ import {
     FaCheck,
     FaTimes,
     FaEye,
-    FaImage
+    FaImage,
+    FaEnvelope
 } from 'react-icons/fa';
 import TiptapWithImg from '../TextEditor/TiptapWithImg';
 import { Chips } from 'primereact/chips';
@@ -356,6 +357,21 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
         );
     };
 
+    // Add this new function for emails sent count badge
+    const emailsCountBadge = (count) => {
+        const emailCount = count || 0;
+        const colorClass = emailCount > 0
+            ? 'bg-green-100 text-green-800 border-green-200'
+            : 'bg-gray-100 text-gray-600 border-gray-200';
+
+        return (
+            <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border ${colorClass}`}>
+                <FaEnvelope size={10} />
+                {emailCount}
+            </span>
+        );
+    };
+
     const renderPagination = () => {
         if (totalPages <= 1) return null;
 
@@ -448,6 +464,9 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
                                 </select>
                             </th>
                             <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Emails Sent
+                            </th>
+                            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Actions
                             </th>
                         </tr>
@@ -455,7 +474,7 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
                     <tbody className="bg-white divide-y divide-gray-200 text-sm">
                         {loading ? (
                             <tr>
-                                <td colSpan="6" className="px-3 py-4 text-center">
+                                <td colSpan="7" className="px-3 py-4 text-center">
                                     <div className="flex justify-center items-center gap-2">
                                         <FaSpinner className="animate-spin" size={18} />
                                         Loading blogs...
@@ -464,7 +483,7 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
                             </tr>
                         ) : paginatedBlogs.length === 0 ? (
                             <tr>
-                                <td colSpan="6" className="px-3 py-4 text-center">
+                                <td colSpan="7" className="px-3 py-4 text-center">
                                     No blogs found
                                 </td>
                             </tr>
@@ -488,6 +507,9 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
                                     </td>
                                     <td className="px-3 py-4 whitespace-nowrap">
                                         {statusBadge(blog.is_active)}
+                                    </td>
+                                    <td className="px-3 py-4 whitespace-nowrap">
+                                        {emailsCountBadge(blog.emails_sent_count)}
                                     </td>
                                     <td className="px-3 py-4 whitespace-nowrap">
                                         <div className="flex items-center gap-2">
