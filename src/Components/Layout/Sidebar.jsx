@@ -81,6 +81,11 @@ export default function Sidebar() {
             path: '/news-letter',
             icon: <IoHomeOutline />
         },
+        {
+            title: 'Requested demos',
+            path: '/requested-demos',
+            icon: <IoHomeOutline />
+        },
     ]
     return <>
         <div className={`h-full bg-tramsparent p-5 fixed w-56 left-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} transition-all duration-500 z-50`}>
