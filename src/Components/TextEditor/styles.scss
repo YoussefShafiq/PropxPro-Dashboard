@@ -8,6 +8,157 @@
     overflow: hidden;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 
+    // Link Input Modal Styles
+    .link-input-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 1000;
+
+        .link-input-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+        }
+
+        .link-input-container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            min-width: 400px;
+
+            .link-input {
+                width: 100%;
+                padding: 10px 12px;
+                border: 2px solid #e5e7eb;
+                border-radius: 6px;
+                font-size: 14px;
+                outline: none;
+                margin-bottom: 15px;
+
+                &:focus {
+                    border-color: #3b82f6;
+                    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+                }
+            }
+
+            .link-input-buttons {
+                display: flex;
+                gap: 10px;
+                justify-content: flex-end;
+
+                .link-submit-btn {
+                    background: #3b82f6;
+                    color: white;
+                    border: none;
+                    padding: 8px 16px;
+                    border-radius: 6px;
+                    cursor: pointer;
+                    font-size: 14px;
+
+                    &:hover {
+                        background: #2563eb;
+                    }
+                }
+
+                .link-cancel-btn {
+                    background: #6b7280;
+                    color: white;
+                    border: none;
+                    padding: 8px 16px;
+                    border-radius: 6px;
+                    cursor: pointer;
+                    font-size: 14px;
+
+                    &:hover {
+                        background: #4b5563;
+                    }
+                }
+            }
+        }
+    }
+
+    // Bubble Menu Link Input Styles
+    .bubble-menu {
+        .bubble-link-input {
+            display: flex;
+            align-items: center;
+            margin-left: 8px;
+
+            form {
+                display: flex;
+                align-items: center;
+                gap: 4px;
+            }
+
+            .bubble-link-field {
+                width: 120px;
+                padding: 4px 6px;
+                border: 1px solid #d1d5db;
+                border-radius: 4px;
+                font-size: 12px;
+                outline: none;
+
+                &:focus {
+                    border-color: #3b82f6;
+                }
+            }
+
+            .bubble-link-submit,
+            .bubble-link-cancel {
+                background: none;
+                border: none;
+                cursor: pointer;
+                padding: 2px;
+                font-size: 12px;
+                color: #6b7280;
+
+                &:hover {
+                    color: #374151;
+                }
+            }
+
+            .bubble-link-submit {
+                color: #22c55e;
+
+                &:hover {
+                    color: #16a34a;
+                }
+            }
+
+            .bubble-link-cancel {
+                color: #ef4444;
+
+                &:hover {
+                    color: #dc2626;
+                }
+            }
+        }
+    }
+
+    // Style for links in the editor
+    .ProseMirror {
+        .custom-link {
+            color: #3b82f6;
+            text-decoration: underline;
+            cursor: pointer;
+
+            &:hover {
+                color: #2563eb;
+            }
+        }
+    }
+
     .tiptap-toolbar {
         display: flex;
         align-items: center;
@@ -126,8 +277,9 @@
             margin-top: 1.5rem;
             margin-bottom: 1rem;
             font-weight: 600;
-            scroll-margin-top: 2rem; /* For better anchor scrolling */
-            
+            scroll-margin-top: 2rem;
+            /* For better anchor scrolling */
+
             /* Add a subtle hover effect to show the anchor */
             &:hover::before {
                 content: '#';
@@ -269,13 +421,13 @@
                 display: flex;
                 align-items: flex-start;
 
-                > label {
+                >label {
                     flex: 0 0 auto;
                     margin-right: 0.5rem;
                     user-select: none;
                 }
 
-                > div {
+                >div {
                     flex: 1 1 auto;
                 }
             }
@@ -380,6 +532,7 @@
 
             &.heading-level-2 {
                 padding-left: 1rem;
+
                 .heading-text {
                     font-size: 1rem;
                 }
@@ -387,6 +540,7 @@
 
             &.heading-level-3 {
                 padding-left: 2rem;
+
                 .heading-text {
                     font-size: 0.9rem;
                 }

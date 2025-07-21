@@ -4,10 +4,11 @@ import {
     Bold, Italic, Strikethrough, List, ListOrdered,
     Heading1, Heading2, Heading3, Quote, Code,
     Undo, Redo, Code2, Minus, AlignLeft,
-    AlignCenter, AlignRight, Image
+    AlignCenter, AlignRight, Image, Link, Unlink
 } from 'lucide-react';
 import TextAlign from '@tiptap/extension-text-align';
 import ImageExtension from '@tiptap/extension-image';
+import LinkExtension from '@tiptap/extension-link';
 import { useCallback, useRef, useState, useEffect } from 'react';
 import axios from 'axios';
 import './styles.scss';
@@ -24,6 +25,7 @@ const generateSlug = (text) => {
 
 // Custom heading extension with auto-generated IDs
 import { Heading } from '@tiptap/extension-heading';
+import toast from 'react-hot-toast';
 
 const HeadingWithId = Heading.extend({
     addAttributes() {
@@ -74,12 +76,22 @@ const extensions = [
             class: 'help-center-image',
         },
     }),
+    LinkExtension.configure({
+        openOnClick: false,
+        HTMLAttributes: {
+            class: 'custom-link',
+            rel: 'noopener noreferrer',
+        },
+    }),
 ];
 
 const MenuBar = () => {
     const { editor } = useCurrentEditor();
     const fileInputRef = useRef(null);
     const [isUploading, setIsUploading] = useState(false);
+    const [showLinkInput, setShowLinkInput] = useState(false);
+    const [linkUrl, setLinkUrl] = useState('');
+    const linkInputRef = useRef(null);
 
     if (!editor) {
         return null;
@@ -112,11 +124,66 @@ const MenuBar = () => {
             }
         } catch (error) {
             console.error('Image upload failed:', error);
-            alert('Failed to upload image. Please try again.');
+            toast.error('Failed to upload image. Please try again.');
         } finally {
             setIsUploading(false);
             event.target.value = '';
         }
+    };
+
+    const handleLinkClick = (e) => {
+        e.preventDefault();
+
+        const { from, to } = editor.state.selection;
+        const selectedText = editor.state.doc.textBetween(from, to, ' ');
+
+        if (selectedText.trim() === '') {
+            toast.error('Please select some text first');
+            return;
+        }
+
+        // If link is already active, get current URL
+        if (editor.isActive('link')) {
+            const currentUrl = editor.getAttributes('link').href || '';
+            setLinkUrl(currentUrl);
+        } else {
+            setLinkUrl('');
+        }
+
+        setShowLinkInput(true);
+        setTimeout(() => {
+            linkInputRef.current?.focus();
+        }, 100);
+    };
+
+    const handleLinkSubmit = (e) => {
+        e.preventDefault();
+
+        if (linkUrl.trim() === '') {
+            setShowLinkInput(false);
+            return;
+        }
+
+        // Add protocol if not present
+        let finalUrl = linkUrl.trim();
+        if (!finalUrl.startsWith('http://') && !finalUrl.startsWith('https://')) {
+            finalUrl = 'https://' + finalUrl;
+        }
+
+        editor.chain().focus().setLink({ href: finalUrl }).run();
+        setShowLinkInput(false);
+        setLinkUrl('');
+    };
+
+    const handleLinkCancel = () => {
+        setShowLinkInput(false);
+        setLinkUrl('');
+        editor.chain().focus().run();
+    };
+
+    const handleUnlink = (e) => {
+        e.preventDefault();
+        editor.chain().focus().unsetLink().run();
     };
 
     return (
@@ -289,6 +356,27 @@ const MenuBar = () => {
             <div className="toolbar-divider" />
 
             <div className="toolbar-group">
+                <button
+                    onClick={handleLinkClick}
+                    className={editor.isActive('link') ? 'is-active' : ''}
+                    title="Add/Edit Link"
+                >
+                    <Link size={16} />
+                </button>
+
+                {editor.isActive('link') && (
+                    <button
+                        onClick={handleUnlink}
+                        title="Remove Link"
+                    >
+                        <Unlink size={16} />
+                    </button>
+                )}
+            </div>
+
+            <div className="toolbar-divider" />
+
+            <div className="toolbar-group">
                 <input
                     type="file"
                     ref={fileInputRef}
@@ -334,16 +422,100 @@ const MenuBar = () => {
                     <Redo size={16} />
                 </button>
             </div>
+
+            {/* Link Input Modal */}
+            {showLinkInput && (
+                <div className="link-input-modal">
+                    <div className="link-input-overlay" onClick={handleLinkCancel} />
+                    <div className="link-input-container">
+                        <div>
+                            <input
+                                ref={linkInputRef}
+                                type="text"
+                                value={linkUrl}
+                                onChange={(e) => setLinkUrl(e.target.value)}
+                                placeholder="Enter URL (e.g., https://example.com)"
+                                className="link-input"
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                        e.preventDefault();
+                                        handleLinkSubmit(e);
+                                    }
+                                    if (e.key === 'Escape') {
+                                        handleLinkCancel();
+                                    }
+                                }}
+                            />
+                            <div className="link-input-buttons">
+                                <button type="button" onClick={handleLinkSubmit} className="link-submit-btn">
+                                    {editor.isActive('link') ? 'Update' : 'Add'} Link
+                                </button>
+                                <button type="button" onClick={handleLinkCancel} className="link-cancel-btn">
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
 
 const CustomBubbleMenu = () => {
     const { editor } = useCurrentEditor();
+    const [showLinkInput, setShowLinkInput] = useState(false);
+    const [linkUrl, setLinkUrl] = useState('');
+    const linkInputRef = useRef(null);
 
     if (!editor) {
         return null;
     }
+
+    const handleBubbleLinkClick = (e) => {
+        e.preventDefault();
+
+        if (editor.isActive('link')) {
+            const currentUrl = editor.getAttributes('link').href || '';
+            setLinkUrl(currentUrl);
+        } else {
+            setLinkUrl('');
+        }
+
+        setShowLinkInput(true);
+        setTimeout(() => {
+            linkInputRef.current?.focus();
+        }, 100);
+    };
+
+    const handleBubbleLinkSubmit = (e) => {
+        e.preventDefault();
+
+        if (linkUrl.trim() === '') {
+            setShowLinkInput(false);
+            return;
+        }
+
+        let finalUrl = linkUrl.trim();
+        if (!finalUrl.startsWith('http://') && !finalUrl.startsWith('https://')) {
+            finalUrl = 'https://' + finalUrl;
+        }
+
+        editor.chain().focus().setLink({ href: finalUrl }).run();
+        setShowLinkInput(false);
+        setLinkUrl('');
+    };
+
+    const handleBubbleLinkCancel = () => {
+        setShowLinkInput(false);
+        setLinkUrl('');
+        editor.chain().focus().run();
+    };
+
+    const handleBubbleUnlink = (e) => {
+        e.preventDefault();
+        editor.chain().focus().unsetLink().run();
+    };
 
     return (
         <BubbleMenu editor={editor} tippyOptions={{ duration: 100 }}>
@@ -367,6 +539,21 @@ const CustomBubbleMenu = () => {
                     <Italic size={16} />
                 </button>
                 <button
+                    onClick={handleBubbleLinkClick}
+                    className={editor.isActive('link') ? 'is-active' : ''}
+                    title="Add/Edit Link"
+                >
+                    <Link size={14} />
+                </button>
+                {editor.isActive('link') && (
+                    <button
+                        onClick={handleBubbleUnlink}
+                        title="Remove Link"
+                    >
+                        <Unlink size={14} />
+                    </button>
+                )}
+                <button
                     onClick={(e) => {
                         e.preventDefault();
                         editor.chain().focus().toggleHeading({ level: 1 }).run();
@@ -375,6 +562,33 @@ const CustomBubbleMenu = () => {
                 >
                     H1
                 </button>
+
+                {/* Bubble Link Input */}
+                {showLinkInput && (
+                    <div className="bubble-link-input">
+                        <div>
+                            <input
+                                ref={linkInputRef}
+                                type="text"
+                                value={linkUrl}
+                                onChange={(e) => setLinkUrl(e.target.value)}
+                                placeholder="Enter URL"
+                                className="bubble-link-field"
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                        e.preventDefault();
+                                        handleBubbleLinkSubmit(e);
+                                    }
+                                    if (e.key === 'Escape') {
+                                        handleBubbleLinkCancel();
+                                    }
+                                }}
+                            />
+                            <button type="button" onClick={handleBubbleLinkSubmit} className="bubble-link-submit">✓</button>
+                            <button type="button" onClick={handleBubbleLinkCancel} className="bubble-link-cancel">✕</button>
+                        </div>
+                    </div>
+                )}
             </div>
         </BubbleMenu>
     );
