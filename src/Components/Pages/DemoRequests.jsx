@@ -35,7 +35,7 @@ export default function DemoRequests() {
 
     return (
         <div className="p-4">
-            <h1 className="text-3xl font-bold text-gray-800 mb-8">News Letter</h1>
+            <h1 className="text-3xl font-bold text-gray-800 mb-8">Requested demos</h1>
             <DemoRequestsDataTable
                 demoRequests={demoRequests?.data?.data || []}
                 loading={isLoading}

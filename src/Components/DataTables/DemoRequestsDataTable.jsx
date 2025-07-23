@@ -195,7 +195,7 @@ export default function DemoRequestsDataTable({ demoRequests, loading, refetch }
                                         </div>
                                     </td>
                                     <td className="px-3 py-4 whitespace-nowrap">
-                                        {formatDate(request.preferred_datetime)}
+                                        {request.formatted_datetime}
                                     </td>
                                     <td className="px-3 py-4 whitespace-nowrap">
                                         {statusBadge(request.status)}
