@@ -77,11 +77,6 @@ export default function Sidebar() {
             icon: <IoHomeOutline />
         },
         {
-            title: 'News letter',
-            path: '/news-letter',
-            icon: <IoHomeOutline />
-        },
-        {
             title: 'Requested demos',
             path: '/requested-demos',
             icon: <IoHomeOutline />
@@ -97,9 +92,9 @@ export default function Sidebar() {
                     <div className="flex justify-center items-center overflow-hidden mb-2">
                         <img src={logo} alt="Logo" className="w-4/5" />
                     </div>
-                    <div className="flex flex-col gap-1.5 text-gray-400 text-base">
+                    <div className="flex flex-col gap-1 text-gray-400 text-base">
                         {sidebarPages.map((p, i) => (
-                            <NavLink key={i} className="px-4 py-2 rounded-xl flex items-center gap-2" to={p.path} >{p.icon} {p.title}</NavLink>
+                            <NavLink key={i} className="px-4 py-2 rounded-xl flex items-center gap-2" to={p.path} ><div className="">{p.icon} </div>{p.title}</NavLink>
                         ))}
                     </div>
                 </div>

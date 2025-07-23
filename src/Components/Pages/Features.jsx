@@ -36,7 +36,7 @@ export default function Features() {
 
     return (
         <div className="p-4">
-            <button className='bg-gray-200 text-primary p-3 rounded-full aspect-square' onClick={() => navigate(`/plans`)}><RiArrowGoBackFill /></button>
+            <button className='bg-gray-200 text-primary p-3 rounded-full aspect-square mb-2' onClick={() => navigate(`/plans`)}><RiArrowGoBackFill /></button>
             <h1 className="text-3xl font-bold text-gray-800 mb-8 mt-3">Plans features</h1>
             <FeaturesDataTable
                 features={features?.data?.data || []}
