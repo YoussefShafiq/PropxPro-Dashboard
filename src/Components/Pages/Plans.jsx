@@ -9,6 +9,18 @@ import toast from 'react-hot-toast';
 export default function Plans() {
     const navigate = useNavigate();
 
+    const { data: currentUser, isLoading: isCurrentuserLoading } = useQuery({
+        queryKey: ['currentUser'],
+        queryFn: () => {
+            return axios.get('https://propxpro.run.place/api/auth/me',
+                {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem('userToken')}`
+                    }
+                })
+        }
+    })
+
     function getAllPlans() {
         return axios.get(
             `https://propxpro.run.place/api/admin/plans`,
@@ -41,9 +53,11 @@ export default function Plans() {
 
     return (
         <div className="p-4">
-            <h1 className="text-3xl font-bold text-gray-800 mb-8">Plans Features</h1>
-            <Link to={'/plans/features'} className='bg-primary text-white py-2 px-3 rounded-xl' >Open plans features</Link>
-            <hr className='my-5' />
+            {currentUser?.data?.data?.permissions?.includes('view_features') && <>
+                <h1 className="text-3xl font-bold text-gray-800 mb-8">Plans Features</h1>
+                <Link to={'/plans/features'} className='bg-primary text-white py-2 px-3 rounded-xl' >Open plans features</Link>
+                <hr className='my-5' />
+            </>}
             <h1 className="text-3xl font-bold text-gray-800 mb-8">Plans</h1>
             <PlansDataTable
                 plans={plans?.data?.data || []}
