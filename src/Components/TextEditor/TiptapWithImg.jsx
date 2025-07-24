@@ -85,133 +85,9 @@ const extensions = [
     }),
 ];
 
-// Image Upload Modal Component
-const ImageUploadModal = ({
-    isOpen,
-    onClose,
-    onUpload,
-    isUploading
-}) => {
-    const [file, setFile] = useState(null);
-    const [altText, setAltText] = useState('');
-    const fileInputRef = useRef(null);
-    const modalRef = useRef(null);
-
-    const handleFileChange = (e) => {
-        const selectedFile = e.target.files[0];
-        if (selectedFile) {
-            setFile(selectedFile);
-        }
-    };
-
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        if (!file) {
-            toast.error('Please select an image file');
-            return;
-        }
-        onUpload(file, altText);
-    };
-
-    const handleClose = (e) => {
-        if (modalRef.current && !modalRef.current.contains(e.target)) {
-            onClose();
-        }
-    };
-
-    useEffect(() => {
-        if (isOpen) {
-            document.addEventListener('mousedown', handleClose);
-        } else {
-            document.removeEventListener('mousedown', handleClose);
-        }
-        return () => {
-            document.removeEventListener('mousedown', handleClose);
-        };
-    }, [isOpen]);
-
-    if (!isOpen) return null;
-
-    return (
-        <div className="modal-overlay">
-            <div className="image-upload-modal" ref={modalRef}>
-                <div className="modal-header">
-                    <h3>Upload Image</h3>
-                    <button
-                        className="close-button"
-                        onClick={onClose}
-                        disabled={isUploading}
-                    >
-                        &times;
-                    </button>
-                </div>
-                <form onSubmit={handleSubmit}>
-                    <div className="form-group">
-                        <label htmlFor="image-upload">Image File</label>
-                        <input
-                            type="file"
-                            id="image-upload"
-                            ref={fileInputRef}
-                            onChange={handleFileChange}
-                            accept="image/*"
-                            disabled={isUploading}
-                            required
-                        />
-                        {file && (
-                            <div className="file-preview">
-                                <span>{file.name}</span>
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        setFile(null);
-                                        if (fileInputRef.current) {
-                                            fileInputRef.current.value = '';
-                                        }
-                                    }}
-                                    disabled={isUploading}
-                                >
-                                    Remove
-                                </button>
-                            </div>
-                        )}
-                    </div>
-                    <div className="form-group">
-                        <label htmlFor="alt-text">Alt Text (Optional)</label>
-                        <input
-                            type="text"
-                            id="alt-text"
-                            value={altText}
-                            onChange={(e) => setAltText(e.target.value)}
-                            placeholder="Describe the image for accessibility"
-                            disabled={isUploading}
-                        />
-                    </div>
-                    <div className="modal-footer">
-                        <button
-                            type="button"
-                            onClick={onClose}
-                            className="cancel-button"
-                            disabled={isUploading}
-                        >
-                            Cancel
-                        </button>
-                        <button
-                            type="submit"
-                            className="upload-button"
-                            disabled={isUploading || !file}
-                        >
-                            {isUploading ? 'Uploading...' : 'Upload Image'}
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    );
-};
-
 const MenuBar = () => {
     const { editor } = useCurrentEditor();
-    const [showImageModal, setShowImageModal] = useState(false);
+    const fileInputRef = useRef(null);
     const [isUploading, setIsUploading] = useState(false);
     const [showLinkInput, setShowLinkInput] = useState(false);
     const [linkUrl, setLinkUrl] = useState('');
@@ -221,7 +97,10 @@ const MenuBar = () => {
         return null;
     }
 
-    const handleImageUpload = async (file, altText) => {
+    const handleImageUpload = async (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+
         setIsUploading(true);
         try {
             const formData = new FormData();
@@ -239,11 +118,7 @@ const MenuBar = () => {
             );
 
             if (response.data.success && response.data.data?.url) {
-                editor.chain().focus().setImage({
-                    src: response.data.data.url,
-                    alt: altText || ''
-                }).run();
-                setShowImageModal(false);
+                editor.chain().focus().setImage({ src: response.data.data.url }).run();
             } else {
                 throw new Error('Invalid response format');
             }
@@ -252,6 +127,7 @@ const MenuBar = () => {
             toast.error('Failed to upload image. Please try again.');
         } finally {
             setIsUploading(false);
+            event.target.value = '';
         }
     };
 
@@ -501,15 +377,24 @@ const MenuBar = () => {
             <div className="toolbar-divider" />
 
             <div className="toolbar-group">
+                <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleImageUpload}
+                    accept="image/*"
+                    style={{ display: 'none' }}
+                    disabled={isUploading}
+                />
                 <button
                     onClick={(e) => {
                         e.preventDefault();
-                        setShowImageModal(true);
+                        fileInputRef.current.click();
                     }}
                     title="Upload Image"
+                    disabled={isUploading}
                     className={isUploading ? 'is-uploading' : ''}
                 >
-                    <Image size={16} />
+                    {isUploading ? 'Uploading...' : <Image size={16} />}
                 </button>
             </div>
 
@@ -537,14 +422,6 @@ const MenuBar = () => {
                     <Redo size={16} />
                 </button>
             </div>
-
-            {/* Image Upload Modal */}
-            <ImageUploadModal
-                isOpen={showImageModal}
-                onClose={() => setShowImageModal(false)}
-                onUpload={handleImageUpload}
-                isUploading={isUploading}
-            />
 
             {/* Link Input Modal */}
             {showLinkInput && (
