@@ -4,6 +4,7 @@ import React, { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom';
 import IntegrationsDataTable from '../DataTables/IntegrationsDataTable';
 import AdminsDataTable from '../DataTables/AdminsDataTable';
+import toast from 'react-hot-toast';
 
 export default function Admins() {
     const navigate = useNavigate();
@@ -44,13 +45,7 @@ export default function Admins() {
 
     const { data: permissions } = useQuery({
         queryKey: ['permissions'],
-        queryFn: getpermissionsData,
-        onError: (error) => {
-            if (error.response?.status == 401) {
-                localStorage.removeItem('userToken')
-                navigate('/login')
-            }
-        }
+        queryFn: getpermissionsData
     })
 
     useEffect(() => {
@@ -58,6 +53,10 @@ export default function Admins() {
             if (error.response?.status == 401) {
                 localStorage.removeItem('userToken')
                 navigate('/login')
+            }
+            if (error.response?.status == 403) {
+                toast.error('You are not authorized to view this page')
+                navigate('/home')
             }
         }
     }, [isError])

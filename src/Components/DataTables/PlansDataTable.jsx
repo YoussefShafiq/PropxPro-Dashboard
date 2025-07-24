@@ -14,6 +14,7 @@ import {
     FaChevronLeft,
     FaStar
 } from 'react-icons/fa';
+import { useQuery } from '@tanstack/react-query';
 
 export default function PlansDataTable({ plans, loading, refetch }) {
     const navigate = useNavigate();
@@ -86,7 +87,17 @@ export default function PlansDataTable({ plans, loading, refetch }) {
         }));
         setCurrentPage(1);
     };
-
+    const { data: currentUser, isLoading: isCurrentuserLoading, error, isError } = useQuery({
+        queryKey: ['currentUser'],
+        queryFn: () => {
+            return axios.get('https://propxpro.run.place/api/auth/me',
+                {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem('userToken')}`
+                    }
+                })
+        }
+    })
     const handleToggleStatus = async (planId, currentStatus) => {
         setTogglingPlanId(planId);
         try {
@@ -106,6 +117,10 @@ export default function PlansDataTable({ plans, loading, refetch }) {
             if (error.response?.status == 401) {
                 localStorage.removeItem('userToken')
                 navigate('/login')
+            }
+            if (error.response?.status == 403) {
+                toast.error('You are not authorized to view this page')
+                navigate('/home')
             }
         } finally {
             setTogglingPlanId(null);
@@ -139,6 +154,10 @@ export default function PlansDataTable({ plans, loading, refetch }) {
             if (error.response?.status == 401) {
                 localStorage.removeItem('userToken')
                 navigate('/login')
+            }
+            if (error.response?.status == 403) {
+                toast.error('You are not authorized to view this page')
+                navigate('/home')
             }
         } finally {
             setDeletingPlanId(null);
@@ -305,6 +324,10 @@ export default function PlansDataTable({ plans, loading, refetch }) {
                 localStorage.removeItem('userToken')
                 navigate('/login')
             }
+            if (error.response?.status == 403) {
+                toast.error('You are not authorized to view this page')
+                navigate('/home')
+            }
         }
     };
 
@@ -358,6 +381,10 @@ export default function PlansDataTable({ plans, loading, refetch }) {
             if (error.response?.status == 401) {
                 localStorage.removeItem('userToken')
                 navigate('/login')
+            }
+            if (error.response?.status == 403) {
+                toast.error('You are not authorized to view this page')
+                navigate('/home')
             }
         }
     };
@@ -451,13 +478,13 @@ export default function PlansDataTable({ plans, loading, refetch }) {
                     placeholder="Search plans..."
                     className="px-3 py-2 rounded-xl shadow-sm focus:outline-2 focus:outline-primary w-full border border-primary transition-all"
                 />
-                <button
+                {currentUser?.data?.data?.permissions?.includes('create_plan') && <button
                     onClick={() => setShowAddModal(true)}
                     className="bg-primary hover:bg-darkBlue transition-all text-white px-3 py-2 rounded-xl shadow-sm min-w-max flex items-center gap-2"
                 >
                     <FaPlus size={18} />
                     <span>Add Plan</span>
-                </button>
+                </button>}
             </div>
 
             {/* Table */}
@@ -556,14 +583,14 @@ export default function PlansDataTable({ plans, loading, refetch }) {
                                     </td>
                                     <td className="px-3 py-4 whitespace-nowrap">
                                         <div className="flex items-center gap-2">
-                                            <button
+                                            {currentUser?.data?.data?.permissions?.includes('edit_plan') && <button
                                                 className="text-blue-500 hover:text-blue-700 p-1"
                                                 onClick={() => prepareEditForm(plan)}
                                             >
                                                 <FaEdit size={18} />
-                                            </button>
+                                            </button>}
                                             {plan.is_active ? <>
-                                                <button
+                                                {currentUser?.data?.data?.permissions?.includes('toggle_plan_status') && <button
                                                     className={`${(plan.status || 'active') === 'active' ? 'text-red-500 hover:text-red-700' : 'text-green-500 hover:text-green-700'} p-1`}
                                                     onClick={() => handleToggleStatus(plan.id, plan.status || 'active')}
                                                     disabled={togglingPlanId === plan.id}
@@ -573,9 +600,9 @@ export default function PlansDataTable({ plans, loading, refetch }) {
                                                     ) : (
                                                         (plan.status || 'active') === 'active' ? <FaTimes /> : <FaCheck />
                                                     )}
-                                                </button>
+                                                </button>}
                                             </> : <>
-                                                <button
+                                                {currentUser?.data?.data?.permissions?.includes('toggle_plan_status') && <button
                                                     className={`${plan.status === 'active' ? 'text-red-500 hover:text-red-700' : 'text-green-500 hover:text-green-700'} p-1`}
                                                     onClick={() => handleToggleStatus(plan.id, plan.status)}
                                                     disabled={togglingPlanId === plan.id}
@@ -585,10 +612,10 @@ export default function PlansDataTable({ plans, loading, refetch }) {
                                                     ) : (
                                                         plan.status === 'active' ? <FaTimes /> : <FaCheck />
                                                     )}
-                                                </button>
+                                                </button>}
                                             </>}
 
-                                            <button
+                                            {currentUser?.data?.data?.permissions?.includes('delete_plan') && <button
                                                 className="text-red-500 hover:text-red-700 p-1"
                                                 onClick={() => handleDeleteClick(plan.id)}
                                                 disabled={deletingPlanId === plan.id}
@@ -598,7 +625,7 @@ export default function PlansDataTable({ plans, loading, refetch }) {
                                                 ) : (
                                                     <FaTrashAlt size={18} />
                                                 )}
-                                            </button>
+                                            </button>}
                                         </div>
                                     </td>
                                 </tr>

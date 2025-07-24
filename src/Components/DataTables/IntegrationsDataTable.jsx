@@ -14,6 +14,7 @@ import {
     FaChevronRight,
     FaChevronLeft
 } from 'react-icons/fa';
+import { useQuery } from '@tanstack/react-query';
 
 export default function IntegrationsDataTable({ integrations, loading, refetch }) {
     const navigate = useNavigate();
@@ -51,7 +52,17 @@ export default function IntegrationsDataTable({ integrations, loading, refetch }
         }));
         setCurrentPage(1);
     };
-
+    const { data: currentUser, isLoading: isCurrentuserLoading, error, isError } = useQuery({
+        queryKey: ['currentUser'],
+        queryFn: () => {
+            return axios.get('https://propxpro.run.place/api/auth/me',
+                {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem('userToken')}`
+                    }
+                })
+        }
+    })
     const handleToggleStatus = async (integrationId) => {
         setTogglingIntegrationId(integrationId);
         try {
@@ -71,6 +82,10 @@ export default function IntegrationsDataTable({ integrations, loading, refetch }
             if (error.response?.status == 401) {
                 localStorage.removeItem('userToken')
                 navigate('/login')
+            }
+            if (error.response?.status == 403) {
+                toast.error('You are not authorized to view this page')
+                navigate('/home')
             }
         } finally {
             setTogglingIntegrationId(null);
@@ -104,6 +119,10 @@ export default function IntegrationsDataTable({ integrations, loading, refetch }
             if (error.response?.status == 401) {
                 localStorage.removeItem('userToken')
                 navigate('/login')
+            }
+            if (error.response?.status == 403) {
+                toast.error('You are not authorized to view this page')
+                navigate('/home')
             }
         } finally {
             setDeletingIntegrationId(null);
@@ -174,6 +193,10 @@ export default function IntegrationsDataTable({ integrations, loading, refetch }
                 localStorage.removeItem('userToken')
                 navigate('/login')
             }
+            if (error.response?.status == 403) {
+                toast.error('You are not authorized to view this page')
+                navigate('/home')
+            }
         }
     };
 
@@ -213,6 +236,10 @@ export default function IntegrationsDataTable({ integrations, loading, refetch }
             if (error.response?.status == 401) {
                 localStorage.removeItem('userToken')
                 navigate('/login')
+            }
+            if (error.response?.status == 403) {
+                toast.error('You are not authorized to view this page')
+                navigate('/home')
             }
         }
     };
@@ -317,13 +344,13 @@ export default function IntegrationsDataTable({ integrations, loading, refetch }
                     placeholder="Search integrations..."
                     className="px-3 py-2 rounded-xl shadow-sm focus:outline-2 focus:outline-primary w-full border border-primary transition-all"
                 />
-                <button
+                {currentUser?.data?.data?.permissions?.includes('create_integration') && <button
                     onClick={() => setShowAddModal(true)}
                     className="bg-primary hover:bg-darkBlue transition-all text-white px-3 py-2 rounded-xl shadow-sm min-w-max flex items-center gap-2"
                 >
                     <FaPlus size={18} />
                     <span>Add Integration</span>
-                </button>
+                </button>}
             </div>
 
             {/* Table */}
@@ -404,14 +431,14 @@ export default function IntegrationsDataTable({ integrations, loading, refetch }
                                     </td>
                                     <td className="px-3 py-4 whitespace-nowrap">
                                         <div className="flex items-center gap-2">
-                                            <button
+                                            {currentUser?.data?.data?.permissions?.includes('edit_integration') && <button
                                                 className="text-blue-500 hover:text-blue-700 p-1"
                                                 onClick={() => prepareEditForm(integration)}
                                             >
                                                 <FaEdit size={18} />
-                                            </button>
+                                            </button>}
 
-                                            <button
+                                            {currentUser?.data?.data?.permissions?.includes('toggle_integration') && <button
                                                 className={`${integration.is_active ? 'text-red-500 hover:text-red-700' : 'text-green-500 hover:text-green-700'} p-1`}
                                                 onClick={() => handleToggleStatus(integration.id, integration.is_active)}
                                                 disabled={togglingIntegrationId === integration.id}
@@ -421,9 +448,9 @@ export default function IntegrationsDataTable({ integrations, loading, refetch }
                                                 ) : (
                                                     integration.is_active ? <FaTimes /> : <FaCheck />
                                                 )}
-                                            </button>
+                                            </button>}
 
-                                            <button
+                                            {currentUser?.data?.data?.permissions?.includes('delete_integration') && <button
                                                 className="text-red-500 hover:text-red-700 p-1"
                                                 onClick={() => handleDeleteClick(integration.id)}
                                                 disabled={deletingIntegrationId === integration.id}
@@ -433,7 +460,7 @@ export default function IntegrationsDataTable({ integrations, loading, refetch }
                                                 ) : (
                                                     <FaTrashAlt size={18} />
                                                 )}
-                                            </button>
+                                            </button>}
                                         </div>
                                     </td>
                                 </tr>

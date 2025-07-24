@@ -3,6 +3,7 @@ import axios from 'axios';
 import React, { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom';
 import DemoRequestsDataTable from '../DataTables/DemoRequestsDataTable';
+import toast from 'react-hot-toast';
 
 export default function DemoRequests() {
     const navigate = useNavigate();
@@ -18,20 +19,23 @@ export default function DemoRequests() {
         );
     }
 
-    const { data: demoRequests, isLoading, refetch } = useQuery({
+    const { data: demoRequests, isLoading, refetch, isError, error } = useQuery({
         queryKey: ['demoRequests'],
         queryFn: getAllDemoRequests,
-        onError: (error) => {
+    })
+
+    useEffect(() => {
+        if (isError) {
             if (error.response?.status == 401) {
                 localStorage.removeItem('userToken')
                 navigate('/login')
             }
+            if (error.response?.status == 403) {
+                toast.error('You are not authorized to view this page')
+                navigate('/home')
+            }
         }
-    })
-
-    useEffect(() => {
-        console.log('demoRequests', demoRequests?.data?.data);
-    }, [demoRequests])
+    }, [isError])
 
     return (
         <div className="p-4">

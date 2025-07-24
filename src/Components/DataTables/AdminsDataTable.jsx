@@ -15,6 +15,7 @@ import {
     FaLock,
     FaLockOpen
 } from 'react-icons/fa';
+import { useQuery } from '@tanstack/react-query';
 
 export default function AdminsDataTable({ admins, allPermissions, loading, refetch }) {
     const navigate = useNavigate();
@@ -53,6 +54,18 @@ export default function AdminsDataTable({ admins, allPermissions, loading, refet
         }));
         setCurrentPage(1);
     };
+
+    const { data: currentUser, isLoading: isCurrentuserLoading, error, isError } = useQuery({
+        queryKey: ['currentUser'],
+        queryFn: () => {
+            return axios.get('https://propxpro.run.place/api/auth/me',
+                {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem('userToken')}`
+                    }
+                })
+        }
+    })
 
     const handleToggleStatus = async (adminId, currentStatus) => {
         setTogglingAdminId(adminId);
@@ -107,6 +120,10 @@ export default function AdminsDataTable({ admins, allPermissions, loading, refet
             if (error.response?.status == 401) {
                 localStorage.removeItem('userToken')
                 navigate('/login')
+            }
+            if (error.response?.status == 403) {
+                toast.error('You are not authorized to view this page')
+                navigate('/home')
             }
         } finally {
             setDeletingAdminId(null);
@@ -206,6 +223,10 @@ export default function AdminsDataTable({ admins, allPermissions, loading, refet
                 localStorage.removeItem('userToken')
                 navigate('/login')
             }
+            if (error.response?.status == 403) {
+                toast.error('You are not authorized to view this page')
+                navigate('/home')
+            }
         }
     };
 
@@ -249,6 +270,10 @@ export default function AdminsDataTable({ admins, allPermissions, loading, refet
                 localStorage.removeItem('userToken')
                 navigate('/login')
             }
+            if (error.response?.status == 403) {
+                toast.error('You are not authorized to view this page')
+                navigate('/home')
+            }
         }
     };
 
@@ -279,6 +304,10 @@ export default function AdminsDataTable({ admins, allPermissions, loading, refet
             if (error.response?.status == 401) {
                 localStorage.removeItem('userToken')
                 navigate('/login')
+            }
+            if (error.response?.status == 403) {
+                toast.error('You are not authorized to view this page')
+                navigate('/home')
             }
         }
     };
@@ -358,13 +387,13 @@ export default function AdminsDataTable({ admins, allPermissions, loading, refet
                     placeholder="Search admins..."
                     className="px-3 py-2 rounded-xl shadow-sm focus:outline-2 focus:outline-primary w-full border border-primary transition-all"
                 />
-                <button
+                {currentUser?.data?.data?.permissions?.includes('create_admin') && <button
                     onClick={() => setShowAddModal(true)}
                     className="bg-primary hover:bg-darkBlue transition-all text-white px-3 py-2 rounded-xl shadow-sm min-w-max flex items-center gap-2"
                 >
                     <FaPlus size={18} />
                     <span>Add Admin</span>
-                </button>
+                </button>}
             </div>
 
             {/* Table */}
@@ -440,21 +469,23 @@ export default function AdminsDataTable({ admins, allPermissions, loading, refet
                                     </td>
                                     <td className="px-3 py-4 whitespace-nowrap">
                                         <div className="flex items-center gap-2">
-                                            <button
-                                                className="text-blue-500 hover:text-blue-700 p-1"
-                                                onClick={() => prepareEditForm(admin)}
-                                            >
-                                                <FaEdit size={18} />
-                                            </button>
+                                            {
+                                                currentUser?.data?.data?.permissions?.includes('edit_admin') && <button
+                                                    className="text-blue-500 hover:text-blue-700 p-1"
+                                                    onClick={() => prepareEditForm(admin)}
+                                                >
+                                                    <FaEdit size={18} />
+                                                </button>
+                                            }
 
-                                            <button
+                                            {currentUser?.data?.data?.permissions?.includes('edit_admin') && <button
                                                 className="text-purple-500 hover:text-purple-700 p-1"
                                                 onClick={() => preparePermissionsForm(admin)}
                                             >
                                                 <FaLock size={18} />
-                                            </button>
+                                            </button>}
 
-                                            <button
+                                            {currentUser?.data?.data?.permissions?.includes('edit_admin') && <button
                                                 className={`${admin.status === 'active' ? 'text-red-500 hover:text-red-700' : 'text-green-500 hover:text-green-700'} p-1`}
                                                 onClick={() => handleToggleStatus(admin.id, admin.status)}
                                                 disabled={togglingAdminId === admin.id}
@@ -464,9 +495,9 @@ export default function AdminsDataTable({ admins, allPermissions, loading, refet
                                                 ) : (
                                                     admin.status === 'active' ? <FaTimes /> : <FaCheck />
                                                 )}
-                                            </button>
+                                            </button>}
 
-                                            <button
+                                            {currentUser?.data?.data?.permissions?.includes('delete_admin') && <button
                                                 className="text-red-500 hover:text-red-700 p-1"
                                                 onClick={() => handleDeleteClick(admin.id)}
                                                 disabled={deletingAdminId === admin.id}
@@ -476,7 +507,7 @@ export default function AdminsDataTable({ admins, allPermissions, loading, refet
                                                 ) : (
                                                     <FaTrashAlt size={18} />
                                                 )}
-                                            </button>
+                                            </button>}
                                         </div>
                                     </td>
                                 </tr>

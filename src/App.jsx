@@ -15,7 +15,6 @@ import Plans from './Components/Pages/Plans'
 import { FcPrivacy } from 'react-icons/fc'
 import PrivacyPolicy from './Components/Pages/PrivacyPolicy'
 import TermsOfServices from './Components/Pages/TermsOfServices'
-import Test from './Components/Pages/Test'
 import Blogs from './Components/Pages/Blogs'
 import NewsLetter from './Components/Pages/NewsLetter'
 import DemoRequests from './Components/Pages/DemoRequests'
@@ -41,7 +40,13 @@ function App() {
     },
   ])
 
-  let query = new QueryClient();
+  let query = new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: false
+      }
+    }
+  });
 
   return (
     <>

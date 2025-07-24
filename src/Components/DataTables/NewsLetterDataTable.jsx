@@ -11,6 +11,7 @@ import {
     FaCheck,
     FaTimes
 } from 'react-icons/fa';
+import { useQuery } from '@tanstack/react-query';
 
 export default function NewsLetterDataTable({ NewsLetter, loading, refetch }) {
     const navigate = useNavigate();
@@ -33,7 +34,17 @@ export default function NewsLetterDataTable({ NewsLetter, loading, refetch }) {
         }));
         setCurrentPage(1);
     };
-
+    const { data: currentUser, isLoading: isCurrentuserLoading, error, isError } = useQuery({
+        queryKey: ['currentUser'],
+        queryFn: () => {
+            return axios.get('https://propxpro.run.place/api/auth/me',
+                {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem('userToken')}`
+                    }
+                })
+        }
+    })
     const handleToggleStatus = async (subscriberId, currentStatus) => {
         setTogglingSubscriberId(subscriberId);
         try {
@@ -53,6 +64,10 @@ export default function NewsLetterDataTable({ NewsLetter, loading, refetch }) {
             if (error.response?.status == 401) {
                 localStorage.removeItem('userToken')
                 navigate('/login')
+            }
+            if (error.response?.status == 403) {
+                toast.error('You are not authorized to view this page')
+                navigate('/home')
             }
         } finally {
             setTogglingSubscriberId(null);
@@ -86,6 +101,10 @@ export default function NewsLetterDataTable({ NewsLetter, loading, refetch }) {
             if (error.response?.status == 401) {
                 localStorage.removeItem('userToken')
                 navigate('/login')
+            }
+            if (error.response?.status == 403) {
+                toast.error('You are not authorized to view this page')
+                navigate('/home')
             }
         } finally {
             setDeletingSubscriberId(null);
@@ -235,7 +254,7 @@ export default function NewsLetterDataTable({ NewsLetter, loading, refetch }) {
                                     </td> */}
                                     <td className="px-3 py-4 whitespace-nowrap">
                                         <div className="flex items-center gap-2">
-                                            <button
+                                            {currentUser?.data?.data?.permissions?.includes('remove_newsletter_subscriber') && <button
                                                 className="text-red-500 hover:text-red-700 p-1"
                                                 onClick={() => handleDeleteClick(subscriber.id)}
                                                 disabled={deletingSubscriberId === subscriber.id}
@@ -245,7 +264,7 @@ export default function NewsLetterDataTable({ NewsLetter, loading, refetch }) {
                                                 ) : (
                                                     <FaTrashAlt size={18} />
                                                 )}
-                                            </button>
+                                            </button>}
                                         </div>
                                     </td>
                                 </tr>

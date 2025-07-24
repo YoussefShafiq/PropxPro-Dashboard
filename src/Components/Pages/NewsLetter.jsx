@@ -4,6 +4,7 @@ import React, { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom';
 import NewsLetterDataTable from '../DataTables/NewsLetterDataTable';
 import { RiArrowGoBackFill } from 'react-icons/ri';
+import toast from 'react-hot-toast';
 
 export default function NewsLetter() {
     const navigate = useNavigate();
@@ -19,20 +20,23 @@ export default function NewsLetter() {
         );
     }
 
-    const { data: newsletter, isLoading, refetch } = useQuery({
+    const { data: newsletter, isLoading, refetch, isError, error } = useQuery({
         queryKey: ['newsletter'],
         queryFn: getAllNewsLetter,
-        onError: (error) => {
+    })
+
+    useEffect(() => {
+        if (isError) {
             if (error.response?.status == 401) {
                 localStorage.removeItem('userToken')
                 navigate('/login')
             }
+            if (error.response?.status == 403) {
+                toast.error('You are not authorized to view this page')
+                navigate('/home')
+            }
         }
-    })
-
-    useEffect(() => {
-        console.log('newsletter', newsletter?.data?.data);
-    }, [newsletter])
+    }, [isError])
 
     return (
         <div className="p-4">

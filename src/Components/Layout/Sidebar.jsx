@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react'
+import React, { useContext, useEffect, useState } from 'react'
 import logo from '../../assets/images/Logo.png'
 import { NavLink, useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
@@ -7,6 +7,7 @@ import { SidebarContext } from '../../Contexts/SidebarContext'
 import { IoHomeOutline } from 'react-icons/io5'
 import { GoSidebarExpand } from 'react-icons/go'
 import { CiLogout } from 'react-icons/ci'
+import { useQuery } from '@tanstack/react-query'
 
 export default function Sidebar() {
     const { sidebarOpen, setSidebarOpen } = useContext(SidebarContext)
@@ -40,46 +41,66 @@ export default function Sidebar() {
 
     const toggleSidebar = () => setSidebarOpen(!sidebarOpen)
 
+    const { data: currentUser, isLoading: isCurrentuserLoading, error, isError } = useQuery({
+        queryKey: ['currentUser'],
+        queryFn: () => {
+            return axios.get('https://propxpro.run.place/api/auth/me',
+                {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem('userToken')}`
+                    }
+                })
+        }
+    })
+
     const sidebarPages = [
         {
             title: 'Home',
             path: '/',
-            icon: <IoHomeOutline />
+            icon: <IoHomeOutline />,
+            permission: ''
         },
         {
             title: 'Integrations',
             path: '/integrations',
-            icon: <IoHomeOutline />
+            icon: <IoHomeOutline />,
+            permission: "view_integrations"
         },
         {
             title: 'Admins',
             path: '/admins',
-            icon: <IoHomeOutline />
+            icon: <IoHomeOutline />,
+            permission: 'view_admins'
         },
         {
             title: 'Plans',
             path: '/plans',
-            icon: <IoHomeOutline />
+            icon: <IoHomeOutline />,
+            permission: 'view_plans'
         },
         {
             title: 'Privacy Policy',
             path: '/privacy-Policy',
-            icon: <IoHomeOutline />
+            icon: <IoHomeOutline />,
+            permission: ''
         },
         {
             title: 'Terms of Services',
             path: '/terms-of-Services',
-            icon: <IoHomeOutline />
+            icon: <IoHomeOutline />,
+            permission: ''
         },
         {
             title: 'Blogs',
             path: '/blogs',
-            icon: <IoHomeOutline />
+            icon: <IoHomeOutline />,
+            permission: 'view_blogs'
         },
         {
             title: 'Requested demos',
             path: '/requested-demos',
-            icon: <IoHomeOutline />
+            icon: <IoHomeOutline />,
+            permission: 'view_request_demos'
         },
     ]
     return <>
@@ -94,7 +115,9 @@ export default function Sidebar() {
                     </div>
                     <div className="flex flex-col gap-1 text-gray-400 text-base">
                         {sidebarPages.map((p, i) => (
-                            <NavLink key={i} className="px-4 py-2 rounded-xl flex items-center gap-2" to={p.path} ><div className="">{p.icon} </div>{p.title}</NavLink>
+                            <>
+                                {(currentUser?.data?.data?.permissions.includes(p.permission) || p.permission == '') && <NavLink key={i} className="px-4 py-2 rounded-xl flex items-center gap-2" to={p.path} ><div className="">{p.icon} </div>{p.title}</NavLink>}
+                            </>
                         ))}
                     </div>
                 </div>

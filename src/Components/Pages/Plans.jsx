@@ -4,6 +4,7 @@ import React, { useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom';
 import FeaturesDataTable from '../DataTables/FeaturesDataTable';
 import PlansDataTable from '../DataTables/PlansDataTable';
+import toast from 'react-hot-toast';
 
 export default function Plans() {
     const navigate = useNavigate();
@@ -22,12 +23,6 @@ export default function Plans() {
     const { data: plans, isLoading, refetch, error, isError } = useQuery({
         queryKey: ['plans'],
         queryFn: getAllPlans,
-        onError: (error) => {
-            if (error.response?.status == 401) {
-                localStorage.removeItem('userToken')
-                navigate('/login')
-            }
-        }
     })
 
 
@@ -36,6 +31,10 @@ export default function Plans() {
             if (error.response?.status == 401) {
                 localStorage.removeItem('userToken')
                 navigate('/login')
+            }
+            if (error.response?.status == 403) {
+                toast.error('You are not authorized to view this page')
+                navigate('/home')
             }
         }
     }, [isError])

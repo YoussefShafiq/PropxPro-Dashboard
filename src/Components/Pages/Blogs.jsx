@@ -3,6 +3,7 @@ import axios from 'axios';
 import React, { useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom';
 import BlogsDataTable from '../DataTables/BlogsDataTable';
+import toast from 'react-hot-toast';
 
 export default function Blogs() {
     const navigate = useNavigate();
@@ -18,20 +19,23 @@ export default function Blogs() {
         );
     }
 
-    const { data: blogs, isLoading, refetch } = useQuery({
+    const { data: blogs, isLoading, refetch, isError, error } = useQuery({
         queryKey: ['blogs'],
         queryFn: getAllBlogs,
-        onError: (error) => {
+    })
+
+    useEffect(() => {
+        if (isError) {
             if (error.response?.status == 401) {
                 localStorage.removeItem('userToken')
                 navigate('/login')
             }
+            if (error.response?.status == 403) {
+                toast.error('You are not authorized to view this page')
+                navigate('/home')
+            }
         }
-    })
-
-    useEffect(() => {
-        console.log('blogs', blogs?.data?.data);
-    }, [blogs])
+    }, [isError])
 
     return (
         <div className="p-4">

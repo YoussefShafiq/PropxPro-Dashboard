@@ -3,6 +3,7 @@ import axios from 'axios';
 import React, { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom';
 import IntegrationsDataTable from '../DataTables/IntegrationsDataTable';
+import toast from 'react-hot-toast';
 
 export default function Integrations() {
     const navigate = useNavigate();
@@ -21,12 +22,6 @@ export default function Integrations() {
     const { data: integrations, isLoading, refetch, isError, error } = useQuery({
         queryKey: ['integrations'],
         queryFn: getIntegrationsData,
-        onError: (error) => {
-            if (error.response?.status == 401) {
-                localStorage.removeItem('userToken')
-                navigate('/login')
-            }
-        }
     })
 
     useEffect(() => {
@@ -35,9 +30,12 @@ export default function Integrations() {
                 localStorage.removeItem('userToken')
                 navigate('/login')
             }
+            if (error.response?.status == 403) {
+                toast.error('You are not authorized to view this page')
+                navigate('/home')
+            }
         }
     }, [isError])
-
     return (
         <div className="p-4">
             <h1 className="text-3xl font-bold text-gray-800 mb-8">Integrations</h1>

@@ -11,6 +11,18 @@ export default function TermsOfServices() {
     const [isSaving, setIsSaving] = useState(false);
     const navigate = useNavigate()
 
+    const { data: currentUser, isLoading: isCurrentuserLoading } = useQuery({
+        queryKey: ['currentUser'],
+        queryFn: () => {
+            return axios.get('https://propxpro.run.place/api/auth/me',
+                {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem('userToken')}`
+                    }
+                })
+        }
+    })
+
     const handleSave = async () => {
         setIsSaving(true);
         try {
@@ -43,6 +55,10 @@ export default function TermsOfServices() {
                 localStorage.removeItem('userToken')
                 navigate('/login')
             }
+            if (error.response?.status == 403) {
+                toast.error('You are not authorized to view this page')
+                navigate('/home')
+            }
         }
     }, [isError])
 
@@ -65,13 +81,13 @@ export default function TermsOfServices() {
                     />}
 
                 <div className="flex gap-4 mt-6">
-                    <button
+                    {currentUser?.data?.data?.permissions?.includes('update_terms_of_service') && <button
                         onClick={handleSave}
                         disabled={isSaving}
                         className={`px-6 py-2 rounded-md font-medium text-white ${isSaving ? 'bg-blue-400' : 'bg-blue-600 hover:bg-blue-700'} transition-colors`}
                     >
                         {isSaving ? 'Saving...' : 'Save Changes'}
-                    </button>
+                    </button>}
 
                 </div>
             </div>

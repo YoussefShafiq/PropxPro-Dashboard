@@ -4,6 +4,7 @@ import React, { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom';
 import FeaturesDataTable from '../DataTables/FeaturesDataTable';
 import { RiArrowGoBackFill } from 'react-icons/ri';
+import toast from 'react-hot-toast';
 
 export default function Features() {
     const navigate = useNavigate();
@@ -19,20 +20,23 @@ export default function Features() {
         );
     }
 
-    const { data: features, isLoading, refetch } = useQuery({
+    const { data: features, isLoading, refetch, isError, error } = useQuery({
         queryKey: ['features'],
         queryFn: getAllFeatures,
-        onError: (error) => {
+    })
+
+    useEffect(() => {
+        if (isError) {
             if (error.response?.status == 401) {
                 localStorage.removeItem('userToken')
                 navigate('/login')
             }
+            if (error.response?.status == 403) {
+                toast.error('You are not authorized to view this page')
+                navigate('/home')
+            }
         }
-    })
-
-    useEffect(() => {
-        console.log('features', features?.data?.data);
-    }, [features])
+    }, [isError])
 
     return (
         <div className="p-4">
