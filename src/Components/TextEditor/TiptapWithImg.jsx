@@ -4,7 +4,10 @@ import {
     Bold, Italic, Strikethrough, List, ListOrdered,
     Heading1, Heading2, Heading3, Quote, Code,
     Undo, Redo, Code2, Minus, AlignLeft,
-    AlignCenter, AlignRight, Image, Link, Unlink
+    AlignCenter, AlignRight, Image, Link, Unlink,
+    InfoIcon,
+    Check,
+    X
 } from 'lucide-react';
 import TextAlign from '@tiptap/extension-text-align';
 import ImageExtension from '@tiptap/extension-image';
@@ -378,9 +381,9 @@ const MenuBar = () => {
                         editor.chain().focus().toggleBlockquote().run();
                     }}
                     className={editor.isActive('blockquote') ? 'is-active' : ''}
-                    title="Blockquote"
+                    title="info icon"
                 >
-                    <Quote size={16} />
+                    <InfoIcon size={16} />
                 </button>
                 <button
                     onClick={(e) => {
@@ -767,6 +770,16 @@ const CustomBubbleMenu = () => {
                 >
                     <Link size={14} />
                 </button>
+                <button
+                    onClick={(e) => {
+                        e.preventDefault();
+                        editor.chain().focus().toggleBlockquote().run();
+                    }}
+                    className={editor.isActive('blockquote') ? 'is-active' : ''}
+                    title="info icon"
+                >
+                    <InfoIcon size={16} />
+                </button>
                 {editor.isActive('link') && (
                     <button
                         onClick={handleBubbleUnlink}
@@ -810,16 +823,17 @@ const CustomBubbleMenu = () => {
                             <button
                                 type="button"
                                 onClick={handleBubbleImageAltSubmit}
-                                className="bubble-link-submit"
+                                className="bubble-link-submit "
                             >
-                                ✓
+                                <Check size={16} color='green' />
+
                             </button>
                             <button
                                 type="button"
                                 onClick={handleBubbleImageAltCancel}
                                 className="bubble-link-cancel"
                             >
-                                ✕
+                                <X size={16} color='red' />
                             </button>
                         </div>
                     </div>

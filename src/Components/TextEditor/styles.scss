@@ -1,4 +1,15 @@
 /* src/components/TextEditor/styles.scss */
+
+/* Highlight Styles */
+i[style*="background-color: #f4f6ff"] {
+    background-color: #f4f6ff !important;
+    font-style: italic !important;
+    padding: 0.2em 0.4em !important;
+    border-radius: 3px !important;
+    display: inline;
+}
+
+/* Modal Styles */
 .modal-overlay {
     position: fixed;
     top: 0;
@@ -107,7 +118,7 @@
         display: flex;
         justify-content: flex-end;
         gap: 10px;
-        padding-top: 16px;
+        padding: 16px 20px;
         border-top: 1px solid #eee;
 
         button {
@@ -144,6 +155,7 @@
     }
 }
 
+/* Editor Container */
 .tiptap-container {
     border: 1px solid #e2e8f0;
     border-radius: 0.5rem;
@@ -152,7 +164,7 @@
     overflow: hidden;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 
-    // Link Input Modal Styles
+    /* Link Input Modal */
     .link-input-modal {
         position: fixed;
         top: 0;
@@ -232,77 +244,7 @@
         }
     }
 
-    // Bubble Menu Link Input Styles
-    .bubble-menu {
-        .bubble-link-input {
-            display: flex;
-            align-items: center;
-            margin-left: 8px;
-
-            form {
-                display: flex;
-                align-items: center;
-                gap: 4px;
-            }
-
-            .bubble-link-field {
-                width: 120px;
-                padding: 4px 6px;
-                border: 1px solid #d1d5db;
-                border-radius: 4px;
-                font-size: 12px;
-                outline: none;
-
-                &:focus {
-                    border-color: #3b82f6;
-                }
-            }
-
-            .bubble-link-submit,
-            .bubble-link-cancel {
-                background: none;
-                border: none;
-                cursor: pointer;
-                padding: 2px;
-                font-size: 12px;
-                color: #6b7280;
-
-                &:hover {
-                    color: #374151;
-                }
-            }
-
-            .bubble-link-submit {
-                color: #22c55e;
-
-                &:hover {
-                    color: #16a34a;
-                }
-            }
-
-            .bubble-link-cancel {
-                color: #ef4444;
-
-                &:hover {
-                    color: #dc2626;
-                }
-            }
-        }
-    }
-
-    // Style for links in the editor
-    .ProseMirror {
-        .custom-link {
-            color: #3b82f6;
-            text-decoration: underline;
-            cursor: pointer;
-
-            &:hover {
-                color: #2563eb;
-            }
-        }
-    }
-
+    /* Toolbar Styles */
     .tiptap-toolbar {
         display: flex;
         align-items: center;
@@ -359,9 +301,15 @@
                 opacity: 0.5;
                 cursor: not-allowed;
             }
+
+            /* Specific style for highlight button when active */
+            &.is-active .highlighter-icon {
+                color: #3b82f6;
+            }
         }
     }
 
+    /* Bubble Menu Styles */
     .bubble-menu {
         display: flex;
         gap: 0.25rem;
@@ -395,13 +343,105 @@
                 color: #6d28d9;
             }
         }
+
+        /* Bubble Menu Inputs */
+        .bubble-link-input,
+        .bubble-alt-input {
+            display: flex;
+            align-items: center;
+            margin-left: 8px;
+
+            form {
+                display: flex;
+                align-items: center;
+                gap: 4px;
+            }
+
+            input {
+                width: 120px;
+                padding: 4px 6px;
+                border: 1px solid #d1d5db;
+                border-radius: 4px;
+                font-size: 12px;
+                outline: none;
+
+                &:focus {
+                    border-color: #3b82f6;
+                }
+            }
+
+            button {
+                background: none;
+                border: none;
+                cursor: pointer;
+                padding: 2px;
+                font-size: 12px;
+                color: #6b7280;
+
+                &:hover {
+                    color: #374151;
+                }
+
+                &.submit {
+                    color: #22c55e;
+
+                    &:hover {
+                        color: #16a34a;
+                    }
+                }
+
+                &.cancel {
+                    color: #ef4444;
+
+                    &:hover {
+                        color: #dc2626;
+                    }
+                }
+            }
+        }
     }
 
-    .tiptap {
+    /* Editor Content Styles */
+    .ProseMirror {
         padding: 1rem;
         min-height: 200px;
         outline: none;
 
+        /* Custom Link Style */
+        .custom-link {
+            color: #3b82f6;
+            text-decoration: underline;
+            cursor: pointer;
+
+            &:hover {
+                color: #2563eb;
+            }
+        }
+
+        /* Help Center Image Style */
+        .help-center-image {
+            max-width: 100%;
+            height: auto;
+            margin: 1rem 0;
+            border-radius: 0.25rem;
+            border: 1px solid #e2e8f0;
+        }
+
+        /* Heading with ID Style */
+        .heading-with-id {
+            position: relative;
+            scroll-margin-top: 2rem;
+
+            &:hover::before {
+                content: '#';
+                position: absolute;
+                left: -1.5rem;
+                color: #cbd5e1;
+                font-weight: normal;
+            }
+        }
+
+        /* Basic Typography */
         :first-child {
             margin-top: 0;
         }
@@ -421,17 +461,6 @@
             margin-top: 1.5rem;
             margin-bottom: 1rem;
             font-weight: 600;
-            scroll-margin-top: 2rem;
-            /* For better anchor scrolling */
-
-            /* Add a subtle hover effect to show the anchor */
-            &:hover::before {
-                content: '#';
-                position: absolute;
-                left: -1.5rem;
-                color: #cbd5e1;
-                font-weight: normal;
-            }
         }
 
         h1 {
@@ -450,6 +479,7 @@
             font-size: 1.1rem;
         }
 
+        /* Lists */
         ul,
         ol {
             padding: 0 1rem;
@@ -470,10 +500,6 @@
 
             ul {
                 list-style-type: circle;
-
-                ul {
-                    list-style-type: square;
-                }
             }
         }
 
@@ -482,13 +508,10 @@
 
             ol {
                 list-style-type: lower-alpha;
-
-                ol {
-                    list-style-type: lower-roman;
-                }
             }
         }
 
+        /* Text Formatting */
         strong {
             font-weight: bold;
         }
@@ -497,6 +520,7 @@
             font-style: italic;
         }
 
+        /* Code */
         code {
             background-color: #f1f5f9;
             border-radius: 0.25rem;
@@ -523,28 +547,38 @@
             }
         }
 
+        /* Blockquotes */
         blockquote {
-            border-left: 3px solid #cbd5e1;
-            margin: 1rem 0;
-            padding-left: 1rem;
-            color: #64748b;
-            font-style: italic;
+            background-color: #f4f6ff;
+            padding-right: 8px;
+            padding-top: 8px;
+            padding-bottom: 2px;
+            padding-left: 34px;
+            border-radius: 8px;
+            color: black;
+            // font-style: italic;
+            position: relative;
+
+            &::before {
+                position: absolute;
+                content: '';
+                left: 12px;
+                top: 12px;
+                width: 16px;
+                height: 16px;
+                background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23245ec1' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'%3E%3C/circle%3E%3Cline x1='12' y1='16' x2='12' y2='12'%3E%3C/line%3E%3Cline x1='12' y1='8' x2='12.01' y2='8'%3E%3C/line%3E%3C/svg%3E");
+                background-repeat: no-repeat;
+            }
         }
 
+        /* Horizontal Rule */
         hr {
             border: none;
             border-top: 1px solid #e2e8f0;
             margin: 1.5rem 0;
         }
 
-        img {
-            max-width: 100%;
-            height: auto;
-            margin: 1rem 0;
-            border-radius: 0.25rem;
-            border: 1px solid #e2e8f0;
-        }
-
+        /* Text Alignment */
         .text-align-left {
             text-align: left;
         }
@@ -556,143 +590,10 @@
         .text-align-right {
             text-align: right;
         }
-
-        ul[data-type="taskList"] {
-            list-style: none;
-            padding: 0;
-
-            li {
-                display: flex;
-                align-items: flex-start;
-
-                >label {
-                    flex: 0 0 auto;
-                    margin-right: 0.5rem;
-                    user-select: none;
-                }
-
-                >div {
-                    flex: 1 1 auto;
-                }
-            }
-        }
     }
 }
 
-/* Form styles for parent component */
-.help-article-form {
-    max-width: 800px;
-    margin: 0 auto;
-    padding: 1rem;
-
-    .form-group {
-        margin-bottom: 1rem;
-
-        label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 500;
-            color: #334155;
-        }
-
-        input,
-        select {
-            width: 100%;
-            padding: 0.5rem;
-            border: 1px solid #cbd5e1;
-            border-radius: 0.25rem;
-            font-size: 1rem;
-
-            &:focus {
-                outline: none;
-                border-color: #6d28d9;
-                box-shadow: 0 0 0 1px #6d28d9;
-            }
-        }
-    }
-
-    .save-button {
-        background-color: #6d28d9;
-        color: white;
-        border: none;
-        padding: 0.75rem 1.5rem;
-        border-radius: 0.25rem;
-        font-size: 1rem;
-        font-weight: 500;
-        cursor: pointer;
-        margin-top: 1rem;
-        transition: background-color 0.2s;
-
-        &:hover {
-            background-color: #5b21b6;
-        }
-
-        &:disabled {
-            background-color: #cbd5e1;
-            cursor: not-allowed;
-        }
-    }
-
-    /* Headings preview styles */
-    .headings-preview {
-        background: #f8fafc;
-        border: 1px solid #e2e8f0;
-        border-radius: 0.5rem;
-        padding: 1rem;
-        max-height: 200px;
-        overflow-y: auto;
-
-        .heading-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0.5rem 0;
-            border-bottom: 1px solid #e2e8f0;
-
-            &:last-child {
-                border-bottom: none;
-            }
-
-            .heading-text {
-                font-weight: 500;
-                color: #334155;
-            }
-
-            .heading-id {
-                font-size: 0.8rem;
-                color: #64748b;
-                font-family: 'SFMono-Regular', Menlo, Monaco, Consolas, monospace;
-                background: #e2e8f0;
-                padding: 0.2rem 0.4rem;
-                border-radius: 0.25rem;
-            }
-
-            &.heading-level-1 {
-                .heading-text {
-                    font-size: 1.1rem;
-                    font-weight: 600;
-                }
-            }
-
-            &.heading-level-2 {
-                padding-left: 1rem;
-
-                .heading-text {
-                    font-size: 1rem;
-                }
-            }
-
-            &.heading-level-3 {
-                padding-left: 2rem;
-
-                .heading-text {
-                    font-size: 0.9rem;
-                }
-            }
-        }
-    }
-}
-
+/* Responsive Styles */
 @media (max-width: 768px) {
     .tiptap-container {
         .tiptap-toolbar {
@@ -702,9 +603,10 @@
                 margin: 0 0.25rem;
             }
         }
-    }
 
-    .help-article-form {
-        padding: 0.5rem;
+        .link-input-container {
+            min-width: 90% !important;
+            width: 90% !important;
+        }
     }
 }
