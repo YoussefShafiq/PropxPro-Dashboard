@@ -642,40 +642,42 @@ const CustomBubbleMenu = () => {
         editor.chain().focus().unsetLink().run();
     };
 
-    const handleBubbleImageClick = (e) => {
+    const handleBubbleImageAltClick = (e) => {
         e.preventDefault();
-        const { state } = editor;
-        const { selection } = state;
-        const node = state.doc.nodeAt(selection.from - 1);
 
-        if (node && node.type.name === 'image') {
-            setCurrentImagePos(selection.from - 1);
-            setImageAltText(node.attrs.alt || '');
-            setShowImageAltInput(true);
-            setTimeout(() => {
-                altInputRef.current?.focus();
-            }, 100);
-        }
+        // Find the image node at the current selection
+        const { state } = editor;
+        const { from, to } = state.selection;
+
+        // Check all nodes in the current selection range
+        state.doc.nodesBetween(from, to, (node, pos) => {
+            if (node.type.name === 'image') {
+                setCurrentImagePos(pos);
+                setImageAltText(node.attrs.alt || '');
+                setShowImageAltInput(true);
+                setTimeout(() => {
+                    altInputRef.current?.focus();
+                }, 100);
+                return false; // Stop searching after first image found
+            }
+        });
     };
 
     const handleBubbleImageAltSubmit = (e) => {
         e.preventDefault();
-        if (!currentImagePos) return;
 
-        const { state } = editor;
-        const node = state.doc.nodeAt(currentImagePos);
+        if (currentImagePos === null) return;
 
-        if (node && node.type.name === 'image') {
-            editor
-                .chain()
-                .focus()
-                .command(({ tr }) => {
-                    const nodeAttrs = { ...node.attrs, alt: imageAltText };
-                    tr.setNodeMarkup(currentImagePos, undefined, nodeAttrs);
-                    return true;
-                })
-                .run();
-        }
+        editor.chain().focus().command(({ tr }) => {
+            const node = tr.doc.nodeAt(currentImagePos);
+            if (node && node.type.name === 'image') {
+                tr.setNodeMarkup(currentImagePos, undefined, {
+                    ...node.attrs,
+                    alt: imageAltText
+                });
+            }
+            return true;
+        }).run();
 
         setShowImageAltInput(false);
         setImageAltText('');
@@ -690,16 +692,31 @@ const CustomBubbleMenu = () => {
     };
 
     return (
-        <BubbleMenu editor={editor} tippyOptions={{ duration: 100 }}>
+        <BubbleMenu
+            editor={editor}
+            tippyOptions={{
+                duration: 100,
+                onHidden: () => {
+                    // Reset inputs when bubble menu hides
+                    setShowLinkInput(false);
+                    setShowImageAltInput(false);
+                    setLinkUrl('');
+                    setImageAltText('');
+                    setCurrentImagePos(null);
+                }
+            }}
+        >
             <div className="bubble-menu">
+                {/* Always show these buttons */}
                 <button
                     onClick={(e) => {
                         e.preventDefault();
                         editor.chain().focus().toggleBold().run();
                     }}
                     className={editor.isActive('bold') ? 'is-active' : ''}
+                    title="Bold"
                 >
-                    <Bold size={16} />
+                    <Bold size={14} />
                 </button>
                 <button
                     onClick={(e) => {
@@ -707,9 +724,42 @@ const CustomBubbleMenu = () => {
                         editor.chain().focus().toggleItalic().run();
                     }}
                     className={editor.isActive('italic') ? 'is-active' : ''}
+                    title="Italic"
                 >
-                    <Italic size={16} />
+                    <Italic size={14} />
                 </button>
+                <button
+                    onClick={(e) => {
+                        e.preventDefault();
+                        editor.chain().focus().toggleHeading({ level: 1 }).run();
+                    }}
+                    className={editor.isActive('heading', { level: 1 }) ? 'is-active' : ''}
+                    title="Heading 1"
+                >
+                    H1
+                </button>
+                <button
+                    onClick={(e) => {
+                        e.preventDefault();
+                        editor.chain().focus().toggleHeading({ level: 2 }).run();
+                    }}
+                    className={editor.isActive('heading', { level: 2 }) ? 'is-active' : ''}
+                    title="Heading 2"
+                >
+                    H2
+                </button>
+                <button
+                    onClick={(e) => {
+                        e.preventDefault();
+                        editor.chain().focus().toggleHeading({ level: 3 }).run();
+                    }}
+                    className={editor.isActive('heading', { level: 3 }) ? 'is-active' : ''}
+                    title="Heading 3"
+                >
+                    H3
+                </button>
+
+                {/* Link buttons */}
                 <button
                     onClick={handleBubbleLinkClick}
                     className={editor.isActive('link') ? 'is-active' : ''}
@@ -725,54 +775,18 @@ const CustomBubbleMenu = () => {
                         <Unlink size={14} />
                     </button>
                 )}
-                <button
-                    onClick={(e) => {
-                        e.preventDefault();
-                        editor.chain().focus().toggleHeading({ level: 1 }).run();
-                    }}
-                    className={editor.isActive('heading', { level: 1 }) ? 'is-active' : ''}
-                >
-                    H1
-                </button>
 
-                {/* Show image alt button when image is selected */}
+                {/* Image Alt button - only shown when image is selected */}
                 {editor.isActive('image') && (
                     <button
-                        onClick={handleBubbleImageClick}
+                        onClick={handleBubbleImageAltClick}
                         title="Edit Alt Text"
                     >
                         Alt
                     </button>
                 )}
 
-                {/* Bubble Link Input */}
-                {showLinkInput && (
-                    <div className="bubble-link-input">
-                        <div>
-                            <input
-                                ref={linkInputRef}
-                                type="text"
-                                value={linkUrl}
-                                onChange={(e) => setLinkUrl(e.target.value)}
-                                placeholder="Enter URL"
-                                className="bubble-link-field"
-                                onKeyDown={(e) => {
-                                    if (e.key === 'Enter') {
-                                        e.preventDefault();
-                                        handleBubbleLinkSubmit(e);
-                                    }
-                                    if (e.key === 'Escape') {
-                                        handleBubbleLinkCancel();
-                                    }
-                                }}
-                            />
-                            <button type="button" onClick={handleBubbleLinkSubmit} className="bubble-link-submit">✓</button>
-                            <button type="button" onClick={handleBubbleLinkCancel} className="bubble-link-cancel">✕</button>
-                        </div>
-                    </div>
-                )}
-
-                {/* Bubble Image Alt Input */}
+                {/* Image Alt Text Input */}
                 {showImageAltInput && (
                     <div className="bubble-link-input">
                         <div>
@@ -793,8 +807,59 @@ const CustomBubbleMenu = () => {
                                     }
                                 }}
                             />
-                            <button type="button" onClick={handleBubbleImageAltSubmit} className="bubble-link-submit">✓</button>
-                            <button type="button" onClick={handleBubbleImageAltCancel} className="bubble-link-cancel">✕</button>
+                            <button
+                                type="button"
+                                onClick={handleBubbleImageAltSubmit}
+                                className="bubble-link-submit"
+                            >
+                                ✓
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleBubbleImageAltCancel}
+                                className="bubble-link-cancel"
+                            >
+                                ✕
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                {/* Link Input (kept from previous implementation) */}
+                {showLinkInput && (
+                    <div className="bubble-link-input">
+                        <div>
+                            <input
+                                ref={linkInputRef}
+                                type="text"
+                                value={linkUrl}
+                                onChange={(e) => setLinkUrl(e.target.value)}
+                                placeholder="Enter URL"
+                                className="bubble-link-field"
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                        e.preventDefault();
+                                        handleBubbleLinkSubmit(e);
+                                    }
+                                    if (e.key === 'Escape') {
+                                        handleBubbleLinkCancel();
+                                    }
+                                }}
+                            />
+                            <button
+                                type="button"
+                                onClick={handleBubbleLinkSubmit}
+                                className="bubble-link-submit"
+                            >
+                                ✓
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleBubbleLinkCancel}
+                                className="bubble-link-cancel"
+                            >
+                                ✕
+                            </button>
                         </div>
                     </div>
                 )}
