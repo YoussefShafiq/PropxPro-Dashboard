@@ -55,7 +55,7 @@ export default function IntegrationsDataTable({ integrations, loading, refetch }
     const { data: currentUser, isLoading: isCurrentuserLoading, error, isError } = useQuery({
         queryKey: ['currentUser'],
         queryFn: () => {
-            return axios.get('https://propxpro.run.place/api/auth/me',
+            return axios.get('https://api.propxpro.com/api/auth/me',
                 {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem('userToken')}`
@@ -67,7 +67,7 @@ export default function IntegrationsDataTable({ integrations, loading, refetch }
         setTogglingIntegrationId(integrationId);
         try {
             await axios.patch(
-                `https://propxpro.run.place/api/admin/integrations/${integrationId}/toggle-status`,
+                `https://api.propxpro.com/api/admin/integrations/${integrationId}/toggle-status`,
                 {},
                 {
                     headers: {
@@ -105,7 +105,7 @@ export default function IntegrationsDataTable({ integrations, loading, refetch }
 
         try {
             await axios.delete(
-                `https://propxpro.run.place/api/admin/integrations/${integrationToDelete}`,
+                `https://api.propxpro.com/api/admin/integrations/${integrationToDelete}`,
                 {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem('userToken')}`
@@ -172,7 +172,7 @@ export default function IntegrationsDataTable({ integrations, loading, refetch }
             if (logoFile) formDataToSend.append('logo', logoFile);
 
             await axios.post(
-                'https://propxpro.run.place/api/admin/integrations',
+                'https://api.propxpro.com/api/admin/integrations',
                 formDataToSend,
                 {
                     headers: {
@@ -216,7 +216,7 @@ export default function IntegrationsDataTable({ integrations, loading, refetch }
             if (logoFile) formDataToSend.append('logo', logoFile);
 
             await axios.post(
-                `https://propxpro.run.place/api/admin/integrations/${selectedIntegration.id}`,
+                `https://api.propxpro.com/api/admin/integrations/${selectedIntegration.id}`,
                 formDataToSend,
                 {
                     headers: {

@@ -58,7 +58,7 @@ export default function AdminsDataTable({ admins, allPermissions, loading, refet
     const { data: currentUser, isLoading: isCurrentuserLoading, error, isError } = useQuery({
         queryKey: ['currentUser'],
         queryFn: () => {
-            return axios.get('https://propxpro.run.place/api/auth/me',
+            return axios.get('https://api.propxpro.com/api/auth/me',
                 {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem('userToken')}`
@@ -72,7 +72,7 @@ export default function AdminsDataTable({ admins, allPermissions, loading, refet
         try {
             const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
             await axios.patch(
-                `https://propxpro.run.place/api/admins/${adminId}/toggle-status`,
+                `https://api.propxpro.com/api/admins/${adminId}/toggle-status`,
                 { status: newStatus },
                 {
                     headers: {
@@ -106,7 +106,7 @@ export default function AdminsDataTable({ admins, allPermissions, loading, refet
 
         try {
             await axios.delete(
-                `https://propxpro.run.place/api/admins/${adminToDelete}`,
+                `https://api.propxpro.com/api/admins/${adminToDelete}`,
                 {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem('userToken')}`
@@ -198,7 +198,7 @@ export default function AdminsDataTable({ admins, allPermissions, loading, refet
         setUpdatingAdmin(true);
         try {
             await axios.post(
-                'https://propxpro.run.place/api/admins',
+                'https://api.propxpro.com/api/admins',
                 {
                     name: formData.name,
                     email: formData.email,
@@ -250,7 +250,7 @@ export default function AdminsDataTable({ admins, allPermissions, loading, refet
             }
 
             await axios.post(
-                `https://propxpro.run.place/api/admins/${selectedAdmin.id}`,
+                `https://api.propxpro.com/api/admins/${selectedAdmin.id}`,
                 payload,
                 {
                     headers: {
@@ -283,7 +283,7 @@ export default function AdminsDataTable({ admins, allPermissions, loading, refet
         setUpdatingAdmin(true);
         try {
             await axios.put(
-                `https://propxpro.run.place/api/admins/${selectedAdmin.id}/permissions`,
+                `https://api.propxpro.com/api/admins/${selectedAdmin.id}/permissions`,
                 {
                     permissions: formData.permissions
                 },

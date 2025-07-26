@@ -92,7 +92,7 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
     const { data: currentUser, isLoading: isCurrentuserLoading, error, isError } = useQuery({
         queryKey: ['currentUser'],
         queryFn: () => {
-            return axios.get('https://propxpro.run.place/api/auth/me',
+            return axios.get('https://api.propxpro.com/api/auth/me',
                 {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem('userToken')}`
@@ -105,7 +105,7 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
         setTogglingBlogId(blogId);
         try {
             await axios.patch(
-                `https://propxpro.run.place/api/admin/blogs/${blogId}/toggle-active`,
+                `https://api.propxpro.com/api/admin/blogs/${blogId}/toggle-active`,
                 {},
                 {
                     headers: {
@@ -143,7 +143,7 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
 
         try {
             await axios.delete(
-                `https://propxpro.run.place/api/admin/blogs/${blogToDelete}`,
+                `https://api.propxpro.com/api/admin/blogs/${blogToDelete}`,
                 {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem('userToken')}`
@@ -265,7 +265,7 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
             }
 
             await axios.post(
-                'https://propxpro.run.place/api/admin/blogs',
+                'https://api.propxpro.com/api/admin/blogs',
                 formDataToSend,
                 {
                     headers: {
@@ -314,7 +314,7 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
             }
 
             await axios.post(
-                `https://propxpro.run.place/api/admin/blogs/${editFormData.id}`,
+                `https://api.propxpro.com/api/admin/blogs/${editFormData.id}`,
                 formDataToSend,
                 {
                     headers: {

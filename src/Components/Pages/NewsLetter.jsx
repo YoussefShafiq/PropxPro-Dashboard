@@ -11,7 +11,7 @@ export default function NewsLetter() {
 
     function getAllNewsLetter() {
         return axios.get(
-            `https://propxpro.run.place/api/admin/newsletter`,
+            `https://api.propxpro.com/api/admin/newsletter`,
             {
                 headers: {
                     Authorization: `Bearer ${localStorage.getItem('userToken')}`

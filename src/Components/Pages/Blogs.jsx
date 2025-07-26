@@ -11,7 +11,7 @@ export default function Blogs() {
     const { data: currentUser, isLoading: isCurrentuserLoading } = useQuery({
         queryKey: ['currentUser'],
         queryFn: () => {
-            return axios.get('https://propxpro.run.place/api/auth/me',
+            return axios.get('https://api.propxpro.com/api/auth/me',
                 {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem('userToken')}`
@@ -22,7 +22,7 @@ export default function Blogs() {
 
     function getAllBlogs() {
         return axios.get(
-            `https://propxpro.run.place/api/admin/blogs`,
+            `https://api.propxpro.com/api/admin/blogs`,
             {
                 headers: {
                     Authorization: `Bearer ${localStorage.getItem('userToken')}`

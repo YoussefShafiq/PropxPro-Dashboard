@@ -107,7 +107,7 @@ const MenuBar = () => {
             formData.append('image', file);
 
             const response = await axios.post(
-                'https://propxpro.run.place/api/admin/blogs/images/upload',
+                'https://api.propxpro.com/api/admin/blogs/images/upload',
                 formData,
                 {
                     headers: {

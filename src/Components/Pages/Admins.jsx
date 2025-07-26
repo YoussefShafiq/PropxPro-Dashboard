@@ -11,7 +11,7 @@ export default function Admins() {
 
     function getAdminsData() {
         return axios.get(
-            `https://propxpro.run.place/api/admins`,
+            `https://api.propxpro.com/api/admins`,
             {
                 headers: {
                     Authorization: `Bearer ${localStorage.getItem('userToken')}`
@@ -34,7 +34,7 @@ export default function Admins() {
 
     function getpermissionsData() {
         return axios.get(
-            `https://propxpro.run.place/api/admins/permissions`,
+            `https://api.propxpro.com/api/admins/permissions`,
             {
                 headers: {
                     Authorization: `Bearer ${localStorage.getItem('userToken')}`

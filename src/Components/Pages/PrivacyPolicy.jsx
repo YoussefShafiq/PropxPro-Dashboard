@@ -14,7 +14,7 @@ export default function PrivacyPolicy() {
     const { data: currentUser, isLoading: isCurrentuserLoading } = useQuery({
         queryKey: ['currentUser'],
         queryFn: () => {
-            return axios.get('https://propxpro.run.place/api/auth/me',
+            return axios.get('https://api.propxpro.com/api/auth/me',
                 {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem('userToken')}`
@@ -26,7 +26,7 @@ export default function PrivacyPolicy() {
     const handleSave = async () => {
         setIsSaving(true);
         try {
-            const response = await axios.post('https://propxpro.run.place/api/admin/legal-documents/privacy-policy', {
+            const response = await axios.post('https://api.propxpro.com/api/admin/legal-documents/privacy-policy', {
                 content: editorContent
             }, {
                 headers: {
@@ -45,7 +45,7 @@ export default function PrivacyPolicy() {
     const { data, isLoading, refetch, error, isError } = useQuery({
         queryKey: ['privacy-policy'],
         queryFn: () => {
-            return axios.get('https://propxpro.run.place/api/legal-documents/privacy-policy')
+            return axios.get('https://api.propxpro.com/api/legal-documents/privacy-policy')
         }
     })
 

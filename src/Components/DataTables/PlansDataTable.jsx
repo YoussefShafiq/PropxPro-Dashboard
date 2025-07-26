@@ -90,7 +90,7 @@ export default function PlansDataTable({ plans, loading, refetch }) {
     const { data: currentUser, isLoading: isCurrentuserLoading, error, isError } = useQuery({
         queryKey: ['currentUser'],
         queryFn: () => {
-            return axios.get('https://propxpro.run.place/api/auth/me',
+            return axios.get('https://api.propxpro.com/api/auth/me',
                 {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem('userToken')}`
@@ -102,7 +102,7 @@ export default function PlansDataTable({ plans, loading, refetch }) {
         setTogglingPlanId(planId);
         try {
             await axios.patch(
-                `https://propxpro.run.place/api/admin/plans/${planId}/toggle-status`,
+                `https://api.propxpro.com/api/admin/plans/${planId}/toggle-status`,
                 {},
                 {
                     headers: {
@@ -140,7 +140,7 @@ export default function PlansDataTable({ plans, loading, refetch }) {
 
         try {
             await axios.delete(
-                `https://propxpro.run.place/api/admin/plans/${planToDelete}`,
+                `https://api.propxpro.com/api/admin/plans/${planToDelete}`,
                 {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem('userToken')}`
@@ -294,7 +294,7 @@ export default function PlansDataTable({ plans, loading, refetch }) {
             const allFeatures = [...featuresArray, ...additionalChargesArray];
 
             await axios.post(
-                'https://propxpro.run.place/api/admin/plans',
+                'https://api.propxpro.com/api/admin/plans',
                 {
                     name: formData.name,
                     title: formData.title,
@@ -352,7 +352,7 @@ export default function PlansDataTable({ plans, loading, refetch }) {
             const allFeatures = [...featuresArray, ...additionalChargesArray];
 
             await axios.put(
-                `https://propxpro.run.place/api/admin/plans/${selectedPlan.id}`,
+                `https://api.propxpro.com/api/admin/plans/${selectedPlan.id}`,
                 {
                     name: formData.name,
                     title: formData.title,

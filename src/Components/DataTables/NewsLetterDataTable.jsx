@@ -37,7 +37,7 @@ export default function NewsLetterDataTable({ NewsLetter, loading, refetch }) {
     const { data: currentUser, isLoading: isCurrentuserLoading, error, isError } = useQuery({
         queryKey: ['currentUser'],
         queryFn: () => {
-            return axios.get('https://propxpro.run.place/api/auth/me',
+            return axios.get('https://api.propxpro.com/api/auth/me',
                 {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem('userToken')}`
@@ -49,7 +49,7 @@ export default function NewsLetterDataTable({ NewsLetter, loading, refetch }) {
         setTogglingSubscriberId(subscriberId);
         try {
             await axios.patch(
-                `https://propxpro.run.place/api/admin/newsletter/${subscriberId}/toggle-active`,
+                `https://api.propxpro.com/api/admin/newsletter/${subscriberId}/toggle-active`,
                 {},
                 {
                     headers: {
@@ -87,7 +87,7 @@ export default function NewsLetterDataTable({ NewsLetter, loading, refetch }) {
 
         try {
             await axios.delete(
-                `https://propxpro.run.place/api/admin/newsletter/${subscriberToDelete}`,
+                `https://api.propxpro.com/api/admin/newsletter/${subscriberToDelete}`,
                 {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem('userToken')}`

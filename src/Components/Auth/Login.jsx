@@ -13,7 +13,7 @@ export default function Login() {
     async function login(values) {
         setloading(true)
         try {
-            let { data } = await axios.post('https://propxpro.run.place/api/auth/login', values)
+            let { data } = await axios.post('https://api.propxpro.com/api/auth/login', values)
             setloading(false)
             console.log(data);
             toast.success('logged in successfully', {

@@ -11,7 +11,7 @@ export default function Features() {
 
     function getAllFeatures() {
         return axios.get(
-            `https://propxpro.run.place/api/admin/features`,
+            `https://api.propxpro.com/api/admin/features`,
             {
                 headers: {
                     Authorization: `Bearer ${localStorage.getItem('userToken')}`

@@ -10,7 +10,7 @@ export default function DemoRequests() {
 
     function getAllDemoRequests() {
         return axios.get(
-            `https://propxpro.run.place/api/admin/request-demos`,
+            `https://api.propxpro.com/api/admin/request-demos`,
             {
                 headers: {
                     Authorization: `Bearer ${localStorage.getItem('userToken')}`

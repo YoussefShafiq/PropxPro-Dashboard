@@ -63,7 +63,7 @@ export default function FeaturesDataTable({ features, loading, refetch }) {
     const { data: currentUser, isLoading: isCurrentuserLoading, error, isError } = useQuery({
         queryKey: ['currentUser'],
         queryFn: () => {
-            return axios.get('https://propxpro.run.place/api/auth/me',
+            return axios.get('https://api.propxpro.com/api/auth/me',
                 {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem('userToken')}`
@@ -76,7 +76,7 @@ export default function FeaturesDataTable({ features, loading, refetch }) {
         try {
             const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
             await axios.patch(
-                `https://propxpro.run.place/api/admin/features/${featureId}/toggle-status`,
+                `https://api.propxpro.com/api/admin/features/${featureId}/toggle-status`,
                 { status: newStatus },
                 {
                     headers: {
@@ -114,7 +114,7 @@ export default function FeaturesDataTable({ features, loading, refetch }) {
 
         try {
             await axios.delete(
-                `https://propxpro.run.place/api/admin/features/${featureToDelete}`,
+                `https://api.propxpro.com/api/admin/features/${featureToDelete}`,
                 {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem('userToken')}`
@@ -191,7 +191,7 @@ export default function FeaturesDataTable({ features, loading, refetch }) {
             };
 
             await axios.post(
-                'https://propxpro.run.place/api/admin/features',
+                'https://api.propxpro.com/api/admin/features',
                 payload,
                 {
                     headers: {
@@ -231,7 +231,7 @@ export default function FeaturesDataTable({ features, loading, refetch }) {
             };
 
             await axios.put(
-                `https://propxpro.run.place/api/admin/features/${editFormData.id}`,
+                `https://api.propxpro.com/api/admin/features/${editFormData.id}`,
                 payload,
                 {
                     headers: {

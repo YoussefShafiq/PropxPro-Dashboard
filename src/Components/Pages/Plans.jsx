@@ -12,7 +12,7 @@ export default function Plans() {
     const { data: currentUser, isLoading: isCurrentuserLoading } = useQuery({
         queryKey: ['currentUser'],
         queryFn: () => {
-            return axios.get('https://propxpro.run.place/api/auth/me',
+            return axios.get('https://api.propxpro.com/api/auth/me',
                 {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem('userToken')}`
@@ -23,7 +23,7 @@ export default function Plans() {
 
     function getAllPlans() {
         return axios.get(
-            `https://propxpro.run.place/api/admin/plans`,
+            `https://api.propxpro.com/api/admin/plans`,
             {
                 headers: {
                     Authorization: `Bearer ${localStorage.getItem('userToken')}`
