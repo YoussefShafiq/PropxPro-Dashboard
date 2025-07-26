@@ -56,6 +56,27 @@ const HeadingWithId = Heading.extend({
     },
 });
 
+// Custom image extension with alt text support
+const CustomImageExtension = ImageExtension.extend({
+    addAttributes() {
+        return {
+            ...this.parent?.(),
+            alt: {
+                default: '',
+                parseHTML: element => element.getAttribute('alt'),
+                renderHTML: attributes => {
+                    if (!attributes.alt) {
+                        return {};
+                    }
+                    return {
+                        alt: attributes.alt,
+                    };
+                },
+            },
+        };
+    },
+});
+
 const extensions = [
     StarterKit.configure({
         heading: false, // Disable default heading
@@ -69,7 +90,7 @@ const extensions = [
     TextAlign.configure({
         types: ['heading', 'paragraph'],
     }),
-    ImageExtension.configure({
+    CustomImageExtension.configure({
         inline: true,
         allowBase64: false,
         HTMLAttributes: {
@@ -91,7 +112,11 @@ const MenuBar = () => {
     const [isUploading, setIsUploading] = useState(false);
     const [showLinkInput, setShowLinkInput] = useState(false);
     const [linkUrl, setLinkUrl] = useState('');
+    const [showImageAltInput, setShowImageAltInput] = useState(false);
+    const [imageAltText, setImageAltText] = useState('');
+    const [currentImagePos, setCurrentImagePos] = useState(null);
     const linkInputRef = useRef(null);
+    const altInputRef = useRef(null);
 
     if (!editor) {
         return null;
@@ -118,7 +143,20 @@ const MenuBar = () => {
             );
 
             if (response.data.success && response.data.data?.url) {
-                editor.chain().focus().setImage({ src: response.data.data.url }).run();
+                const src = response.data.data.url;
+                editor.chain().focus().setImage({ src }).run();
+
+                // After image is inserted, show alt text input
+                const { state } = editor;
+                const { selection } = state;
+                const pos = selection.$anchor.pos - 1; // Position of the inserted image
+
+                setCurrentImagePos(pos);
+                setImageAltText('');
+                setShowImageAltInput(true);
+                setTimeout(() => {
+                    altInputRef.current?.focus();
+                }, 100);
             } else {
                 throw new Error('Invalid response format');
             }
@@ -129,6 +167,37 @@ const MenuBar = () => {
             setIsUploading(false);
             event.target.value = '';
         }
+    };
+
+    const handleImageAltSubmit = (e) => {
+        e.preventDefault();
+        if (!currentImagePos) return;
+
+        const { state } = editor;
+        const node = state.doc.nodeAt(currentImagePos);
+
+        if (node && node.type.name === 'image') {
+            editor
+                .chain()
+                .focus()
+                .command(({ tr }) => {
+                    const nodeAttrs = { ...node.attrs, alt: imageAltText };
+                    tr.setNodeMarkup(currentImagePos, undefined, nodeAttrs);
+                    return true;
+                })
+                .run();
+        }
+
+        setShowImageAltInput(false);
+        setImageAltText('');
+        setCurrentImagePos(null);
+    };
+
+    const handleImageAltCancel = () => {
+        setShowImageAltInput(false);
+        setImageAltText('');
+        setCurrentImagePos(null);
+        editor.chain().focus().run();
     };
 
     const handleLinkClick = (e) => {
@@ -184,6 +253,22 @@ const MenuBar = () => {
     const handleUnlink = (e) => {
         e.preventDefault();
         editor.chain().focus().unsetLink().run();
+    };
+
+    const handleImageClick = (e) => {
+        e.preventDefault();
+        const { state } = editor;
+        const { selection } = state;
+        const node = state.doc.nodeAt(selection.from - 1);
+
+        if (node && node.type.name === 'image') {
+            setCurrentImagePos(selection.from - 1);
+            setImageAltText(node.attrs.alt || '');
+            setShowImageAltInput(true);
+            setTimeout(() => {
+                altInputRef.current?.focus();
+            }, 100);
+        }
     };
 
     return (
@@ -458,6 +543,42 @@ const MenuBar = () => {
                     </div>
                 </div>
             )}
+
+            {/* Image Alt Text Input Modal */}
+            {showImageAltInput && (
+                <div className="link-input-modal">
+                    <div className="link-input-overlay" onClick={handleImageAltCancel} />
+                    <div className="link-input-container">
+                        <div>
+                            <input
+                                ref={altInputRef}
+                                type="text"
+                                value={imageAltText}
+                                onChange={(e) => setImageAltText(e.target.value)}
+                                placeholder="Enter alt text for the image"
+                                className="link-input"
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                        e.preventDefault();
+                                        handleImageAltSubmit(e);
+                                    }
+                                    if (e.key === 'Escape') {
+                                        handleImageAltCancel();
+                                    }
+                                }}
+                            />
+                            <div className="link-input-buttons">
+                                <button type="button" onClick={handleImageAltSubmit} className="link-submit-btn">
+                                    Save Alt Text
+                                </button>
+                                <button type="button" onClick={handleImageAltCancel} className="link-cancel-btn">
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
@@ -466,7 +587,11 @@ const CustomBubbleMenu = () => {
     const { editor } = useCurrentEditor();
     const [showLinkInput, setShowLinkInput] = useState(false);
     const [linkUrl, setLinkUrl] = useState('');
+    const [showImageAltInput, setShowImageAltInput] = useState(false);
+    const [imageAltText, setImageAltText] = useState('');
+    const [currentImagePos, setCurrentImagePos] = useState(null);
     const linkInputRef = useRef(null);
+    const altInputRef = useRef(null);
 
     if (!editor) {
         return null;
@@ -517,6 +642,53 @@ const CustomBubbleMenu = () => {
         editor.chain().focus().unsetLink().run();
     };
 
+    const handleBubbleImageClick = (e) => {
+        e.preventDefault();
+        const { state } = editor;
+        const { selection } = state;
+        const node = state.doc.nodeAt(selection.from - 1);
+
+        if (node && node.type.name === 'image') {
+            setCurrentImagePos(selection.from - 1);
+            setImageAltText(node.attrs.alt || '');
+            setShowImageAltInput(true);
+            setTimeout(() => {
+                altInputRef.current?.focus();
+            }, 100);
+        }
+    };
+
+    const handleBubbleImageAltSubmit = (e) => {
+        e.preventDefault();
+        if (!currentImagePos) return;
+
+        const { state } = editor;
+        const node = state.doc.nodeAt(currentImagePos);
+
+        if (node && node.type.name === 'image') {
+            editor
+                .chain()
+                .focus()
+                .command(({ tr }) => {
+                    const nodeAttrs = { ...node.attrs, alt: imageAltText };
+                    tr.setNodeMarkup(currentImagePos, undefined, nodeAttrs);
+                    return true;
+                })
+                .run();
+        }
+
+        setShowImageAltInput(false);
+        setImageAltText('');
+        setCurrentImagePos(null);
+    };
+
+    const handleBubbleImageAltCancel = () => {
+        setShowImageAltInput(false);
+        setImageAltText('');
+        setCurrentImagePos(null);
+        editor.chain().focus().run();
+    };
+
     return (
         <BubbleMenu editor={editor} tippyOptions={{ duration: 100 }}>
             <div className="bubble-menu">
@@ -563,6 +735,16 @@ const CustomBubbleMenu = () => {
                     H1
                 </button>
 
+                {/* Show image alt button when image is selected */}
+                {editor.isActive('image') && (
+                    <button
+                        onClick={handleBubbleImageClick}
+                        title="Edit Alt Text"
+                    >
+                        Alt
+                    </button>
+                )}
+
                 {/* Bubble Link Input */}
                 {showLinkInput && (
                     <div className="bubble-link-input">
@@ -586,6 +768,33 @@ const CustomBubbleMenu = () => {
                             />
                             <button type="button" onClick={handleBubbleLinkSubmit} className="bubble-link-submit">✓</button>
                             <button type="button" onClick={handleBubbleLinkCancel} className="bubble-link-cancel">✕</button>
+                        </div>
+                    </div>
+                )}
+
+                {/* Bubble Image Alt Input */}
+                {showImageAltInput && (
+                    <div className="bubble-link-input">
+                        <div>
+                            <input
+                                ref={altInputRef}
+                                type="text"
+                                value={imageAltText}
+                                onChange={(e) => setImageAltText(e.target.value)}
+                                placeholder="Enter alt text"
+                                className="bubble-link-field"
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                        e.preventDefault();
+                                        handleBubbleImageAltSubmit(e);
+                                    }
+                                    if (e.key === 'Escape') {
+                                        handleBubbleImageAltCancel();
+                                    }
+                                }}
+                            />
+                            <button type="button" onClick={handleBubbleImageAltSubmit} className="bubble-link-submit">✓</button>
+                            <button type="button" onClick={handleBubbleImageAltCancel} className="bubble-link-cancel">✕</button>
                         </div>
                     </div>
                 )}
