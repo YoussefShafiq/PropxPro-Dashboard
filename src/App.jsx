@@ -18,6 +18,8 @@ import TermsOfServices from './Components/Pages/TermsOfServices'
 import Blogs from './Components/Pages/Blogs'
 import NewsLetter from './Components/Pages/NewsLetter'
 import DemoRequests from './Components/Pages/DemoRequests'
+import Notfound from './Components/Notfound'
+import UserSetting from './Components/Pages/UserSetting'
 
 function App() {
 
@@ -36,8 +38,10 @@ function App() {
         { path: '/blogs', element: <ProtectedRoute><Blogs /></ProtectedRoute> },
         { path: '/news-letter', element: <ProtectedRoute><NewsLetter /></ProtectedRoute> },
         { path: '/requested-demos', element: <ProtectedRoute><DemoRequests /></ProtectedRoute> },
+        { path: '/user-setting', element: <ProtectedRoute><UserSetting /></ProtectedRoute> },
       ]
     },
+    { path: '*', element: <Notfound /> }
   ])
 
   let query = new QueryClient({
