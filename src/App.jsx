@@ -20,6 +20,10 @@ import NewsLetter from './Components/Pages/NewsLetter'
 import DemoRequests from './Components/Pages/DemoRequests'
 import Notfound from './Components/Notfound'
 import UserSetting from './Components/Pages/UserSetting'
+import HelpCenter from './Components/Pages/HelpCenter'
+import HelpCenterCategories from './Components/Pages/HelpCenterCategories'
+import HelpCenterSubcategories from './Components/Pages/HelpCenterSubcategories'
+import HelpCenterArticles from './Components/Pages/HelpCenterArticles'
 
 function App() {
 
@@ -39,6 +43,10 @@ function App() {
         { path: '/news-letter', element: <ProtectedRoute><NewsLetter /></ProtectedRoute> },
         { path: '/requested-demos', element: <ProtectedRoute><DemoRequests /></ProtectedRoute> },
         { path: '/user-setting', element: <ProtectedRoute><UserSetting /></ProtectedRoute> },
+        { path: '/help-center', element: <ProtectedRoute><HelpCenter /></ProtectedRoute> },
+        { path: '/help-center/categories', element: <HelpCenterCategories /> },
+        { path: '/help-center/subcategories', element: <HelpCenterSubcategories /> },
+        { path: '/help-center/articles', element: <HelpCenterArticles /> },
       ]
     },
     { path: '*', element: <Notfound /> }

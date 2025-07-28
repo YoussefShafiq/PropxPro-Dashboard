@@ -109,7 +109,7 @@ const extensions = [
     }),
 ];
 
-const MenuBar = () => {
+const MenuBar = ({ uploadImgUrl = '' }) => {
     const { editor } = useCurrentEditor();
     const fileInputRef = useRef(null);
     const [isUploading, setIsUploading] = useState(false);
@@ -135,7 +135,7 @@ const MenuBar = () => {
             formData.append('image', file);
 
             const response = await axios.post(
-                'https://api.propxpro.com/api/admin/blogs/images/upload',
+                uploadImgUrl,
                 formData,
                 {
                     headers: {
@@ -921,7 +921,7 @@ const ensureHeadingIds = (htmlContent) => {
     return updated ? doc.body.innerHTML : htmlContent;
 };
 
-const TiptapWithImg = ({ content = '', onUpdate, onHeadingsUpdate }) => {
+const TiptapWithImg = ({ content = '', onUpdate, onHeadingsUpdate, uploadImgUrl = 'https://api.propxpro.com/api/admin/blogs/images/upload' }) => {
     const [initialized, setInitialized] = useState(false);
     const [editor, setEditor] = useState(null);
     const updateTimeoutRef = useRef(null);
@@ -1006,7 +1006,7 @@ const TiptapWithImg = ({ content = '', onUpdate, onHeadingsUpdate }) => {
                 onUpdate={handleUpdate}
                 onCreate={handleCreate}
             >
-                <MenuBar />
+                <MenuBar uploadImgUrl={uploadImgUrl} />
                 <CustomBubbleMenu />
             </EditorProvider>
         </div>

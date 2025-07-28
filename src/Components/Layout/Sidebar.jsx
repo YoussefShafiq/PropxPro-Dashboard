@@ -102,6 +102,12 @@ export default function Sidebar() {
             icon: <IoHomeOutline />,
             permission: 'view_request_demos'
         },
+        {
+            title: 'Help center',
+            path: '/help-center',
+            icon: <IoHomeOutline />,
+            permission: ''
+        },
     ]
     return <>
         <div className={`h-full bg-tramsparent p-5 fixed w-56 left-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} transition-all duration-500 z-50`}>
