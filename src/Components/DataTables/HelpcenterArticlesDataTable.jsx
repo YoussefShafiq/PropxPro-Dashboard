@@ -44,6 +44,7 @@ export default function HelpcenterArticlesDataTable({
     const [articleToDelete, setArticleToDelete] = useState(null);
     const [selectedArticle, setSelectedArticle] = useState(null);
     const [filteredSubcategories, setFilteredSubcategories] = useState([]);
+    const [headings, setHeadings] = useState([]);
 
     // Form states
     const [formData, setFormData] = useState({
@@ -52,7 +53,8 @@ export default function HelpcenterArticlesDataTable({
         slug: '',
         content: '',
         order: '',
-        is_active: true
+        is_active: true,
+        headings: [] // Add headings to form data
     });
 
     const { data: currentUser } = useQuery({
@@ -67,12 +69,21 @@ export default function HelpcenterArticlesDataTable({
         }
     });
 
+    // Handler for headings update from Tiptap
+    const handleHeadingsUpdate = (extractedHeadings) => {
+        setHeadings(extractedHeadings);
+        setFormData(prev => ({ ...prev, headings: extractedHeadings }));
+    };
+
     // Create mutation
     const createMutation = useMutation({
         mutationFn: (newArticle) => {
             return axios.post(
                 'https://api.propxpro.com/api/admin/help-center/topics',
-                newArticle,
+                {
+                    ...newArticle,
+                    headings: JSON.stringify(newArticle.headings) // Stringify headings array
+                },
                 {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem('userToken')}`
@@ -104,7 +115,10 @@ export default function HelpcenterArticlesDataTable({
         mutationFn: (updatedArticle) => {
             return axios.put(
                 `https://api.propxpro.com/api/admin/help-center/topics/${updatedArticle.id}`,
-                updatedArticle,
+                {
+                    ...updatedArticle,
+                    headings: JSON.stringify(updatedArticle.headings) // Stringify headings array
+                },
                 {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem('userToken')}`
@@ -245,8 +259,10 @@ export default function HelpcenterArticlesDataTable({
             slug: '',
             content: '',
             order: '',
-            is_active: true
+            is_active: true,
+            headings: []
         });
+        setHeadings([]);
         setFilteredSubcategories([]);
     };
 
@@ -263,14 +279,19 @@ export default function HelpcenterArticlesDataTable({
 
         setFilteredSubcategories(subs);
 
+        // Parse headings if they exist in the article data
+        const articleHeadings = article.headings ? JSON.parse(article.headings) : [];
+
         setFormData({
             subcategory_id: article.subcategory_id,
             title: article.title,
             slug: article.slug,
             content: article.content,
             order: article.order,
-            is_active: article.is_active
+            is_active: article.is_active,
+            headings: articleHeadings
         });
+        setHeadings(articleHeadings);
         setShowEditModal(true);
     };
 
@@ -599,7 +620,6 @@ export default function HelpcenterArticlesDataTable({
                                     />
                                 </div>
 
-
                                 <div className="mb-4">
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Order*</label>
                                     <input
@@ -619,6 +639,7 @@ export default function HelpcenterArticlesDataTable({
                                         uploadImgUrl='https://api.propxpro.com/api/admin/help-center/topics/upload-image'
                                         content={formData.content}
                                         onUpdate={(content) => setFormData(prev => ({ ...prev, content }))}
+                                        onHeadingsUpdate={handleHeadingsUpdate}
                                     />
                                 </div>
 
@@ -739,7 +760,6 @@ export default function HelpcenterArticlesDataTable({
                                     />
                                 </div>
 
-
                                 <div className="mb-4">
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Order*</label>
                                     <input
@@ -759,6 +779,7 @@ export default function HelpcenterArticlesDataTable({
                                         uploadImgUrl='https://api.propxpro.com/api/admin/help-center/topics/upload-image'
                                         content={formData.content}
                                         onUpdate={(content) => setFormData(prev => ({ ...prev, content }))}
+                                        onHeadingsUpdate={handleHeadingsUpdate}
                                     />
                                 </div>
 
