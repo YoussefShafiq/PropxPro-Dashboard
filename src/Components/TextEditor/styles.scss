@@ -1,4 +1,51 @@
 /* src/components/TextEditor/styles.scss */
+.image-meta-form {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.form-group label {
+    font-size: 12px;
+    font-weight: 500;
+    color: #555;
+}
+
+.link-input.textarea {
+    min-height: 60px;
+    resize: vertical;
+}
+
+.bubble-link-input .image-meta-form {
+    max-width: 250px;
+    padding: 8px;
+}
+
+.bubble-link-input .form-group {
+    margin-bottom: 6px;
+}
+
+.bubble-link-input .form-group label {
+    font-size: 11px;
+}
+
+.bubble-link-input .textarea {
+    min-height: 50px;
+}
+
+.form-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 4px;
+    margin-top: 4px;
+}
 
 /* Highlight Styles */
 i[style*="background-color: #f4f6ff"] {
@@ -312,6 +359,7 @@ i[style*="background-color: #f4f6ff"] {
     /* Bubble Menu Styles */
     .bubble-menu {
         display: flex;
+        flex-direction: column;
         gap: 0.25rem;
         background: #f8fafc;
         padding: 0.25rem;

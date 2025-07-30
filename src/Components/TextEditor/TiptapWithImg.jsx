@@ -4,7 +4,7 @@ import {
     Bold, Italic, Strikethrough, List, ListOrdered,
     Heading1, Heading2, Heading3, Quote, Code,
     Undo, Redo, Code2, Minus, AlignLeft,
-    AlignCenter, AlignRight, Image, Link, Unlink,
+    AlignCenter, AlignRight, Image as ImageIcon, Link, Unlink,
     InfoIcon,
     Check,
     X
@@ -59,7 +59,7 @@ const HeadingWithId = Heading.extend({
     },
 });
 
-// Custom image extension with alt text support
+// Custom image extension with alt text, title, and content support
 const CustomImageExtension = ImageExtension.extend({
     addAttributes() {
         return {
@@ -73,6 +73,30 @@ const CustomImageExtension = ImageExtension.extend({
                     }
                     return {
                         alt: attributes.alt,
+                    };
+                },
+            },
+            title: {
+                default: '',
+                parseHTML: element => element.getAttribute('title'),
+                renderHTML: attributes => {
+                    if (!attributes.title) {
+                        return {};
+                    }
+                    return {
+                        title: attributes.title,
+                    };
+                },
+            },
+            content: {
+                default: '',
+                parseHTML: element => element.getAttribute('data-content'),
+                renderHTML: attributes => {
+                    if (!attributes.content) {
+                        return {};
+                    }
+                    return {
+                        'data-content': attributes.content,
                     };
                 },
             },
@@ -115,8 +139,10 @@ const MenuBar = ({ uploadImgUrl = '' }) => {
     const [isUploading, setIsUploading] = useState(false);
     const [showLinkInput, setShowLinkInput] = useState(false);
     const [linkUrl, setLinkUrl] = useState('');
-    const [showImageAltInput, setShowImageAltInput] = useState(false);
+    const [showImageMetaInput, setShowImageMetaInput] = useState(false);
     const [imageAltText, setImageAltText] = useState('');
+    const [imageTitle, setImageTitle] = useState('');
+    const [imageContent, setImageContent] = useState('');
     const [currentImagePos, setCurrentImagePos] = useState(null);
     const linkInputRef = useRef(null);
     const altInputRef = useRef(null);
@@ -149,14 +175,16 @@ const MenuBar = ({ uploadImgUrl = '' }) => {
                 const src = response.data.data.url;
                 editor.chain().focus().setImage({ src }).run();
 
-                // After image is inserted, show alt text input
+                // After image is inserted, show meta input
                 const { state } = editor;
                 const { selection } = state;
                 const pos = selection.$anchor.pos - 1; // Position of the inserted image
 
                 setCurrentImagePos(pos);
                 setImageAltText('');
-                setShowImageAltInput(true);
+                setImageTitle('');
+                setImageContent('');
+                setShowImageMetaInput(true);
                 setTimeout(() => {
                     altInputRef.current?.focus();
                 }, 100);
@@ -172,7 +200,7 @@ const MenuBar = ({ uploadImgUrl = '' }) => {
         }
     };
 
-    const handleImageAltSubmit = (e) => {
+    const handleImageMetaSubmit = (e) => {
         e.preventDefault();
         if (!currentImagePos) return;
 
@@ -184,21 +212,30 @@ const MenuBar = ({ uploadImgUrl = '' }) => {
                 .chain()
                 .focus()
                 .command(({ tr }) => {
-                    const nodeAttrs = { ...node.attrs, alt: imageAltText };
+                    const nodeAttrs = {
+                        ...node.attrs,
+                        alt: imageAltText,
+                        title: imageTitle,
+                        content: imageContent
+                    };
                     tr.setNodeMarkup(currentImagePos, undefined, nodeAttrs);
                     return true;
                 })
                 .run();
         }
 
-        setShowImageAltInput(false);
+        setShowImageMetaInput(false);
         setImageAltText('');
+        setImageTitle('');
+        setImageContent('');
         setCurrentImagePos(null);
     };
 
-    const handleImageAltCancel = () => {
-        setShowImageAltInput(false);
+    const handleImageMetaCancel = () => {
+        setShowImageMetaInput(false);
         setImageAltText('');
+        setImageTitle('');
+        setImageContent('');
         setCurrentImagePos(null);
         editor.chain().focus().run();
     };
@@ -267,7 +304,9 @@ const MenuBar = ({ uploadImgUrl = '' }) => {
         if (node && node.type.name === 'image') {
             setCurrentImagePos(selection.from - 1);
             setImageAltText(node.attrs.alt || '');
-            setShowImageAltInput(true);
+            setImageTitle(node.attrs.title || '');
+            setImageContent(node.attrs.content || '');
+            setShowImageMetaInput(true);
             setTimeout(() => {
                 altInputRef.current?.focus();
             }, 100);
@@ -482,7 +521,7 @@ const MenuBar = ({ uploadImgUrl = '' }) => {
                     disabled={isUploading}
                     className={isUploading ? 'is-uploading' : ''}
                 >
-                    {isUploading ? 'Uploading...' : <Image size={16} />}
+                    {isUploading ? 'Uploading...' : <ImageIcon size={16} />}
                 </button>
             </div>
 
@@ -547,34 +586,48 @@ const MenuBar = ({ uploadImgUrl = '' }) => {
                 </div>
             )}
 
-            {/* Image Alt Text Input Modal */}
-            {showImageAltInput && (
+            {/* Image Meta Input Modal */}
+            {showImageMetaInput && (
                 <div className="link-input-modal">
-                    <div className="link-input-overlay" onClick={handleImageAltCancel} />
+                    <div className="link-input-overlay" onClick={handleImageMetaCancel} />
                     <div className="link-input-container">
-                        <div>
-                            <input
-                                ref={altInputRef}
-                                type="text"
-                                value={imageAltText}
-                                onChange={(e) => setImageAltText(e.target.value)}
-                                placeholder="Enter alt text for the image"
-                                className="link-input"
-                                onKeyDown={(e) => {
-                                    if (e.key === 'Enter') {
-                                        e.preventDefault();
-                                        handleImageAltSubmit(e);
-                                    }
-                                    if (e.key === 'Escape') {
-                                        handleImageAltCancel();
-                                    }
-                                }}
-                            />
+                        <div className="image-meta-form">
+                            <div className="form-group">
+                                <label>Alt Text</label>
+                                <input
+                                    ref={altInputRef}
+                                    type="text"
+                                    value={imageAltText}
+                                    onChange={(e) => setImageAltText(e.target.value)}
+                                    placeholder="Enter alt text for accessibility"
+                                    className="link-input"
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label>Title</label>
+                                <input
+                                    type="text"
+                                    value={imageTitle}
+                                    onChange={(e) => setImageTitle(e.target.value)}
+                                    placeholder="Enter title text (shown on hover)"
+                                    className="link-input"
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label>Content</label>
+                                <textarea
+                                    value={imageContent}
+                                    onChange={(e) => setImageContent(e.target.value)}
+                                    placeholder="Enter additional content or description"
+                                    className="link-input textarea"
+                                    rows={3}
+                                />
+                            </div>
                             <div className="link-input-buttons">
-                                <button type="button" onClick={handleImageAltSubmit} className="link-submit-btn">
-                                    Save Alt Text
+                                <button type="button" onClick={handleImageMetaSubmit} className="link-submit-btn">
+                                    Save Image Details
                                 </button>
-                                <button type="button" onClick={handleImageAltCancel} className="link-cancel-btn">
+                                <button type="button" onClick={handleImageMetaCancel} className="link-cancel-btn">
                                     Cancel
                                 </button>
                             </div>
@@ -590,8 +643,10 @@ const CustomBubbleMenu = () => {
     const { editor } = useCurrentEditor();
     const [showLinkInput, setShowLinkInput] = useState(false);
     const [linkUrl, setLinkUrl] = useState('');
-    const [showImageAltInput, setShowImageAltInput] = useState(false);
+    const [showImageMetaInput, setShowImageMetaInput] = useState(false);
     const [imageAltText, setImageAltText] = useState('');
+    const [imageTitle, setImageTitle] = useState('');
+    const [imageContent, setImageContent] = useState('');
     const [currentImagePos, setCurrentImagePos] = useState(null);
     const linkInputRef = useRef(null);
     const altInputRef = useRef(null);
@@ -645,7 +700,7 @@ const CustomBubbleMenu = () => {
         editor.chain().focus().unsetLink().run();
     };
 
-    const handleBubbleImageAltClick = (e) => {
+    const handleBubbleImageMetaClick = (e) => {
         e.preventDefault();
 
         // Find the image node at the current selection
@@ -657,7 +712,9 @@ const CustomBubbleMenu = () => {
             if (node.type.name === 'image') {
                 setCurrentImagePos(pos);
                 setImageAltText(node.attrs.alt || '');
-                setShowImageAltInput(true);
+                setImageTitle(node.attrs.title || '');
+                setImageContent(node.attrs.content || '');
+                setShowImageMetaInput(true);
                 setTimeout(() => {
                     altInputRef.current?.focus();
                 }, 100);
@@ -666,7 +723,7 @@ const CustomBubbleMenu = () => {
         });
     };
 
-    const handleBubbleImageAltSubmit = (e) => {
+    const handleBubbleImageMetaSubmit = (e) => {
         e.preventDefault();
 
         if (currentImagePos === null) return;
@@ -676,20 +733,26 @@ const CustomBubbleMenu = () => {
             if (node && node.type.name === 'image') {
                 tr.setNodeMarkup(currentImagePos, undefined, {
                     ...node.attrs,
-                    alt: imageAltText
+                    alt: imageAltText,
+                    title: imageTitle,
+                    content: imageContent
                 });
             }
             return true;
         }).run();
 
-        setShowImageAltInput(false);
+        setShowImageMetaInput(false);
         setImageAltText('');
+        setImageTitle('');
+        setImageContent('');
         setCurrentImagePos(null);
     };
 
-    const handleBubbleImageAltCancel = () => {
-        setShowImageAltInput(false);
+    const handleBubbleImageMetaCancel = () => {
+        setShowImageMetaInput(false);
         setImageAltText('');
+        setImageTitle('');
+        setImageContent('');
         setCurrentImagePos(null);
         editor.chain().focus().run();
     };
@@ -702,144 +765,163 @@ const CustomBubbleMenu = () => {
                 onHidden: () => {
                     // Reset inputs when bubble menu hides
                     setShowLinkInput(false);
-                    setShowImageAltInput(false);
+                    setShowImageMetaInput(false);
                     setLinkUrl('');
                     setImageAltText('');
+                    setImageTitle('');
+                    setImageContent('');
                     setCurrentImagePos(null);
                 }
             }}
         >
             <div className="bubble-menu">
                 {/* Always show these buttons */}
-                <button
-                    onClick={(e) => {
-                        e.preventDefault();
-                        editor.chain().focus().toggleBold().run();
-                    }}
-                    className={editor.isActive('bold') ? 'is-active' : ''}
-                    title="Bold"
-                >
-                    <Bold size={14} />
-                </button>
-                <button
-                    onClick={(e) => {
-                        e.preventDefault();
-                        editor.chain().focus().toggleItalic().run();
-                    }}
-                    className={editor.isActive('italic') ? 'is-active' : ''}
-                    title="Italic"
-                >
-                    <Italic size={14} />
-                </button>
-                <button
-                    onClick={(e) => {
-                        e.preventDefault();
-                        editor.chain().focus().toggleHeading({ level: 1 }).run();
-                    }}
-                    className={editor.isActive('heading', { level: 1 }) ? 'is-active' : ''}
-                    title="Heading 1"
-                >
-                    H1
-                </button>
-                <button
-                    onClick={(e) => {
-                        e.preventDefault();
-                        editor.chain().focus().toggleHeading({ level: 2 }).run();
-                    }}
-                    className={editor.isActive('heading', { level: 2 }) ? 'is-active' : ''}
-                    title="Heading 2"
-                >
-                    H2
-                </button>
-                <button
-                    onClick={(e) => {
-                        e.preventDefault();
-                        editor.chain().focus().toggleHeading({ level: 3 }).run();
-                    }}
-                    className={editor.isActive('heading', { level: 3 }) ? 'is-active' : ''}
-                    title="Heading 3"
-                >
-                    H3
-                </button>
-
-                {/* Link buttons */}
-                <button
-                    onClick={handleBubbleLinkClick}
-                    className={editor.isActive('link') ? 'is-active' : ''}
-                    title="Add/Edit Link"
-                >
-                    <Link size={14} />
-                </button>
-                <button
-                    onClick={(e) => {
-                        e.preventDefault();
-                        editor.chain().focus().toggleBlockquote().run();
-                    }}
-                    className={editor.isActive('blockquote') ? 'is-active' : ''}
-                    title="info icon"
-                >
-                    <InfoIcon size={16} />
-                </button>
-                {editor.isActive('link') && (
+                <div className="flex gap-2">
                     <button
-                        onClick={handleBubbleUnlink}
-                        title="Remove Link"
+                        onClick={(e) => {
+                            e.preventDefault();
+                            editor.chain().focus().toggleBold().run();
+                        }}
+                        className={editor.isActive('bold') ? 'is-active' : ''}
+                        title="Bold"
                     >
-                        <Unlink size={14} />
+                        <Bold size={14} />
                     </button>
-                )}
-
-                {/* Image Alt button - only shown when image is selected */}
-                {editor.isActive('image') && (
                     <button
-                        onClick={handleBubbleImageAltClick}
-                        title="Edit Alt Text"
+                        onClick={(e) => {
+                            e.preventDefault();
+                            editor.chain().focus().toggleItalic().run();
+                        }}
+                        className={editor.isActive('italic') ? 'is-active' : ''}
+                        title="Italic"
                     >
-                        Alt
+                        <Italic size={14} />
                     </button>
-                )}
+                    <button
+                        onClick={(e) => {
+                            e.preventDefault();
+                            editor.chain().focus().toggleHeading({ level: 1 }).run();
+                        }}
+                        className={editor.isActive('heading', { level: 1 }) ? 'is-active' : ''}
+                        title="Heading 1"
+                    >
+                        H1
+                    </button>
+                    <button
+                        onClick={(e) => {
+                            e.preventDefault();
+                            editor.chain().focus().toggleHeading({ level: 2 }).run();
+                        }}
+                        className={editor.isActive('heading', { level: 2 }) ? 'is-active' : ''}
+                        title="Heading 2"
+                    >
+                        H2
+                    </button>
+                    <button
+                        onClick={(e) => {
+                            e.preventDefault();
+                            editor.chain().focus().toggleHeading({ level: 3 }).run();
+                        }}
+                        className={editor.isActive('heading', { level: 3 }) ? 'is-active' : ''}
+                        title="Heading 3"
+                    >
+                        H3
+                    </button>
 
-                {/* Image Alt Text Input */}
-                {showImageAltInput && (
+                    {/* Link buttons */}
+                    <button
+                        onClick={handleBubbleLinkClick}
+                        className={editor.isActive('link') ? 'is-active' : ''}
+                        title="Add/Edit Link"
+                    >
+                        <Link size={14} />
+                    </button>
+                    <button
+                        onClick={(e) => {
+                            e.preventDefault();
+                            editor.chain().focus().toggleBlockquote().run();
+                        }}
+                        className={editor.isActive('blockquote') ? 'is-active' : ''}
+                        title="info icon"
+                    >
+                        <InfoIcon size={16} />
+                    </button>
+                    {editor.isActive('link') && (
+                        <button
+                            onClick={handleBubbleUnlink}
+                            title="Remove Link"
+                        >
+                            <Unlink size={14} />
+                        </button>
+                    )}
+
+                    {/* Image Meta button - only shown when image is selected */}
+                    {editor.isActive('image') && (
+                        <button
+                            onClick={handleBubbleImageMetaClick}
+                            title="Edit Image Details"
+                        >
+                            <ImageIcon size={14} />
+                        </button>
+                    )}
+                </div>
+
+                {/* Image Meta Input */}
+                {showImageMetaInput && (
                     <div className="bubble-link-input">
-                        <div>
-                            <input
-                                ref={altInputRef}
-                                type="text"
-                                value={imageAltText}
-                                onChange={(e) => setImageAltText(e.target.value)}
-                                placeholder="Enter alt text"
-                                className="bubble-link-field"
-                                onKeyDown={(e) => {
-                                    if (e.key === 'Enter') {
-                                        e.preventDefault();
-                                        handleBubbleImageAltSubmit(e);
-                                    }
-                                    if (e.key === 'Escape') {
-                                        handleBubbleImageAltCancel();
-                                    }
-                                }}
-                            />
-                            <button
-                                type="button"
-                                onClick={handleBubbleImageAltSubmit}
-                                className="bubble-link-submit "
-                            >
-                                <Check size={16} color='green' />
-
-                            </button>
-                            <button
-                                type="button"
-                                onClick={handleBubbleImageAltCancel}
-                                className="bubble-link-cancel"
-                            >
-                                <X size={16} color='red' />
-                            </button>
+                        <div className="image-meta-form">
+                            <div className="form-group">
+                                <label>Alt:</label>
+                                <input
+                                    ref={altInputRef}
+                                    type="text"
+                                    value={imageAltText}
+                                    onChange={(e) => setImageAltText(e.target.value)}
+                                    placeholder="Alt text"
+                                    className="bubble-link-field"
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label>Title:</label>
+                                <input
+                                    type="text"
+                                    value={imageTitle}
+                                    onChange={(e) => setImageTitle(e.target.value)}
+                                    placeholder="Title"
+                                    className="bubble-link-field"
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label>Content:</label>
+                                <textarea
+                                    value={imageContent}
+                                    onChange={(e) => setImageContent(e.target.value)}
+                                    placeholder="Content"
+                                    className="bubble-link-field textarea"
+                                    rows={2}
+                                />
+                            </div>
+                            <div className="form-buttons">
+                                <button
+                                    type="button"
+                                    onClick={handleBubbleImageMetaSubmit}
+                                    className="bubble-link-submit"
+                                >
+                                    <Check size={16} color='green' />
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={handleBubbleImageMetaCancel}
+                                    className="bubble-link-cancel"
+                                >
+                                    <X size={16} color='red' />
+                                </button>
+                            </div>
                         </div>
                     </div>
                 )}
 
-                {/* Link Input (kept from previous implementation) */}
+                {/* Link Input */}
                 {showLinkInput && (
                     <div className="bubble-link-input">
                         <div>

@@ -71,10 +71,10 @@ export default function HelpcenterArticlesDataTable({
 
     // Handler for headings update from Tiptap
     const handleHeadingsUpdate = (extractedHeadings) => {
-        setHeadings(extractedHeadings);
-        setFormData(prev => ({ ...prev, headings: extractedHeadings }));
+        const safeHeadings = Array.isArray(extractedHeadings) ? extractedHeadings : [];
+        setHeadings(safeHeadings);
+        setFormData(prev => ({ ...prev, headings: safeHeadings }));
     };
-
     // Create mutation
     const createMutation = useMutation({
         mutationFn: (newArticle) => {
@@ -279,8 +279,19 @@ export default function HelpcenterArticlesDataTable({
 
         setFilteredSubcategories(subs);
 
-        // Parse headings if they exist in the article data
-        const articleHeadings = article.headings ? JSON.parse(article.headings) : [];
+        // Safely handle headings - default to empty array if invalid
+        let articleHeadings = [];
+        if (article.headings && typeof article.headings === 'string' && article.headings.trim() !== '') {
+            try {
+                articleHeadings = JSON.parse(article.headings);
+                if (!Array.isArray(articleHeadings)) {
+                    articleHeadings = [];
+                }
+            } catch (e) {
+                console.error('Error parsing headings:', e);
+                articleHeadings = [];
+            }
+        }
 
         setFormData({
             subcategory_id: article.subcategory_id,
