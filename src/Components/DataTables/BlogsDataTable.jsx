@@ -14,17 +14,19 @@ import {
     FaTimes,
     FaEye,
     FaImage,
-    FaEnvelope
+    FaEnvelope,
+    FaQuestionCircle
 } from 'react-icons/fa';
 import TiptapWithImg from '../TextEditor/TiptapWithImg';
 import { Chips } from 'primereact/chips';
 import 'primereact/resources/themes/lara-light-indigo/theme.css';
 import 'primereact/resources/primereact.min.css';
 import 'primeicons/primeicons.css';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 export default function BlogsDataTable({ blogs, loading, refetch }) {
     const navigate = useNavigate();
+    const queryClient = useQueryClient();
     const [filters, setFilters] = useState({
         global: '',
         title: '',
@@ -44,7 +46,16 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
     const [editHeadings, setEditHeadings] = useState([]);
     const [isSlugManuallyEdited, setIsSlugManuallyEdited] = useState(false);
     const [isEditSlugManuallyEdited, setIsEditSlugManuallyEdited] = useState(false);
-
+    const [showFaqModal, setShowFaqModal] = useState(false);
+    const [currentBlogId, setCurrentBlogId] = useState(null);
+    const [faqForm, setFaqForm] = useState({
+        question: '',
+        answer: '',
+        order: ''
+    });
+    const [editingFaqId, setEditingFaqId] = useState(null);
+    const [showDeleteFaqConfirm, setShowDeleteFaqConfirm] = useState(false);
+    const [faqToDelete, setFaqToDelete] = useState(null);
     // Form states
     const [formData, setFormData] = useState({
         title: '',
@@ -70,6 +81,109 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
         existing_cover_photo: null,
         tags: [],
         headings: []
+    });
+
+    // Fetch FAQs for a blog
+    const { data: faqs, refetch: refetchFaqs } = useQuery({
+        queryKey: ['blogFaqs', currentBlogId],
+        queryFn: () => {
+            if (!currentBlogId) return Promise.resolve([]);
+            return axios.get(`https://api.propxpro.com/api/admin/blogs/${currentBlogId}/manage/faq`, {
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem('userToken')}`
+                }
+            }).then(res => res.data.data);
+        },
+        enabled: !!currentBlogId
+    });
+
+    // Mutation for adding FAQ
+    const addFaqMutation = useMutation({
+        mutationFn: (newFaq) => {
+            return axios.post(
+                `https://api.propxpro.com/api/admin/blogs/${currentBlogId}/manage/faq`,
+                newFaq,
+                {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem('userToken')}`
+                    }
+                }
+            );
+        },
+        onSuccess: () => {
+            toast.success('FAQ added successfully');
+            refetchFaqs();
+            setFaqForm({ question: '', answer: '', order: '' });
+        },
+        onError: (error) => {
+            toast.error(error.response?.data?.message || 'Failed to add FAQ');
+            if (error.response?.status === 401) {
+                localStorage.removeItem('userToken');
+                navigate('/login');
+            }
+            if (error.response?.status === 403) {
+                toast.error('You are not authorized to perform this action');
+            }
+        }
+    });
+
+    // Mutation for updating FAQ
+    const updateFaqMutation = useMutation({
+        mutationFn: (updatedFaq) => {
+            return axios.put(
+                `https://api.propxpro.com/api/admin/blogs/${currentBlogId}/manage/faq/${editingFaqId}`,
+                updatedFaq,
+                {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem('userToken')}`
+                    }
+                }
+            );
+        },
+        onSuccess: () => {
+            toast.success('FAQ updated successfully');
+            refetchFaqs();
+            setEditingFaqId(null);
+            setFaqForm({ question: '', answer: '', order: '' });
+        },
+        onError: (error) => {
+            toast.error(error.response?.data?.message || 'Failed to update FAQ');
+            if (error.response?.status === 401) {
+                localStorage.removeItem('userToken');
+                navigate('/login');
+            }
+            if (error.response?.status === 403) {
+                toast.error('You are not authorized to perform this action');
+            }
+        }
+    });
+
+    // Mutation for deleting FAQ
+    const deleteFaqMutation = useMutation({
+        mutationFn: (faqId) => {
+            return axios.delete(
+                `https://api.propxpro.com/api/admin/blogs/${currentBlogId}/manage/faq/${faqId}`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem('userToken')}`
+                    }
+                }
+            );
+        },
+        onSuccess: () => {
+            toast.success('FAQ deleted successfully');
+            refetchFaqs();
+        },
+        onError: (error) => {
+            toast.error(error.response?.data?.message || 'Failed to delete FAQ');
+            if (error.response?.status === 401) {
+                localStorage.removeItem('userToken');
+                navigate('/login');
+            }
+            if (error.response?.status === 403) {
+                toast.error('You are not authorized to perform this action');
+            }
+        }
     });
 
     // Handler functions for headings
@@ -98,7 +212,7 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
         setCurrentPage(1);
     };
 
-    const { data: currentUser, isLoading: isCurrentuserLoading, error, isError } = useQuery({
+    const { data: currentUser, isLoading: isCurrentuserLoading } = useQuery({
         queryKey: ['currentUser'],
         queryFn: () => {
             return axios.get('https://api.propxpro.com/api/auth/me',
@@ -414,6 +528,60 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
         }
     };
 
+    // Open FAQ modal and set current blog ID
+    const handleOpenFaqModal = (blogId) => {
+        setCurrentBlogId(blogId);
+        setShowFaqModal(true);
+    };
+
+    // Handle FAQ form changes
+    const handleFaqFormChange = (e) => {
+        const { name, value } = e.target;
+        setFaqForm(prev => ({
+            ...prev,
+            [name]: value
+        }));
+    };
+
+    // Submit FAQ form (add or update)
+    const handleFaqSubmit = (e) => {
+        e.preventDefault();
+        if (editingFaqId) {
+            updateFaqMutation.mutate(faqForm);
+        } else {
+            addFaqMutation.mutate(faqForm);
+        }
+    };
+
+    // Edit FAQ
+    const handleEditFaq = (faq) => {
+        setEditingFaqId(faq.id);
+        setFaqForm({
+            question: faq.question,
+            answer: faq.answer,
+            order: faq.order
+        });
+    };
+
+    // Cancel FAQ editing
+    const handleCancelEditFaq = () => {
+        setEditingFaqId(null);
+        setFaqForm({ question: '', answer: '', order: '' });
+    };
+
+    // Delete FAQ
+    const handleDeleteFaq = (faqId) => {
+        setFaqToDelete(faqId);
+        setShowDeleteFaqConfirm(true);
+    };
+
+    const handleConfirmDeleteFaq = () => {
+        if (!faqToDelete) return;
+        deleteFaqMutation.mutate(faqToDelete);
+        setShowDeleteFaqConfirm(false);
+        setFaqToDelete(null);
+    };
+
     // Filter blogs based on all filter criteria
     const filteredBlogs = blogs?.filter(blog => {
         return (
@@ -643,6 +811,12 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
                                                     <FaTrashAlt size={18} />
                                                 )}
                                             </button>}
+                                            <button
+                                                className="text-purple-500 hover:text-purple-700 p-1"
+                                                onClick={() => handleOpenFaqModal(blog.id)}
+                                            >
+                                                <FaQuestionCircle size={18} />
+                                            </button>
                                         </div>
                                     </td>
                                 </tr>
@@ -1099,6 +1273,218 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
                                     className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
                                 >
                                     Delete
+                                </button>
+                            </div>
+                        </div>
+                    </motion.div>
+                </motion.div>
+            )}
+
+            {/* FAQ Management Modal */}
+            {showFaqModal && (
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+                    onClick={() => {
+                        setShowFaqModal(false);
+                        setCurrentBlogId(null);
+                        setEditingFaqId(null);
+                        setFaqForm({ question: '', answer: '', order: '' });
+                    }}
+                >
+                    <motion.div
+                        initial={{ y: -50, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        exit={{ y: 50, opacity: 0 }}
+                        className="bg-white rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="p-6">
+                            <h2 className="text-xl font-bold mb-4">Manage FAQs</h2>
+
+                            {/* FAQ Form */}
+                            <form onSubmit={handleFaqSubmit} className="mb-6">
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                                    <div className="md:col-span-2">
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Question*</label>
+                                        <input
+                                            type="text"
+                                            name="question"
+                                            value={faqForm.question}
+                                            onChange={handleFaqFormChange}
+                                            className="w-full px-3 py-2 border rounded-md"
+                                            required
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Order*</label>
+                                        <input
+                                            type="number"
+                                            name="order"
+                                            value={faqForm.order}
+                                            onChange={handleFaqFormChange}
+                                            className="w-full px-3 py-2 border rounded-md"
+                                            required
+                                        />
+                                    </div>
+                                </div>
+                                <div className="mb-4">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Answer*</label>
+                                    <textarea
+                                        name="answer"
+                                        value={faqForm.answer}
+                                        onChange={handleFaqFormChange}
+                                        className="w-full px-3 py-2 border rounded-md"
+                                        rows="3"
+                                        required
+                                    />
+                                </div>
+                                <div className="flex justify-end gap-3">
+                                    {editingFaqId && (
+                                        <button
+                                            type="button"
+                                            onClick={handleCancelEditFaq}
+                                            className="px-4 py-2 border rounded-md text-gray-700 hover:bg-gray-50"
+                                        >
+                                            Cancel
+                                        </button>
+                                    )}
+                                    <button
+                                        type="submit"
+                                        className="px-4 py-2 bg-primary text-white rounded-md hover:bg-darkBlue transition-all flex items-center justify-center gap-2"
+                                        disabled={addFaqMutation.isPending || updateFaqMutation.isPending}
+                                    >
+                                        {(addFaqMutation.isPending || updateFaqMutation.isPending) ? (
+                                            <>
+                                                <FaSpinner className="animate-spin" size={18} />
+                                                <span>{editingFaqId ? 'Updating...' : 'Adding...'}</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <FaCheck size={18} />
+                                                <span>{editingFaqId ? 'Update FAQ' : 'Add FAQ'}</span>
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
+                            </form>
+
+                            {/* FAQs List */}
+                            <div>
+                                <h3 className="text-lg font-medium mb-2">Existing FAQs</h3>
+                                {faqs?.length === 0 ? (
+                                    <p className="text-gray-500">No FAQs found for this blog.</p>
+                                ) : (
+                                    <div className="space-y-4">
+                                        {faqs?.map((faq) => (
+                                            <div key={faq.id} className="border rounded-lg p-4">
+                                                <div className="flex justify-between items-start">
+                                                    <div>
+                                                        <h4 className="font-medium">{faq.question}</h4>
+                                                        <p className="text-sm text-gray-600 mt-1">{faq.answer}</p>
+                                                        <div className="text-xs text-gray-500 mt-2">
+                                                            Order: {faq.order}
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex gap-2">
+                                                        <button
+                                                            onClick={() => handleEditFaq(faq)}
+                                                            className="text-blue-500 hover:text-blue-700 p-1"
+                                                        >
+                                                            <FaEdit size={16} />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleDeleteFaq(faq.id)}
+                                                            className="text-red-500 hover:text-red-700 p-1"
+                                                            disabled={deleteFaqMutation.isPending}
+                                                        >
+                                                            {deleteFaqMutation.isPending && deleteFaqMutation.variables === faq.id ? (
+                                                                <FaSpinner className="animate-spin" size={16} />
+                                                            ) : (
+                                                                <FaTrashAlt size={16} />
+                                                            )}
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="flex justify-end mt-6">
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setShowFaqModal(false);
+                                        setCurrentBlogId(null);
+                                        setEditingFaqId(null);
+                                        setFaqForm({ question: '', answer: '', order: '' });
+                                    }}
+                                    className="px-4 py-2 border rounded-md text-gray-700 hover:bg-gray-50"
+                                >
+                                    Close
+                                </button>
+                            </div>
+                        </div>
+                    </motion.div>
+                </motion.div>
+            )}
+
+            {/* Delete FAQ Confirmation Modal */}
+            {showDeleteFaqConfirm && (
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+                    onClick={() => setShowDeleteFaqConfirm(false)}
+                >
+                    <motion.div
+                        initial={{ scale: 0.9, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        exit={{ scale: 0.9, opacity: 0 }}
+                        className="bg-white rounded-lg shadow-xl w-full max-w-md"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="p-6">
+                            <div className="flex items-start">
+                                <div className="flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
+                                    <FaTrashAlt className="h-5 w-5 text-red-600" />
+                                </div>
+                                <div className="ml-4">
+                                    <h3 className="text-lg font-medium text-gray-900">Delete FAQ</h3>
+                                    <div className="mt-2">
+                                        <p className="text-sm text-gray-500">
+                                            Are you sure you want to delete this FAQ? This action cannot be undone.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="mt-5 flex justify-end gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowDeleteFaqConfirm(false)}
+                                    className="px-4 py-2 border rounded-md text-gray-700 hover:bg-gray-50"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={handleConfirmDeleteFaq}
+                                    className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+                                    disabled={deleteFaqMutation.isPending}
+                                >
+                                    {deleteFaqMutation.isPending ? (
+                                        <>
+                                            <FaSpinner className="animate-spin mr-2" />
+                                            Deleting...
+                                        </>
+                                    ) : (
+                                        'Delete'
+                                    )}
                                 </button>
                             </div>
                         </div>
