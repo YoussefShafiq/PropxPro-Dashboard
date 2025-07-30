@@ -104,7 +104,7 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
             return axios.get('https://api.propxpro.com/api/auth/me',
                 {
                     headers: {
-                        Authorization: `Bearer ${ localStorage.getItem('userToken') } `
+                        Authorization: `Bearer ${localStorage.getItem('userToken')} `
                     }
                 })
         }
@@ -115,996 +115,996 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
         try {
             await axios.patch(
                 `https://api.propxpro.com/api/admin/blogs/${blogId}/toggle-active`,
-{ },
-{
-    headers: {
-        Authorization: `Bearer ${localStorage.getItem('userToken')}`
-    }
-}
+                {},
+                {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem('userToken')}`
+                    }
+                }
             );
-toast.success(`Blog ${currentStatus ? 'deactivated' : 'activated'} successfully`, { duration: 2000 });
-refetch();
+            toast.success(`Blog ${currentStatus ? 'deactivated' : 'activated'} successfully`, { duration: 2000 });
+            refetch();
         } catch (error) {
-    toast.error(error.response?.data?.message || 'An unexpected error occurred', { duration: 3000 });
-    if (error.response?.status == 401) {
-        localStorage.removeItem('userToken')
-        navigate('/login')
-    }
-    if (error.response?.status == 403) {
-        toast.error('You are not authorized to view this page')
-        navigate('/home')
-    }
-} finally {
-    setTogglingBlogId(null);
-}
+            toast.error(error.response?.data?.message || 'An unexpected error occurred', { duration: 3000 });
+            if (error.response?.status == 401) {
+                localStorage.removeItem('userToken')
+                navigate('/login')
+            }
+            if (error.response?.status == 403) {
+                toast.error('You are not authorized to view this page')
+                navigate('/home')
+            }
+        } finally {
+            setTogglingBlogId(null);
+        }
     };
 
-const handleDeleteClick = (blogId) => {
-    setBlogToDelete(blogId);
-    setShowDeleteConfirm(true);
-};
+    const handleDeleteClick = (blogId) => {
+        setBlogToDelete(blogId);
+        setShowDeleteConfirm(true);
+    };
 
-const handleConfirmDelete = async () => {
-    if (!blogToDelete) return;
+    const handleConfirmDelete = async () => {
+        if (!blogToDelete) return;
 
-    setDeletingBlogId(blogToDelete);
-    setShowDeleteConfirm(false);
+        setDeletingBlogId(blogToDelete);
+        setShowDeleteConfirm(false);
 
-    try {
-        await axios.delete(
-            `https://api.propxpro.com/api/admin/blogs/${blogToDelete}`,
-            {
-                headers: {
-                    Authorization: `Bearer ${localStorage.getItem('userToken')}`
+        try {
+            await axios.delete(
+                `https://api.propxpro.com/api/admin/blogs/${blogToDelete}`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem('userToken')}`
+                    }
                 }
+            );
+            toast.success('Blog deleted successfully', { duration: 2000 });
+            refetch();
+        } catch (error) {
+            toast.error(error.response?.data?.message || 'An unexpected error occurred', { duration: 3000 });
+            if (error.response?.status == 401) {
+                localStorage.removeItem('userToken')
+                navigate('/login')
             }
-        );
-        toast.success('Blog deleted successfully', { duration: 2000 });
-        refetch();
-    } catch (error) {
-        toast.error(error.response?.data?.message || 'An unexpected error occurred', { duration: 3000 });
-        if (error.response?.status == 401) {
-            localStorage.removeItem('userToken')
-            navigate('/login')
+            if (error.response?.status == 403) {
+                toast.error('You are not authorized to view this page')
+                navigate('/home')
+            }
+        } finally {
+            setDeletingBlogId(null);
+            setBlogToDelete(null);
         }
-        if (error.response?.status == 403) {
-            toast.error('You are not authorized to view this page')
-            navigate('/home')
+    };
+
+    const handleFormChange = (e) => {
+        const { name, value, type, checked, files } = e.target;
+
+        if (type === 'file') {
+            setFormData(prev => ({
+                ...prev,
+                [name]: files[0]
+            }));
+        } else {
+            setFormData(prev => ({
+                ...prev,
+                [name]: type === 'checkbox' ? checked : value
+            }));
         }
-    } finally {
-        setDeletingBlogId(null);
-        setBlogToDelete(null);
-    }
-};
 
-const handleFormChange = (e) => {
-    const { name, value, type, checked, files } = e.target;
+        // Generate slug from title if it's not manually edited
+        if (name === 'title' && !isSlugManuallyEdited) {
+            const slug = generateSlug(value);
+            setFormData(prev => ({
+                ...prev,
+                slug: slug
+            }));
+        }
+    };
 
-    if (type === 'file') {
+    // Handle slug input change
+    const handleSlugChange = (e) => {
+        const { value } = e.target;
         setFormData(prev => ({
             ...prev,
-            [name]: files[0]
+            slug: value
         }));
-    } else {
-        setFormData(prev => ({
-            ...prev,
-            [name]: type === 'checkbox' ? checked : value
-        }));
-    }
+        setIsSlugManuallyEdited(true);
+    };
 
-    // Generate slug from title if it's not manually edited
-    if (name === 'title' && !isSlugManuallyEdited) {
-        const slug = generateSlug(value);
+    // Reset slug to auto-generated when clicking the reset button
+    const handleResetSlug = () => {
+        const slug = generateSlug(formData.title);
         setFormData(prev => ({
             ...prev,
             slug: slug
         }));
-    }
-};
+        setIsSlugManuallyEdited(false);
+    };
 
-// Handle slug input change
-const handleSlugChange = (e) => {
-    const { value } = e.target;
-    setFormData(prev => ({
-        ...prev,
-        slug: value
-    }));
-    setIsSlugManuallyEdited(true);
-};
+    const handleEditFormChange = (e) => {
+        const { name, value, type, checked, files } = e.target;
 
-// Reset slug to auto-generated when clicking the reset button
-const handleResetSlug = () => {
-    const slug = generateSlug(formData.title);
-    setFormData(prev => ({
-        ...prev,
-        slug: slug
-    }));
-    setIsSlugManuallyEdited(false);
-};
+        if (type === 'file') {
+            setEditFormData(prev => ({
+                ...prev,
+                [name]: files[0]
+            }));
+        } else {
+            setEditFormData(prev => ({
+                ...prev,
+                [name]: type === 'checkbox' ? checked : value
+            }));
+        }
 
-const handleEditFormChange = (e) => {
-    const { name, value, type, checked, files } = e.target;
+        // Generate slug from title if it's not manually edited
+        if (name === 'title' && !isEditSlugManuallyEdited) {
+            const slug = generateSlug(value);
+            setEditFormData(prev => ({
+                ...prev,
+                slug: slug
+            }));
+        }
+    };
 
-    if (type === 'file') {
+    // Handle edit slug input change
+    const handleEditSlugChange = (e) => {
+        const { value } = e.target;
         setEditFormData(prev => ({
             ...prev,
-            [name]: files[0]
+            slug: value
         }));
-    } else {
-        setEditFormData(prev => ({
-            ...prev,
-            [name]: type === 'checkbox' ? checked : value
-        }));
-    }
+        setIsEditSlugManuallyEdited(true);
+    };
 
-    // Generate slug from title if it's not manually edited
-    if (name === 'title' && !isEditSlugManuallyEdited) {
-        const slug = generateSlug(value);
+    // Reset edit slug to auto-generated when clicking the reset button
+    const handleEditResetSlug = () => {
+        const slug = generateSlug(editFormData.title);
         setEditFormData(prev => ({
             ...prev,
             slug: slug
         }));
-    }
-};
-
-// Handle edit slug input change
-const handleEditSlugChange = (e) => {
-    const { value } = e.target;
-    setEditFormData(prev => ({
-        ...prev,
-        slug: value
-    }));
-    setIsEditSlugManuallyEdited(true);
-};
-
-// Reset edit slug to auto-generated when clicking the reset button
-const handleEditResetSlug = () => {
-    const slug = generateSlug(editFormData.title);
-    setEditFormData(prev => ({
-        ...prev,
-        slug: slug
-    }));
-    setIsEditSlugManuallyEdited(false);
-};
-
-const handletagsChange = (e) => {
-    setFormData(prev => ({
-        ...prev,
-        tags: e.value
-    }));
-};
-
-const handleEdittagsChange = (e) => {
-    setEditFormData(prev => ({
-        ...prev,
-        tags: e.value
-    }));
-};
-
-const resetForm = () => {
-    setFormData({
-        title: '',
-        slug: '',
-        category: 'guides',
-        is_active: true,
-        mark_as_hero: true,
-        content: '',
-        cover_photo: null,
-        tags: [],
-        headings: []
-    });
-    setHeadings([]);
-    setIsSlugManuallyEdited(false);
-};
-
-const prepareEditForm = (blog) => {
-    setEditFormData({
-        id: blog.id,
-        title: blog.title,
-        slug: blog.slug,
-        category: blog.category,
-        is_active: blog.is_active,
-        mark_as_hero: blog.mark_as_hero,
-        content: blog.content,
-        cover_photo: null,
-        existing_cover_photo: blog.cover_photo_url,
-        tags: blog.tags || [],
-        headings: blog.headings || []
-    });
-    setEditHeadings(blog.headings || []);
-    setIsEditSlugManuallyEdited(true); // Assume slug was manually edited when editing
-    setShowEditModal(true);
-};
-
-const handleAddBlog = async (e) => {
-    e.preventDefault();
-
-    setUpdatingBlog(true);
-    try {
-        const formDataToSend = new FormData();
-        formDataToSend.append('title', formData.title);
-        formDataToSend.append('slug', formData.slug);
-        formDataToSend.append('category', formData.category);
-        formDataToSend.append('is_active', formData.is_active ? 1 : 0);
-        formDataToSend.append('mark_as_hero', formData.mark_as_hero ? 1 : 0);
-        formDataToSend.append('content', formData.content);
-        formDataToSend.append('headings', JSON.stringify(formData.headings));
-        formData.tags.forEach(skill => {
-            formDataToSend.append('tags[]', skill);
-        });
-        if (formData.cover_photo) {
-            formDataToSend.append('cover_photo', formData.cover_photo);
-        }
-
-        await axios.post(
-            'https://api.propxpro.com/api/admin/blogs',
-            formDataToSend,
-            {
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('userToken')}`,
-                    'Content-Type': 'multipart/form-data'
-                }
-            }
-        );
-        setUpdatingBlog(false);
-        toast.success('Blog added successfully', { duration: 2000 });
-        setShowAddModal(false);
-        resetForm();
-        refetch();
-    } catch (error) {
-        setUpdatingBlog(false);
-        toast.error(error.response?.data?.message || 'An unexpected error occurred', { duration: 3000 });
-        if (error.response?.status == 401) {
-            localStorage.removeItem('userToken')
-            navigate('/login')
-        }
-        if (error.response?.status == 403) {
-            toast.error('You are not authorized to view this page')
-            navigate('/home')
-        }
-    }
-};
-
-const handleUpdateBlog = async (e) => {
-    e.preventDefault();
-
-    setUpdatingBlog(true);
-    try {
-        const formDataToSend = new FormData();
-        formDataToSend.append('title', editFormData.title);
-        formDataToSend.append('slug', editFormData.slug);
-        formDataToSend.append('category', editFormData.category);
-        formDataToSend.append('is_active', editFormData.is_active ? 1 : 0);
-        formDataToSend.append('mark_as_hero', editFormData.mark_as_hero ? 1 : 0);
-        formDataToSend.append('content', editFormData.content);
-        formDataToSend.append('headings', JSON.stringify(editFormData.headings));
-        editFormData.tags.forEach(skill => {
-            formDataToSend.append('tags[]', skill);
-        });
-        formDataToSend.append('_method', 'POST');
-        if (editFormData.cover_photo) {
-            formDataToSend.append('cover_photo', editFormData.cover_photo);
-        }
-
-        await axios.post(
-            `https://api.propxpro.com/api/admin/blogs/${editFormData.id}`,
-            formDataToSend,
-            {
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('userToken')}`,
-                    'Content-Type': 'multipart/form-data'
-                }
-            }
-        );
-        setUpdatingBlog(false);
-        toast.success('Blog updated successfully', { duration: 2000 });
-        setShowEditModal(false);
-        refetch();
-    } catch (error) {
-        setUpdatingBlog(false);
-        toast.error(error.response?.data?.message || 'An unexpected error occurred', { duration: 3000 });
-        if (error.response?.status == 401) {
-            localStorage.removeItem('userToken')
-            navigate('/login')
-        }
-        if (error.response?.status == 403) {
-            toast.error('You are not authorized to view this page')
-            navigate('/home')
-        }
-    }
-};
-
-// Filter blogs based on all filter criteria
-const filteredBlogs = blogs?.filter(blog => {
-    return (
-        (filters.global === '' ||
-            blog.title.toLowerCase().includes(filters.global.toLowerCase()) ||
-            blog.category.toLowerCase().includes(filters.global.toLowerCase())) &&
-        (filters.title === '' ||
-            blog.title.toLowerCase().includes(filters.title.toLowerCase())) &&
-        (filters.category === '' || blog.category.includes(filters.category.toLowerCase())) &&
-        (filters.status === '' ||
-            (filters.status === 'active' ? blog.is_active : !blog.is_active))
-    );
-}) || [];
-
-// Pagination logic
-const totalPages = Math.ceil(filteredBlogs.length / rowsPerPage);
-const paginatedBlogs = filteredBlogs.slice(
-    (currentPage - 1) * rowsPerPage,
-    currentPage * rowsPerPage
-);
-
-const categoryBadge = (category) => {
-    const categories = {
-        'guides': 'bg-blue-100 text-blue-800',
-        'insights': 'bg-purple-100 text-purple-800',
-        'trending': 'bg-pink-100 text-pink-800'
+        setIsEditSlugManuallyEdited(false);
     };
-    return (
-        <span className={`${categories[category] || 'bg-gray-100 text-gray-800'} text-xs font-medium px-2.5 py-1 rounded capitalize`}>
-            {category}
-        </span>
+
+    const handletagsChange = (e) => {
+        setFormData(prev => ({
+            ...prev,
+            tags: e.value
+        }));
+    };
+
+    const handleEdittagsChange = (e) => {
+        setEditFormData(prev => ({
+            ...prev,
+            tags: e.value
+        }));
+    };
+
+    const resetForm = () => {
+        setFormData({
+            title: '',
+            slug: '',
+            category: 'guides',
+            is_active: true,
+            mark_as_hero: true,
+            content: '',
+            cover_photo: null,
+            tags: [],
+            headings: []
+        });
+        setHeadings([]);
+        setIsSlugManuallyEdited(false);
+    };
+
+    const prepareEditForm = (blog) => {
+        setEditFormData({
+            id: blog.id,
+            title: blog.title,
+            slug: blog.slug,
+            category: blog.category,
+            is_active: blog.is_active,
+            mark_as_hero: blog.mark_as_hero,
+            content: blog.content,
+            cover_photo: null,
+            existing_cover_photo: blog.cover_photo,
+            tags: blog.tags || [],
+            headings: blog.headings || []
+        });
+        setEditHeadings(blog.headings || []);
+        setIsEditSlugManuallyEdited(true); // Assume slug was manually edited when editing
+        setShowEditModal(true);
+    };
+
+    const handleAddBlog = async (e) => {
+        e.preventDefault();
+
+        setUpdatingBlog(true);
+        try {
+            const formDataToSend = new FormData();
+            formDataToSend.append('title', formData.title);
+            formDataToSend.append('slug', formData.slug);
+            formDataToSend.append('category', formData.category);
+            formDataToSend.append('is_active', formData.is_active ? 1 : 0);
+            formDataToSend.append('mark_as_hero', formData.mark_as_hero ? 1 : 0);
+            formDataToSend.append('content', formData.content);
+            formDataToSend.append('headings', JSON.stringify(formData.headings));
+            formData.tags.forEach(skill => {
+                formDataToSend.append('tags[]', skill);
+            });
+            if (formData.cover_photo) {
+                formDataToSend.append('cover_photo', formData.cover_photo);
+            }
+
+            await axios.post(
+                'https://api.propxpro.com/api/admin/blogs',
+                formDataToSend,
+                {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('userToken')}`,
+                        'Content-Type': 'multipart/form-data'
+                    }
+                }
+            );
+            setUpdatingBlog(false);
+            toast.success('Blog added successfully', { duration: 2000 });
+            setShowAddModal(false);
+            resetForm();
+            refetch();
+        } catch (error) {
+            setUpdatingBlog(false);
+            toast.error(error.response?.data?.message || 'An unexpected error occurred', { duration: 3000 });
+            if (error.response?.status == 401) {
+                localStorage.removeItem('userToken')
+                navigate('/login')
+            }
+            if (error.response?.status == 403) {
+                toast.error('You are not authorized to view this page')
+                navigate('/home')
+            }
+        }
+    };
+
+    const handleUpdateBlog = async (e) => {
+        e.preventDefault();
+
+        setUpdatingBlog(true);
+        try {
+            const formDataToSend = new FormData();
+            formDataToSend.append('title', editFormData.title);
+            formDataToSend.append('slug', editFormData.slug);
+            formDataToSend.append('category', editFormData.category);
+            formDataToSend.append('is_active', editFormData.is_active ? 1 : 0);
+            formDataToSend.append('mark_as_hero', editFormData.mark_as_hero ? 1 : 0);
+            formDataToSend.append('content', editFormData.content);
+            formDataToSend.append('headings', JSON.stringify(editFormData.headings));
+            editFormData.tags.forEach(skill => {
+                formDataToSend.append('tags[]', skill);
+            });
+            formDataToSend.append('_method', 'POST');
+            if (editFormData.cover_photo) {
+                formDataToSend.append('cover_photo', editFormData.cover_photo);
+            }
+
+            await axios.post(
+                `https://api.propxpro.com/api/admin/blogs/${editFormData.id}`,
+                formDataToSend,
+                {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('userToken')}`,
+                        'Content-Type': 'multipart/form-data'
+                    }
+                }
+            );
+            setUpdatingBlog(false);
+            toast.success('Blog updated successfully', { duration: 2000 });
+            setShowEditModal(false);
+            refetch();
+        } catch (error) {
+            setUpdatingBlog(false);
+            toast.error(error.response?.data?.message || 'An unexpected error occurred', { duration: 3000 });
+            if (error.response?.status == 401) {
+                localStorage.removeItem('userToken')
+                navigate('/login')
+            }
+            if (error.response?.status == 403) {
+                toast.error('You are not authorized to view this page')
+                navigate('/home')
+            }
+        }
+    };
+
+    // Filter blogs based on all filter criteria
+    const filteredBlogs = blogs?.filter(blog => {
+        return (
+            (filters.global === '' ||
+                blog.title.toLowerCase().includes(filters.global.toLowerCase()) ||
+                blog.category.toLowerCase().includes(filters.global.toLowerCase())) &&
+            (filters.title === '' ||
+                blog.title.toLowerCase().includes(filters.title.toLowerCase())) &&
+            (filters.category === '' || blog.category.includes(filters.category.toLowerCase())) &&
+            (filters.status === '' ||
+                (filters.status === 'active' ? blog.is_active : !blog.is_active))
+        );
+    }) || [];
+
+    // Pagination logic
+    const totalPages = Math.ceil(filteredBlogs.length / rowsPerPage);
+    const paginatedBlogs = filteredBlogs.slice(
+        (currentPage - 1) * rowsPerPage,
+        currentPage * rowsPerPage
     );
-};
 
-const statusBadge = (is_active) => {
-    const statusClass = is_active
-        ? 'bg-[#009379] text-white'
-        : 'bg-[#930002] text-white';
-    return (
-        <span className={`flex justify-center w-fit items-center px-2.5 py-1 rounded-md text-xs font-medium ${statusClass} min-w-16 text-center`}>
-            {is_active ? 'Active' : 'Inactive'}
-        </span>
-    );
-};
+    const categoryBadge = (category) => {
+        const categories = {
+            'guides': 'bg-blue-100 text-blue-800',
+            'insights': 'bg-purple-100 text-purple-800',
+            'trending': 'bg-pink-100 text-pink-800'
+        };
+        return (
+            <span className={`${categories[category] || 'bg-gray-100 text-gray-800'} text-xs font-medium px-2.5 py-1 rounded capitalize`}>
+                {category}
+            </span>
+        );
+    };
 
-const emailsCountBadge = (count) => {
-    const emailCount = count || 0;
-    const colorClass = emailCount > 0
-        ? 'bg-green-100 text-green-800 border-green-200'
-        : 'bg-gray-100 text-gray-600 border-gray-200';
+    const statusBadge = (is_active) => {
+        const statusClass = is_active
+            ? 'bg-[#009379] text-white'
+            : 'bg-[#930002] text-white';
+        return (
+            <span className={`flex justify-center w-fit items-center px-2.5 py-1 rounded-md text-xs font-medium ${statusClass} min-w-16 text-center`}>
+                {is_active ? 'Active' : 'Inactive'}
+            </span>
+        );
+    };
 
-    return (
-        <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border ${colorClass}`}>
-            <FaEnvelope size={10} />
-            {emailCount}
-        </span>
-    );
-};
+    const emailsCountBadge = (count) => {
+        const emailCount = count || 0;
+        const colorClass = emailCount > 0
+            ? 'bg-green-100 text-green-800 border-green-200'
+            : 'bg-gray-100 text-gray-600 border-gray-200';
 
-const renderPagination = () => {
-    if (totalPages <= 1) return null;
+        return (
+            <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border ${colorClass}`}>
+                <FaEnvelope size={10} />
+                {emailCount}
+            </span>
+        );
+    };
 
-    return (
-        <div className="flex justify-between items-center mt-4 px-4 pb-1">
-            <div className='text-xs'>
-                Showing {((currentPage - 1) * rowsPerPage + 1)}-{Math.min(currentPage * rowsPerPage, filteredBlogs.length)} of {filteredBlogs.length} entries
+    const renderPagination = () => {
+        if (totalPages <= 1) return null;
+
+        return (
+            <div className="flex justify-between items-center mt-4 px-4 pb-1">
+                <div className='text-xs'>
+                    Showing {((currentPage - 1) * rowsPerPage + 1)}-{Math.min(currentPage * rowsPerPage, filteredBlogs.length)} of {filteredBlogs.length} entries
+                </div>
+                <div className="flex gap-1">
+                    <button
+                        onClick={() => setCurrentPage(1)}
+                        disabled={currentPage === 1}
+                        className="p-1 disabled:opacity-50"
+                    >
+                        <FaChevronLeft className="h-4 w-4" />
+                    </button>
+                    <span className="px-3 py-1">
+                        Page {currentPage} of {totalPages}
+                    </span>
+                    <button
+                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                        disabled={currentPage === totalPages}
+                        className="p-1 disabled:opacity-50"
+                    >
+                        <FaChevronRight className="h-4 w-4" />
+                    </button>
+                </div>
             </div>
-            <div className="flex gap-1">
-                <button
-                    onClick={() => setCurrentPage(1)}
-                    disabled={currentPage === 1}
-                    className="p-1 disabled:opacity-50"
+        );
+    };
+
+    return (
+        <div className="shadow-2xl rounded-2xl overflow-hidden bg-white">
+            {/* Global Search and Add Button */}
+            <div className="p-4 border-b flex justify-between items-center gap-4">
+                <input
+                    type="text"
+                    value={filters.global}
+                    onChange={(e) => handleFilterChange('global', e.target.value)}
+                    placeholder="Search blogs..."
+                    className="px-3 py-2 rounded-xl shadow-sm focus:outline-2 focus:outline-primary w-full border border-primary transition-all"
+                />
+                {currentUser?.data?.data?.permissions?.includes('create_blog') && <button
+                    onClick={() => setShowAddModal(true)}
+                    className="bg-primary hover:bg-darkBlue transition-all text-white px-3 py-2 rounded-xl shadow-sm min-w-max flex items-center gap-2"
                 >
-                    <FaChevronLeft className="h-4 w-4" />
-                </button>
-                <span className="px-3 py-1">
-                    Page {currentPage} of {totalPages}
-                </span>
-                <button
-                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                    disabled={currentPage === totalPages}
-                    className="p-1 disabled:opacity-50"
-                >
-                    <FaChevronRight className="h-4 w-4" />
-                </button>
+                    <FaPlus size={18} />
+                    <span>Add Blog</span>
+                </button>}
             </div>
-        </div>
-    );
-};
 
-return (
-    <div className="shadow-2xl rounded-2xl overflow-hidden bg-white">
-        {/* Global Search and Add Button */}
-        <div className="p-4 border-b flex justify-between items-center gap-4">
-            <input
-                type="text"
-                value={filters.global}
-                onChange={(e) => handleFilterChange('global', e.target.value)}
-                placeholder="Search blogs..."
-                className="px-3 py-2 rounded-xl shadow-sm focus:outline-2 focus:outline-primary w-full border border-primary transition-all"
-            />
-            {currentUser?.data?.data?.permissions?.includes('create_blog') && <button
-                onClick={() => setShowAddModal(true)}
-                className="bg-primary hover:bg-darkBlue transition-all text-white px-3 py-2 rounded-xl shadow-sm min-w-max flex items-center gap-2"
-            >
-                <FaPlus size={18} />
-                <span>Add Blog</span>
-            </button>}
-        </div>
-
-        {/* Table */}
-        <div className="overflow-x-auto">
-            <table className="w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                    <tr>
-                        <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            <input
-                                type="text"
-                                placeholder="Title"
-                                value={filters.title}
-                                onChange={(e) => handleFilterChange('title', e.target.value)}
-                                className="text-xs p-1 border rounded w-full"
-                            />
-                        </th>
-                        <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Cover Photo
-                        </th>
-                        <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            <select
-                                value={filters.category}
-                                onChange={(e) => handleFilterChange('category', e.target.value)}
-                                className="text-xs p-1 border rounded w-full"
-                            >
-                                <option value="">All Categories</option>
-                                <option value="guides">Guides</option>
-                                <option value="insights">Insights</option>
-                                <option value="trending">Trending</option>
-                            </select>
-                        </th>
-                        <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            <select
-                                value={filters.status}
-                                onChange={(e) => handleFilterChange('status', e.target.value)}
-                                className="text-xs p-1 border rounded w-full"
-                            >
-                                <option value="">All Statuses</option>
-                                <option value="active">Active</option>
-                                <option value="inactive">Inactive</option>
-                            </select>
-                        </th>
-                        <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Emails Sent
-                        </th>
-                        <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Actions
-                        </th>
-                    </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200 text-sm">
-                    {loading ? (
+            {/* Table */}
+            <div className="overflow-x-auto">
+                <table className="w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
                         <tr>
-                            <td colSpan="7" className="px-3 py-4 text-center">
-                                <div className="flex justify-center items-center gap-2">
-                                    <FaSpinner className="animate-spin" size={18} />
-                                    Loading blogs...
-                                </div>
-                            </td>
+                            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <input
+                                    type="text"
+                                    placeholder="Title"
+                                    value={filters.title}
+                                    onChange={(e) => handleFilterChange('title', e.target.value)}
+                                    className="text-xs p-1 border rounded w-full"
+                                />
+                            </th>
+                            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Cover Photo
+                            </th>
+                            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <select
+                                    value={filters.category}
+                                    onChange={(e) => handleFilterChange('category', e.target.value)}
+                                    className="text-xs p-1 border rounded w-full"
+                                >
+                                    <option value="">All Categories</option>
+                                    <option value="guides">Guides</option>
+                                    <option value="insights">Insights</option>
+                                    <option value="trending">Trending</option>
+                                </select>
+                            </th>
+                            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <select
+                                    value={filters.status}
+                                    onChange={(e) => handleFilterChange('status', e.target.value)}
+                                    className="text-xs p-1 border rounded w-full"
+                                >
+                                    <option value="">All Statuses</option>
+                                    <option value="active">Active</option>
+                                    <option value="inactive">Inactive</option>
+                                </select>
+                            </th>
+                            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Emails Sent
+                            </th>
+                            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Actions
+                            </th>
                         </tr>
-                    ) : paginatedBlogs.length === 0 ? (
-                        <tr>
-                            <td colSpan="7" className="px-3 py-4 text-center">
-                                No blogs found
-                            </td>
-                        </tr>
-                    ) : (
-                        paginatedBlogs.map((blog) => (
-                            <tr key={blog.id} className="hover:bg-gray-50">
-                                <td className="px-3 py-4 whitespace-nowrap">
-                                    <div className="font-medium">{blog.title}</div>
-                                    <div className="text-xs text-gray-500">{blog.slug}</div>
-                                </td>
-                                <td className="px-3 py-4 whitespace-nowrap">
-                                    {blog.cover_photo_url && (
-                                        <img
-                                            src={blog.cover_photo_url}
-                                            alt="Cover"
-                                            className="h-10 w-10 object-cover rounded"
-                                        />
-                                    )}
-                                </td>
-                                <td className="px-3 py-4 whitespace-nowrap">
-                                    {categoryBadge(blog.category)}
-                                </td>
-                                <td className="px-3 py-4 whitespace-nowrap">
-                                    {statusBadge(blog.is_active)}
-                                </td>
-                                <td className="px-3 py-4 whitespace-nowrap">
-                                    {emailsCountBadge(blog.emails_sent_count)}
-                                </td>
-                                <td className="px-3 py-4 whitespace-nowrap">
-                                    <div className="flex items-center gap-2">
-                                        {currentUser?.data?.data?.permissions?.includes('edit_blog') && <button
-                                            className="text-blue-500 hover:text-blue-700 p-1"
-                                            onClick={() => prepareEditForm(blog)}
-                                        >
-                                            <FaEdit size={18} />
-                                        </button>}
-                                        {currentUser?.data?.data?.permissions?.includes('toggle_blog_status') && <button
-                                            className={`${blog.is_active ? 'text-red-500 hover:text-red-700' : 'text-green-500 hover:text-green-700'} p-1`}
-                                            onClick={() => handleToggleStatus(blog.id, blog.is_active)}
-                                            disabled={togglingBlogId === blog.id}
-                                        >
-                                            {togglingBlogId === blog.id ? (
-                                                <FaSpinner className="animate-spin" size={18} />
-                                            ) : (
-                                                blog.is_active ? <FaTimes /> : <FaCheck />
-                                            )}
-                                        </button>}
-                                        {currentUser?.data?.data?.permissions?.includes('delete_blog') && <button
-                                            className="text-red-500 hover:text-red-700 p-1"
-                                            onClick={() => handleDeleteClick(blog.id)}
-                                            disabled={deletingBlogId === blog.id}
-                                        >
-                                            {deletingBlogId === blog.id ? (
-                                                <FaSpinner className="animate-spin" size={18} />
-                                            ) : (
-                                                <FaTrashAlt size={18} />
-                                            )}
-                                        </button>}
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200 text-sm">
+                        {loading ? (
+                            <tr>
+                                <td colSpan="7" className="px-3 py-4 text-center">
+                                    <div className="flex justify-center items-center gap-2">
+                                        <FaSpinner className="animate-spin" size={18} />
+                                        Loading blogs...
                                     </div>
                                 </td>
                             </tr>
-                        ))
-                    )}
-                </tbody>
-            </table>
-        </div>
-
-        {/* Pagination */}
-        {!loading && renderPagination()}
-
-        {/* Add Blog Modal */}
-        {showAddModal && (
-            <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-                onClick={() => setShowAddModal(false)}
-            >
-                <motion.div
-                    initial={{ y: -50, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    exit={{ y: 50, opacity: 0 }}
-                    className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto"
-                    onClick={(e) => e.stopPropagation()}
-                >
-                    <div className="p-6">
-                        <h2 className="text-xl font-bold mb-4">Add New Blog</h2>
-                        <form onSubmit={handleAddBlog}>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Title*</label>
-                                    <input
-                                        type="text"
-                                        name="title"
-                                        value={formData.title}
-                                        onChange={handleFormChange}
-                                        className="w-full px-3 py-2 border rounded-md"
-                                        required
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Category*</label>
-                                    <select
-                                        name="category"
-                                        value={formData.category}
-                                        onChange={handleFormChange}
-                                        className="w-full px-3 py-2 border rounded-md"
-                                        required
-                                    >
-                                        <option value="guides">Guides</option>
-                                        <option value="insights">Insights</option>
-                                        <option value="trending">Trending</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div className="mb-4">
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Slug*</label>
-                                <div className="relative">
-                                    <input
-                                        type="text"
-                                        name="slug"
-                                        value={formData.slug}
-                                        onChange={handleSlugChange}
-                                        className="w-full px-3 py-2 border rounded-md"
-                                        required
-                                    />
-                                    {isSlugManuallyEdited && (
-                                        <button
-                                            type="button"
-                                            onClick={handleResetSlug}
-                                            className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                                            title="Reset to auto-generated slug"
-                                        >
-                                            <FaTimes />
-                                        </button>
-                                    )}
-                                </div>
-                                <p className="text-xs text-gray-500 mt-1">
-                                    {isSlugManuallyEdited ?
-                                        "Slug is manually edited. Click the X to reset to auto-generated." :
-                                        "Slug is auto-generated from title. You can edit it manually."}
-                                </p>
-                            </div>
-
-                            <div className="mb-4">
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Cover Photo</label>
-                                {formData.cover_photo ? (
-                                    <div className="relative mb-4">
-                                        <img
-                                            src={URL.createObjectURL(formData.cover_photo)}
-                                            alt="Preview"
-                                            className="h-48 w-full object-cover rounded-lg"
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={() => setFormData(prev => ({ ...prev, cover_photo: null }))}
-                                            className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-2"
-                                        >
-                                            <FaTimes size={16} />
-                                        </button>
-                                    </div>
-                                ) : (
-                                    <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
-                                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                            <FaImage className="w-8 h-8 mb-3 text-gray-400" />
-                                            <p className="mb-2 text-sm text-gray-500">
-                                                <span className="font-semibold">Click to upload</span> or drag and drop
-                                            </p>
-                                            <p className="text-xs text-gray-500">
-                                                PNG, JPG, JPEG (MAX. 5MB)
-                                            </p>
+                        ) : paginatedBlogs.length === 0 ? (
+                            <tr>
+                                <td colSpan="7" className="px-3 py-4 text-center">
+                                    No blogs found
+                                </td>
+                            </tr>
+                        ) : (
+                            paginatedBlogs.map((blog) => (
+                                <tr key={blog.id} className="hover:bg-gray-50">
+                                    <td className="px-3 py-4 whitespace-nowrap">
+                                        <div className="font-medium">{blog.title}</div>
+                                        <div className="text-xs text-gray-500">{blog.slug}</div>
+                                    </td>
+                                    <td className="px-3 py-4 whitespace-nowrap">
+                                        {blog.cover_photo && (
+                                            <img
+                                                src={blog.cover_photo}
+                                                alt="Cover"
+                                                className="h-10 w-10 object-cover rounded"
+                                            />
+                                        )}
+                                    </td>
+                                    <td className="px-3 py-4 whitespace-nowrap">
+                                        {categoryBadge(blog.category)}
+                                    </td>
+                                    <td className="px-3 py-4 whitespace-nowrap">
+                                        {statusBadge(blog.is_active)}
+                                    </td>
+                                    <td className="px-3 py-4 whitespace-nowrap">
+                                        {emailsCountBadge(blog.emails_sent_count)}
+                                    </td>
+                                    <td className="px-3 py-4 whitespace-nowrap">
+                                        <div className="flex items-center gap-2">
+                                            {currentUser?.data?.data?.permissions?.includes('edit_blog') && <button
+                                                className="text-blue-500 hover:text-blue-700 p-1"
+                                                onClick={() => prepareEditForm(blog)}
+                                            >
+                                                <FaEdit size={18} />
+                                            </button>}
+                                            {currentUser?.data?.data?.permissions?.includes('toggle_blog_status') && <button
+                                                className={`${blog.is_active ? 'text-red-500 hover:text-red-700' : 'text-green-500 hover:text-green-700'} p-1`}
+                                                onClick={() => handleToggleStatus(blog.id, blog.is_active)}
+                                                disabled={togglingBlogId === blog.id}
+                                            >
+                                                {togglingBlogId === blog.id ? (
+                                                    <FaSpinner className="animate-spin" size={18} />
+                                                ) : (
+                                                    blog.is_active ? <FaTimes /> : <FaCheck />
+                                                )}
+                                            </button>}
+                                            {currentUser?.data?.data?.permissions?.includes('delete_blog') && <button
+                                                className="text-red-500 hover:text-red-700 p-1"
+                                                onClick={() => handleDeleteClick(blog.id)}
+                                                disabled={deletingBlogId === blog.id}
+                                            >
+                                                {deletingBlogId === blog.id ? (
+                                                    <FaSpinner className="animate-spin" size={18} />
+                                                ) : (
+                                                    <FaTrashAlt size={18} />
+                                                )}
+                                            </button>}
                                         </div>
+                                    </td>
+                                </tr>
+                            ))
+                        )}
+                    </tbody>
+                </table>
+            </div>
+
+            {/* Pagination */}
+            {!loading && renderPagination()}
+
+            {/* Add Blog Modal */}
+            {showAddModal && (
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+                    onClick={() => setShowAddModal(false)}
+                >
+                    <motion.div
+                        initial={{ y: -50, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        exit={{ y: 50, opacity: 0 }}
+                        className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="p-6">
+                            <h2 className="text-xl font-bold mb-4">Add New Blog</h2>
+                            <form onSubmit={handleAddBlog}>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Title*</label>
                                         <input
-                                            id="cover_photo"
-                                            name="cover_photo"
-                                            type="file"
-                                            className="hidden"
+                                            type="text"
+                                            name="title"
+                                            value={formData.title}
                                             onChange={handleFormChange}
-                                            accept="image/*"
+                                            className="w-full px-3 py-2 border rounded-md"
+                                            required
                                         />
-                                    </label>
-                                )}
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                                <div className="flex items-center">
-                                    <input
-                                        type="checkbox"
-                                        id="is_active"
-                                        name="is_active"
-                                        checked={formData.is_active}
-                                        onChange={handleFormChange}
-                                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                                    />
-                                    <label htmlFor="is_active" className="ml-2 text-sm text-gray-700">
-                                        Active
-                                    </label>
-                                </div>
-                            </div>
-
-                            <div className="mb-4">
-                                <label htmlFor="tags" className="block text-sm font-medium mb-1">Tags</label>
-                                <Chips
-                                    id="tags"
-                                    name="tags"
-                                    value={formData.tags}
-                                    onChange={handletagsChange}
-                                    placeholder="Enter tags"
-                                    className="w-full p-chips dark:bg-dark2"
-                                    itemTemplate={(skill) => (
-                                        <div className="bg-gray-200 dark:bg-dark1 rounded-full px-3 py-1 text-sm">
-                                            {skill}
-                                        </div>
-                                    )}
-                                />
-                            </div>
-
-                            <div className="mb-4">
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Content*</label>
-                                <TiptapWithImg
-                                    content={formData.content}
-                                    onUpdate={(content) => setFormData(prev => ({ ...prev, content }))}
-                                    onHeadingsUpdate={handleHeadingsUpdate}
-                                />
-                            </div>
-
-                            <div className="flex justify-end gap-3 mt-6">
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        setShowAddModal(false);
-                                        resetForm();
-                                    }}
-                                    className="px-4 py-2 border rounded-md text-gray-700 hover:bg-gray-50"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    type="submit"
-                                    className="px-4 py-2 bg-primary text-white rounded-md hover:bg-darkBlue transition-all flex items-center justify-center gap-2"
-                                    disabled={updatingBlog}
-                                >
-                                    {updatingBlog ? (
-                                        <>
-                                            <FaSpinner className="animate-spin" size={18} />
-                                            <span>Adding...</span>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <FaPlus size={18} />
-                                            <span>Add Blog</span>
-                                        </>
-                                    )}
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </motion.div>
-            </motion.div>
-        )}
-
-        {/* Edit Blog Modal */}
-        {showEditModal && (
-            <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-                onClick={() => setShowEditModal(false)}
-            >
-                <motion.div
-                    initial={{ y: -50, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    exit={{ y: 50, opacity: 0 }}
-                    className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto"
-                    onClick={(e) => e.stopPropagation()}
-                >
-                    <div className="p-6">
-                        <h2 className="text-xl font-bold mb-4">Edit Blog</h2>
-                        <form onSubmit={handleUpdateBlog}>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Title*</label>
-                                    <input
-                                        type="text"
-                                        name="title"
-                                        value={editFormData.title}
-                                        onChange={handleEditFormChange}
-                                        className="w-full px-3 py-2 border rounded-md"
-                                        required
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Category*</label>
-                                    <select
-                                        name="category"
-                                        value={editFormData.category}
-                                        onChange={handleEditFormChange}
-                                        className="w-full px-3 py-2 border rounded-md"
-                                        required
-                                    >
-                                        <option value="guides">Guides</option>
-                                        <option value="insights">Insights</option>
-                                        <option value="trending">Trending</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div className="mb-4">
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Slug*</label>
-                                <div className="relative">
-                                    <input
-                                        type="text"
-                                        name="slug"
-                                        value={editFormData.slug}
-                                        onChange={handleEditSlugChange}
-                                        className="w-full px-3 py-2 border rounded-md"
-                                        required
-                                    />
-                                    {isEditSlugManuallyEdited && (
-                                        <button
-                                            type="button"
-                                            onClick={handleEditResetSlug}
-                                            className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                                            title="Reset to auto-generated slug"
-                                        >
-                                            <FaTimes />
-                                        </button>
-                                    )}
-                                </div>
-                                <p className="text-xs text-gray-500 mt-1">
-                                    {isEditSlugManuallyEdited ?
-                                        "Slug is manually edited. Click the X to reset to auto-generated." :
-                                        "Slug is auto-generated from title. You can edit it manually."}
-                                </p>
-                            </div>
-
-                            <div className="mb-4">
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Cover Photo</label>
-                                {editFormData.cover_photo ? (
-                                    <div className="relative mb-4">
-                                        <img
-                                            src={URL.createObjectURL(editFormData.cover_photo)}
-                                            alt="Preview"
-                                            className="h-48 w-full object-cover rounded-lg"
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={() => setEditFormData(prev => ({ ...prev, cover_photo: null }))}
-                                            className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-2"
-                                        >
-                                            <FaTimes size={16} />
-                                        </button>
                                     </div>
-                                ) : editFormData.existing_cover_photo ? (
-                                    <div className="relative mb-4">
-                                        <img
-                                            src={editFormData.existing_cover_photo}
-                                            alt="Current Cover"
-                                            className="h-48 w-full object-cover rounded-lg"
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={() => setEditFormData(prev => ({ ...prev, existing_cover_photo: null }))}
-                                            className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-2"
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Category*</label>
+                                        <select
+                                            name="category"
+                                            value={formData.category}
+                                            onChange={handleFormChange}
+                                            className="w-full px-3 py-2 border rounded-md"
+                                            required
                                         >
-                                            <FaTimes size={16} />
-                                        </button>
+                                            <option value="guides">Guides</option>
+                                            <option value="insights">Insights</option>
+                                            <option value="trending">Trending</option>
+                                        </select>
                                     </div>
-                                ) : (
-                                    <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
-                                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                            <FaImage className="w-8 h-8 mb-3 text-gray-400" />
-                                            <p className="mb-2 text-sm text-gray-500">
-                                                <span className="font-semibold">Click to upload</span> or drag and drop
-                                            </p>
-                                            <p className="text-xs text-gray-500">
-                                                PNG, JPG, JPEG (MAX. 5MB)
-                                            </p>
-                                        </div>
+                                </div>
+
+                                <div className="mb-4">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Slug*</label>
+                                    <div className="relative">
                                         <input
-                                            id="edit_cover_photo"
-                                            name="cover_photo"
-                                            type="file"
-                                            className="hidden"
-                                            onChange={handleEditFormChange}
-                                            accept="image/*"
+                                            type="text"
+                                            name="slug"
+                                            value={formData.slug}
+                                            onChange={handleSlugChange}
+                                            className="w-full px-3 py-2 border rounded-md"
+                                            required
                                         />
-                                    </label>
-                                )}
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                                <div className="flex items-center">
-                                    <input
-                                        type="checkbox"
-                                        id="edit_is_active"
-                                        name="is_active"
-                                        checked={editFormData.is_active}
-                                        onChange={handleEditFormChange}
-                                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                                    />
-                                    <label htmlFor="edit_is_active" className="ml-2 text-sm text-gray-700">
-                                        Active
-                                    </label>
-                                </div>
-                            </div>
-
-                            <div className="mb-4">
-                                <label htmlFor="tags" className="block text-sm font-medium mb-1">tags</label>
-                                <Chips
-                                    id="tags"
-                                    name="tags"
-                                    value={editFormData.tags}
-                                    onChange={handleEdittagsChange}
-                                    placeholder="Enter tags"
-                                    className="w-full p-chips dark:bg-dark2"
-                                    itemTemplate={(skill) => (
-                                        <div className="bg-gray-200 dark:bg-dark1 rounded-full px-3 py-1 text-sm">
-                                            {skill}
-                                        </div>
-                                    )}
-                                />
-                            </div>
-
-                            <div className="mb-4">
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Content</label>
-                                <TiptapWithImg
-                                    content={editFormData.content}
-                                    onUpdate={(content) => setEditFormData(prev => ({ ...prev, content }))}
-                                    onHeadingsUpdate={handleEditHeadingsUpdate}
-                                />
-                            </div>
-
-                            <div className="flex justify-end gap-3 mt-6">
-                                <button
-                                    type="button"
-                                    onClick={() => setShowEditModal(false)}
-                                    className="px-4 py-2 border rounded-md text-gray-700 hover:bg-gray-50"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    type="submit"
-                                    className="px-4 py-2 bg-primary text-white rounded-md hover:bg-darkBlue transition-all flex items-center justify-center gap-2"
-                                    disabled={updatingBlog}
-                                >
-                                    {updatingBlog ? (
-                                        <>
-                                            <FaSpinner className="animate-spin" size={18} />
-                                            <span>Updating...</span>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <FaCheck size={18} />
-                                            <span>Update Blog</span>
-                                        </>
-                                    )}
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </motion.div>
-            </motion.div>
-        )}
-
-        {/* Delete Confirmation Modal */}
-        {showDeleteConfirm && (
-            <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-                onClick={() => setShowDeleteConfirm(false)}
-            >
-                <motion.div
-                    initial={{ scale: 0.9, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    exit={{ scale: 0.9, opacity: 0 }}
-                    className="bg-white rounded-lg shadow-xl w-full max-w-md"
-                    onClick={(e) => e.stopPropagation()}
-                >
-                    <div className="p-6">
-                        <div className="flex items-start">
-                            <div className="flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
-                                <FaTrashAlt className="h-5 w-5 text-red-600" />
-                            </div>
-                            <div className="ml-4">
-                                <h3 className="text-lg font-medium text-gray-900">Delete Blog</h3>
-                                <div className="mt-2">
-                                    <p className="text-sm text-gray-500">
-                                        Are you sure you want to delete this blog? This action cannot be undone.
+                                        {isSlugManuallyEdited && (
+                                            <button
+                                                type="button"
+                                                onClick={handleResetSlug}
+                                                className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                                                title="Reset to auto-generated slug"
+                                            >
+                                                <FaTimes />
+                                            </button>
+                                        )}
+                                    </div>
+                                    <p className="text-xs text-gray-500 mt-1">
+                                        {isSlugManuallyEdited ?
+                                            "Slug is manually edited. Click the X to reset to auto-generated." :
+                                            "Slug is auto-generated from title. You can edit it manually."}
                                     </p>
                                 </div>
+
+                                <div className="mb-4">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Cover Photo</label>
+                                    {formData.cover_photo ? (
+                                        <div className="relative mb-4">
+                                            <img
+                                                src={URL.createObjectURL(formData.cover_photo)}
+                                                alt="Preview"
+                                                className="h-48 w-full object-cover rounded-lg"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => setFormData(prev => ({ ...prev, cover_photo: null }))}
+                                                className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-2"
+                                            >
+                                                <FaTimes size={16} />
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+                                            <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                                <FaImage className="w-8 h-8 mb-3 text-gray-400" />
+                                                <p className="mb-2 text-sm text-gray-500">
+                                                    <span className="font-semibold">Click to upload</span> or drag and drop
+                                                </p>
+                                                <p className="text-xs text-gray-500">
+                                                    PNG, JPG, JPEG (MAX. 5MB)
+                                                </p>
+                                            </div>
+                                            <input
+                                                id="cover_photo"
+                                                name="cover_photo"
+                                                type="file"
+                                                className="hidden"
+                                                onChange={handleFormChange}
+                                                accept="image/*"
+                                            />
+                                        </label>
+                                    )}
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                    <div className="flex items-center">
+                                        <input
+                                            type="checkbox"
+                                            id="is_active"
+                                            name="is_active"
+                                            checked={formData.is_active}
+                                            onChange={handleFormChange}
+                                            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                        />
+                                        <label htmlFor="is_active" className="ml-2 text-sm text-gray-700">
+                                            Active
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div className="mb-4">
+                                    <label htmlFor="tags" className="block text-sm font-medium mb-1">Tags</label>
+                                    <Chips
+                                        id="tags"
+                                        name="tags"
+                                        value={formData.tags}
+                                        onChange={handletagsChange}
+                                        placeholder="Enter tags"
+                                        className="w-full p-chips dark:bg-dark2"
+                                        itemTemplate={(skill) => (
+                                            <div className="bg-gray-200 dark:bg-dark1 rounded-full px-3 py-1 text-sm">
+                                                {skill}
+                                            </div>
+                                        )}
+                                    />
+                                </div>
+
+                                <div className="mb-4">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Content*</label>
+                                    <TiptapWithImg
+                                        content={formData.content}
+                                        onUpdate={(content) => setFormData(prev => ({ ...prev, content }))}
+                                        onHeadingsUpdate={handleHeadingsUpdate}
+                                    />
+                                </div>
+
+                                <div className="flex justify-end gap-3 mt-6">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setShowAddModal(false);
+                                            resetForm();
+                                        }}
+                                        className="px-4 py-2 border rounded-md text-gray-700 hover:bg-gray-50"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        className="px-4 py-2 bg-primary text-white rounded-md hover:bg-darkBlue transition-all flex items-center justify-center gap-2"
+                                        disabled={updatingBlog}
+                                    >
+                                        {updatingBlog ? (
+                                            <>
+                                                <FaSpinner className="animate-spin" size={18} />
+                                                <span>Adding...</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <FaPlus size={18} />
+                                                <span>Add Blog</span>
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </motion.div>
+                </motion.div>
+            )}
+
+            {/* Edit Blog Modal */}
+            {showEditModal && (
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+                    onClick={() => setShowEditModal(false)}
+                >
+                    <motion.div
+                        initial={{ y: -50, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        exit={{ y: 50, opacity: 0 }}
+                        className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="p-6">
+                            <h2 className="text-xl font-bold mb-4">Edit Blog</h2>
+                            <form onSubmit={handleUpdateBlog}>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Title*</label>
+                                        <input
+                                            type="text"
+                                            name="title"
+                                            value={editFormData.title}
+                                            onChange={handleEditFormChange}
+                                            className="w-full px-3 py-2 border rounded-md"
+                                            required
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Category*</label>
+                                        <select
+                                            name="category"
+                                            value={editFormData.category}
+                                            onChange={handleEditFormChange}
+                                            className="w-full px-3 py-2 border rounded-md"
+                                            required
+                                        >
+                                            <option value="guides">Guides</option>
+                                            <option value="insights">Insights</option>
+                                            <option value="trending">Trending</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div className="mb-4">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Slug*</label>
+                                    <div className="relative">
+                                        <input
+                                            type="text"
+                                            name="slug"
+                                            value={editFormData.slug}
+                                            onChange={handleEditSlugChange}
+                                            className="w-full px-3 py-2 border rounded-md"
+                                            required
+                                        />
+                                        {isEditSlugManuallyEdited && (
+                                            <button
+                                                type="button"
+                                                onClick={handleEditResetSlug}
+                                                className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                                                title="Reset to auto-generated slug"
+                                            >
+                                                <FaTimes />
+                                            </button>
+                                        )}
+                                    </div>
+                                    <p className="text-xs text-gray-500 mt-1">
+                                        {isEditSlugManuallyEdited ?
+                                            "Slug is manually edited. Click the X to reset to auto-generated." :
+                                            "Slug is auto-generated from title. You can edit it manually."}
+                                    </p>
+                                </div>
+
+                                <div className="mb-4">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Cover Photo</label>
+                                    {editFormData.cover_photo ? (
+                                        <div className="relative mb-4">
+                                            <img
+                                                src={URL.createObjectURL(editFormData.cover_photo)}
+                                                alt="Preview"
+                                                className="h-48 w-full object-cover rounded-lg"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => setEditFormData(prev => ({ ...prev, cover_photo: null }))}
+                                                className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-2"
+                                            >
+                                                <FaTimes size={16} />
+                                            </button>
+                                        </div>
+                                    ) : editFormData.existing_cover_photo ? (
+                                        <div className="relative mb-4">
+                                            <img
+                                                src={editFormData.existing_cover_photo}
+                                                alt="Current Cover"
+                                                className="h-48 w-full object-cover rounded-lg"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => setEditFormData(prev => ({ ...prev, existing_cover_photo: null }))}
+                                                className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-2"
+                                            >
+                                                <FaTimes size={16} />
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+                                            <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                                <FaImage className="w-8 h-8 mb-3 text-gray-400" />
+                                                <p className="mb-2 text-sm text-gray-500">
+                                                    <span className="font-semibold">Click to upload</span> or drag and drop
+                                                </p>
+                                                <p className="text-xs text-gray-500">
+                                                    PNG, JPG, JPEG (MAX. 5MB)
+                                                </p>
+                                            </div>
+                                            <input
+                                                id="edit_cover_photo"
+                                                name="cover_photo"
+                                                type="file"
+                                                className="hidden"
+                                                onChange={handleEditFormChange}
+                                                accept="image/*"
+                                            />
+                                        </label>
+                                    )}
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                    <div className="flex items-center">
+                                        <input
+                                            type="checkbox"
+                                            id="edit_is_active"
+                                            name="is_active"
+                                            checked={editFormData.is_active}
+                                            onChange={handleEditFormChange}
+                                            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                        />
+                                        <label htmlFor="edit_is_active" className="ml-2 text-sm text-gray-700">
+                                            Active
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div className="mb-4">
+                                    <label htmlFor="tags" className="block text-sm font-medium mb-1">tags</label>
+                                    <Chips
+                                        id="tags"
+                                        name="tags"
+                                        value={editFormData.tags}
+                                        onChange={handleEdittagsChange}
+                                        placeholder="Enter tags"
+                                        className="w-full p-chips dark:bg-dark2"
+                                        itemTemplate={(skill) => (
+                                            <div className="bg-gray-200 dark:bg-dark1 rounded-full px-3 py-1 text-sm">
+                                                {skill}
+                                            </div>
+                                        )}
+                                    />
+                                </div>
+
+                                <div className="mb-4">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Content</label>
+                                    <TiptapWithImg
+                                        content={editFormData.content}
+                                        onUpdate={(content) => setEditFormData(prev => ({ ...prev, content }))}
+                                        onHeadingsUpdate={handleEditHeadingsUpdate}
+                                    />
+                                </div>
+
+                                <div className="flex justify-end gap-3 mt-6">
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowEditModal(false)}
+                                        className="px-4 py-2 border rounded-md text-gray-700 hover:bg-gray-50"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        className="px-4 py-2 bg-primary text-white rounded-md hover:bg-darkBlue transition-all flex items-center justify-center gap-2"
+                                        disabled={updatingBlog}
+                                    >
+                                        {updatingBlog ? (
+                                            <>
+                                                <FaSpinner className="animate-spin" size={18} />
+                                                <span>Updating...</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <FaCheck size={18} />
+                                                <span>Update Blog</span>
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </motion.div>
+                </motion.div>
+            )}
+
+            {/* Delete Confirmation Modal */}
+            {showDeleteConfirm && (
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+                    onClick={() => setShowDeleteConfirm(false)}
+                >
+                    <motion.div
+                        initial={{ scale: 0.9, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        exit={{ scale: 0.9, opacity: 0 }}
+                        className="bg-white rounded-lg shadow-xl w-full max-w-md"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="p-6">
+                            <div className="flex items-start">
+                                <div className="flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
+                                    <FaTrashAlt className="h-5 w-5 text-red-600" />
+                                </div>
+                                <div className="ml-4">
+                                    <h3 className="text-lg font-medium text-gray-900">Delete Blog</h3>
+                                    <div className="mt-2">
+                                        <p className="text-sm text-gray-500">
+                                            Are you sure you want to delete this blog? This action cannot be undone.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="mt-5 flex justify-end gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowDeleteConfirm(false)}
+                                    className="px-4 py-2 border rounded-md text-gray-700 hover:bg-gray-50"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={handleConfirmDelete}
+                                    className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+                                >
+                                    Delete
+                                </button>
                             </div>
                         </div>
-                        <div className="mt-5 flex justify-end gap-3">
-                            <button
-                                type="button"
-                                onClick={() => setShowDeleteConfirm(false)}
-                                className="px-4 py-2 border rounded-md text-gray-700 hover:bg-gray-50"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                type="button"
-                                onClick={handleConfirmDelete}
-                                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
-                            >
-                                Delete
-                            </button>
-                        </div>
-                    </div>
+                    </motion.div>
                 </motion.div>
-            </motion.div>
-        )}
-    </div>
-);
+            )}
+        </div>
+    );
 }

@@ -783,7 +783,7 @@ export default function HelpcenterArticlesDataTable({
                                             className="w-full px-3 py-2 border rounded-md"
                                             required
                                             value={helpcenterSubcategoriesData?.find(
-                                                sub => sub.id === selectedArticle?.subcategory_id
+                                                sub => sub.id === selectedArticle?.subcategory.id
                                             )?.category_id || ''}
                                         >
                                             <option value="">Select a category</option>
