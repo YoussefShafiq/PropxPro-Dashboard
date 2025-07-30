@@ -591,6 +591,30 @@ export default function AdminsDataTable({ admins, allPermissions, loading, refet
 
                                 <div className="mb-4">
                                     <label className="block text-sm font-medium text-gray-700 mb-2">Permissions</label>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setFormData(prev => ({
+                                                ...prev,
+                                                permissions: allPermissions.map(p => p.name)
+                                            }));
+                                        }}
+                                        className="mb-2 text-xs bg-gray-200 hover:bg-gray-300 px-2 py-1 rounded"
+                                    >
+                                        Select All
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setFormData(prev => ({
+                                                ...prev,
+                                                permissions: []
+                                            }));
+                                        }}
+                                        className="mb-2 text-xs bg-gray-200 hover:bg-gray-300 px-2 py-1 rounded ml-2"
+                                    >
+                                        Clear All
+                                    </button>
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 max-h-60 overflow-y-auto p-2 border rounded">
                                         {allPermissions.map(permission => (
                                             <div key={permission.name} className="flex items-center">
@@ -770,6 +794,30 @@ export default function AdminsDataTable({ admins, allPermissions, loading, refet
                             <form onSubmit={handleUpdatePermissions}>
                                 <div className="mb-4">
                                     <label className="block text-sm font-medium text-gray-700 mb-2">Permissions</label>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setFormData(prev => ({
+                                                ...prev,
+                                                permissions: allPermissions.map(p => p.name)
+                                            }));
+                                        }}
+                                        className="mb-2 text-xs bg-gray-200 hover:bg-gray-300 px-2 py-1 rounded"
+                                    >
+                                        Select All
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setFormData(prev => ({
+                                                ...prev,
+                                                permissions: []
+                                            }));
+                                        }}
+                                        className="mb-2 text-xs bg-gray-200 hover:bg-gray-300 px-2 py-1 rounded ml-2"
+                                    >
+                                        Clear All
+                                    </button>
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 max-h-60 overflow-y-auto p-2 border rounded">
                                         {allPermissions.map(permission => (
                                             <div key={permission.name} className="flex items-center">
