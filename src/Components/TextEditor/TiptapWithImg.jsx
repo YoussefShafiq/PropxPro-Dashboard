@@ -878,7 +878,7 @@ const CustomBubbleMenu = () => {
                                     value={imageAltText}
                                     onChange={(e) => setImageAltText(e.target.value)}
                                     placeholder="Alt text"
-                                    className="bubble-link-field"
+                                    className="bubble-link-field !w-full"
                                 />
                             </div>
                             <div className="form-group">
@@ -888,7 +888,7 @@ const CustomBubbleMenu = () => {
                                     value={imageTitle}
                                     onChange={(e) => setImageTitle(e.target.value)}
                                     placeholder="Title"
-                                    className="bubble-link-field"
+                                    className="bubble-link-field !w-full"
                                 />
                             </div>
                             <div className="form-group">
