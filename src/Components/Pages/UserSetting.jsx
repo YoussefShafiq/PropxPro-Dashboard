@@ -39,6 +39,7 @@ export default function UserSetting() {
         if (isEditing && currentUser?.data?.data?.user) {
             setValue('name', currentUser.data.data.user.name);
             setValue('email', currentUser.data.data.user.email);
+            setValue('bio', currentUser.data.data.user.bio || ''); // Set bio value, default to empty string if not exists
         }
     }, [isEditing, currentUser, setValue]);
 
@@ -66,6 +67,7 @@ export default function UserSetting() {
             const data = new FormData();
             data.append('name', formData.name);
             data.append('email', formData.email);
+            data.append('bio', formData.bio); // Add bio to form data
             data.append('code', verificationCode);
 
             if (formData.password) {
@@ -215,6 +217,24 @@ export default function UserSetting() {
                                     <p className="px-3 py-2 bg-gray-50 rounded-md">{currentUser?.data?.data?.user?.email}</p>
                                 )}
                                 {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>}
+                            </div>
+
+                            {/* Bio Field */}
+                            <div className="md:col-span-2">
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Bio</label>
+                                {isEditing ? (
+                                    <textarea
+                                        {...register('bio')}
+                                        rows={3}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        placeholder="Tell us about yourself..."
+                                        disabled={sendVerificationMutation.isPending}
+                                    />
+                                ) : (
+                                    <p className="px-3 py-2 bg-gray-50 rounded-md whitespace-pre-line">
+                                        {currentUser?.data?.data?.user?.bio || 'No bio yet'}
+                                    </p>
+                                )}
                             </div>
 
                             {isEditing && (
