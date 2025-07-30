@@ -45,6 +45,7 @@ export default function HelpcenterArticlesDataTable({
     const [selectedArticle, setSelectedArticle] = useState(null);
     const [filteredSubcategories, setFilteredSubcategories] = useState([]);
     const [headings, setHeadings] = useState([]);
+    const [isSlugManuallyEdited, setIsSlugManuallyEdited] = useState(false);
 
     // Form states
     const [formData, setFormData] = useState({
@@ -54,7 +55,7 @@ export default function HelpcenterArticlesDataTable({
         content: '',
         order: '',
         is_active: true,
-        headings: [] // Add headings to form data
+        headings: []
     });
 
     const { data: currentUser } = useQuery({
@@ -75,6 +76,7 @@ export default function HelpcenterArticlesDataTable({
         setHeadings(safeHeadings);
         setFormData(prev => ({ ...prev, headings: safeHeadings }));
     };
+
     // Create mutation
     const createMutation = useMutation({
         mutationFn: (newArticle) => {
@@ -82,7 +84,7 @@ export default function HelpcenterArticlesDataTable({
                 'https://api.propxpro.com/api/admin/help-center/topics',
                 {
                     ...newArticle,
-                    headings: JSON.stringify(newArticle.headings) // Stringify headings array
+                    headings: JSON.stringify(newArticle.headings)
                 },
                 {
                     headers: {
@@ -117,7 +119,7 @@ export default function HelpcenterArticlesDataTable({
                 `https://api.propxpro.com/api/admin/help-center/topics/${updatedArticle.id}`,
                 {
                     ...updatedArticle,
-                    headings: JSON.stringify(updatedArticle.headings) // Stringify headings array
+                    headings: JSON.stringify(updatedArticle.headings)
                 },
                 {
                     headers: {
@@ -184,7 +186,7 @@ export default function HelpcenterArticlesDataTable({
         setFormData(prev => ({
             ...prev,
             category_id: categoryId,
-            subcategory_id: '' // Reset subcategory when category changes
+            subcategory_id: ''
         }));
     };
 
@@ -235,6 +237,13 @@ export default function HelpcenterArticlesDataTable({
         deleteMutation.mutate(articleToDelete);
     };
 
+    // Function to generate slug from title
+    const generateSlug = (title) => {
+        return title.toLowerCase()
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/(^-|-$)/g, '');
+    };
+
     const handleFormChange = (e) => {
         const { name, value, type, checked } = e.target;
         setFormData(prev => ({
@@ -242,14 +251,34 @@ export default function HelpcenterArticlesDataTable({
             [name]: type === 'checkbox' ? checked : value
         }));
 
-        // Generate slug from title
-        if (name === 'title') {
-            const slug = value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+        // Generate slug from title if it's not manually edited
+        if (name === 'title' && !isSlugManuallyEdited) {
+            const slug = generateSlug(value);
             setFormData(prev => ({
                 ...prev,
                 slug: slug
             }));
         }
+    };
+
+    // Handle slug input change
+    const handleSlugChange = (e) => {
+        const { value } = e.target;
+        setFormData(prev => ({
+            ...prev,
+            slug: value
+        }));
+        setIsSlugManuallyEdited(true);
+    };
+
+    // Reset slug to auto-generated when clicking the reset button
+    const handleResetSlug = () => {
+        const slug = generateSlug(formData.title);
+        setFormData(prev => ({
+            ...prev,
+            slug: slug
+        }));
+        setIsSlugManuallyEdited(false);
     };
 
     const resetForm = () => {
@@ -264,11 +293,11 @@ export default function HelpcenterArticlesDataTable({
         });
         setHeadings([]);
         setFilteredSubcategories([]);
+        setIsSlugManuallyEdited(false);
     };
 
     const prepareEditForm = (article) => {
         setSelectedArticle(article);
-        // Filter subcategories based on article's category
         const categoryId = helpcenterSubcategoriesData?.find(
             sub => sub.id === article.subcategory_id
         )?.category_id;
@@ -279,7 +308,6 @@ export default function HelpcenterArticlesDataTable({
 
         setFilteredSubcategories(subs);
 
-        // Safely handle headings - default to empty array if invalid
         let articleHeadings = [];
         if (article.headings && typeof article.headings === 'string' && article.headings.trim() !== '') {
             try {
@@ -304,6 +332,7 @@ export default function HelpcenterArticlesDataTable({
         });
         setHeadings(articleHeadings);
         setShowEditModal(true);
+        setIsSlugManuallyEdited(true); // Assume slug was manually edited when editing
     };
 
     const handleAddArticle = (e) => {
@@ -319,7 +348,6 @@ export default function HelpcenterArticlesDataTable({
         });
     };
 
-    // Get category name by subcategory ID
     const getCategoryName = (subcategoryId) => {
         const subcategory = helpcenterSubcategoriesData?.find(sub => sub.id === subcategoryId);
         if (!subcategory) return 'Unknown';
@@ -328,13 +356,11 @@ export default function HelpcenterArticlesDataTable({
         return category ? category.name : 'Unknown';
     };
 
-    // Get subcategory name by ID
     const getSubcategoryName = (subcategoryId) => {
         const subcategory = helpcenterSubcategoriesData?.find(sub => sub.id === subcategoryId);
         return subcategory ? subcategory.name : 'Unknown';
     };
 
-    // Filter articles based on all filter criteria
     const filteredArticles = helpcenterArticlesData?.filter(article => {
         const subcategoryName = getSubcategoryName(article.subcategory_id).toLowerCase();
         const categoryName = getCategoryName(article.subcategory_id).toLowerCase();
@@ -356,7 +382,6 @@ export default function HelpcenterArticlesDataTable({
         );
     }) || [];
 
-    // Pagination logic
     const totalPages = Math.ceil(filteredArticles.length / rowsPerPage);
     const paginatedArticles = filteredArticles.slice(
         (currentPage - 1) * rowsPerPage,
@@ -632,6 +657,35 @@ export default function HelpcenterArticlesDataTable({
                                 </div>
 
                                 <div className="mb-4">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Slug*</label>
+                                    <div className="relative">
+                                        <input
+                                            type="text"
+                                            name="slug"
+                                            value={formData.slug}
+                                            onChange={handleSlugChange}
+                                            className="w-full px-3 py-2 border rounded-md"
+                                            required
+                                        />
+                                        {isSlugManuallyEdited && (
+                                            <button
+                                                type="button"
+                                                onClick={handleResetSlug}
+                                                className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                                                title="Reset to auto-generated slug"
+                                            >
+                                                <FaTimes />
+                                            </button>
+                                        )}
+                                    </div>
+                                    <p className="text-xs text-gray-500 mt-1">
+                                        {isSlugManuallyEdited ?
+                                            "Slug is manually edited. Click the X to reset to auto-generated." :
+                                            "Slug is auto-generated from title. You can edit it manually."}
+                                    </p>
+                                </div>
+
+                                <div className="mb-4">
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Order*</label>
                                     <input
                                         type="number"
@@ -769,6 +823,35 @@ export default function HelpcenterArticlesDataTable({
                                         className="w-full px-3 py-2 border rounded-md"
                                         required
                                     />
+                                </div>
+
+                                <div className="mb-4">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Slug*</label>
+                                    <div className="relative">
+                                        <input
+                                            type="text"
+                                            name="slug"
+                                            value={formData.slug}
+                                            onChange={handleSlugChange}
+                                            className="w-full px-3 py-2 border rounded-md"
+                                            required
+                                        />
+                                        {isSlugManuallyEdited && (
+                                            <button
+                                                type="button"
+                                                onClick={handleResetSlug}
+                                                className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                                                title="Reset to auto-generated slug"
+                                            >
+                                                <FaTimes />
+                                            </button>
+                                        )}
+                                    </div>
+                                    <p className="text-xs text-gray-500 mt-1">
+                                        {isSlugManuallyEdited ?
+                                            "Slug is manually edited. Click the X to reset to auto-generated." :
+                                            "Slug is auto-generated from title. You can edit it manually."}
+                                    </p>
                                 </div>
 
                                 <div className="mb-4">
