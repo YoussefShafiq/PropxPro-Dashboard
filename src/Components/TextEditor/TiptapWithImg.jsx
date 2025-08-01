@@ -5,13 +5,17 @@ import {
     Heading1, Heading2, Heading3, Quote, Code,
     Undo, Redo, Code2, Minus, AlignLeft,
     AlignCenter, AlignRight, Image as ImageIcon, Link, Unlink,
-    InfoIcon,
+    InfoIcon, Table, Table2,
     Check,
     X
 } from 'lucide-react';
 import TextAlign from '@tiptap/extension-text-align';
 import ImageExtension from '@tiptap/extension-image';
 import LinkExtension from '@tiptap/extension-link';
+import { Table as TableExtension } from '@tiptap/extension-table';
+import { TableRow } from '@tiptap/extension-table-row';
+import { TableCell } from '@tiptap/extension-table-cell';
+import { TableHeader } from '@tiptap/extension-table-header';
 import { useCallback, useRef, useState, useEffect } from 'react';
 import axios from 'axios';
 import './styles.scss';
@@ -131,6 +135,19 @@ const extensions = [
             rel: 'noopener noreferrer',
         },
     }),
+    TableExtension.configure({
+        resizable: true,
+        HTMLAttributes: {
+            class: 'tiptap-table',
+        },
+    }),
+    TableRow,
+    TableHeader,
+    TableCell.configure({
+        HTMLAttributes: {
+            class: 'tiptap-table-cell',
+        },
+    }),
 ];
 
 const MenuBar = ({ uploadImgUrl = '' }) => {
@@ -144,6 +161,9 @@ const MenuBar = ({ uploadImgUrl = '' }) => {
     const [imageTitle, setImageTitle] = useState('');
     const [imageContent, setImageContent] = useState('');
     const [currentImagePos, setCurrentImagePos] = useState(null);
+    const [showTableControls, setShowTableControls] = useState(false);
+    const [tableRows, setTableRows] = useState(3);
+    const [tableCols, setTableCols] = useState(3);
     const linkInputRef = useRef(null);
     const altInputRef = useRef(null);
 
@@ -311,6 +331,75 @@ const MenuBar = ({ uploadImgUrl = '' }) => {
                 altInputRef.current?.focus();
             }, 100);
         }
+    };
+
+    const handleTableClick = (e) => {
+        e.preventDefault();
+        setShowTableControls(!showTableControls);
+    };
+
+    const handleCreateTable = (e) => {
+        e.preventDefault();
+        editor
+            .chain()
+            .focus()
+            .insertTable({
+                rows: tableRows,
+                cols: tableCols,
+                withHeaderRow: true,
+            })
+            .run();
+        setShowTableControls(false);
+    };
+
+    const handleAddRow = (e) => {
+        e.preventDefault();
+        editor.chain().focus().addRowAfter().run();
+    };
+
+    const handleAddColumn = (e) => {
+        e.preventDefault();
+        editor.chain().focus().addColumnAfter().run();
+    };
+
+    const handleDeleteRow = (e) => {
+        e.preventDefault();
+        editor.chain().focus().deleteRow().run();
+    };
+
+    const handleDeleteColumn = (e) => {
+        e.preventDefault();
+        editor.chain().focus().deleteColumn().run();
+    };
+
+    const handleDeleteTable = (e) => {
+        e.preventDefault();
+        editor.chain().focus().deleteTable().run();
+    };
+
+    const handleMergeCells = (e) => {
+        e.preventDefault();
+        editor.chain().focus().mergeCells().run();
+    };
+
+    const handleSplitCell = (e) => {
+        e.preventDefault();
+        editor.chain().focus().splitCell().run();
+    };
+
+    const handleToggleHeaderRow = (e) => {
+        e.preventDefault();
+        editor.chain().focus().toggleHeaderRow().run();
+    };
+
+    const handleToggleHeaderColumn = (e) => {
+        e.preventDefault();
+        editor.chain().focus().toggleHeaderColumn().run();
+    };
+
+    const handleToggleHeaderCell = (e) => {
+        e.preventDefault();
+        editor.chain().focus().toggleHeaderCell().run();
     };
 
     return (
@@ -529,6 +618,18 @@ const MenuBar = ({ uploadImgUrl = '' }) => {
 
             <div className="toolbar-group">
                 <button
+                    onClick={handleTableClick}
+                    className={editor.isActive('table') ? 'is-active' : ''}
+                    title="Table"
+                >
+                    <Table size={16} />
+                </button>
+            </div>
+
+            <div className="toolbar-divider" />
+
+            <div className="toolbar-group">
+                <button
                     onClick={(e) => {
                         e.preventDefault();
                         editor.chain().focus().undo().run();
@@ -549,6 +650,79 @@ const MenuBar = ({ uploadImgUrl = '' }) => {
                     <Redo size={16} />
                 </button>
             </div>
+
+            {/* Table Controls */}
+            {showTableControls && (
+                <div className="table-controls-modal">
+                    <div className="table-controls-overlay" onClick={() => setShowTableControls(false)} />
+                    <div className="table-controls-container">
+                        <h4>Create Table</h4>
+                        <div className="table-controls-grid">
+                            <div className="table-control-row">
+                                <label>Rows:</label>
+                                <input
+                                    type="number"
+                                    min="1"
+                                    max="10"
+                                    value={tableRows}
+                                    onChange={(e) => setTableRows(parseInt(e.target.value) || 1)}
+                                />
+                            </div>
+                            <div className="table-control-row">
+                                <label>Columns:</label>
+                                <input
+                                    type="number"
+                                    min="1"
+                                    max="10"
+                                    value={tableCols}
+                                    onChange={(e) => setTableCols(parseInt(e.target.value) || 1)}
+                                />
+                            </div>
+                        </div>
+                        <div className="table-controls-buttons">
+                            <button onClick={handleCreateTable} className="table-create-btn">
+                                Create Table
+                            </button>
+                            <button onClick={() => setShowTableControls(false)} className="table-cancel-btn">
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Table Editing Controls (shown when table is active) */}
+            {editor?.isActive('table') && (
+                <div className="table-edit-controls">
+                    <button onClick={handleAddRow} title="Add Row">
+                        + Row
+                    </button>
+                    <button onClick={handleAddColumn} title="Add Column">
+                        + Column
+                    </button>
+                    <button onClick={handleDeleteRow} title="Delete Row">
+                        - Row
+                    </button>
+                    <button onClick={handleDeleteColumn} title="Delete Column">
+                        - Column
+                    </button>
+                    <button onClick={handleDeleteTable} title="Delete Table">
+                        Delete Table
+                    </button>
+                    <button onClick={handleMergeCells} title="Merge Cells">
+                        Merge
+                    </button>
+                    <button onClick={handleSplitCell} title="Split Cell">
+                        Split
+                    </button>
+                    <button onClick={handleToggleHeaderRow} title="Toggle Header Row">
+                        Header Row
+                    </button>
+                    <button onClick={handleToggleHeaderColumn} title="Toggle Header Column">
+                        Header Column
+                    </button>
+                </div>
+            )}
 
             {/* Link Input Modal */}
             {showLinkInput && (
