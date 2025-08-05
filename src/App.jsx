@@ -24,6 +24,9 @@ import HelpCenter from './Components/Pages/HelpCenter'
 import HelpCenterCategories from './Components/Pages/HelpCenterCategories'
 import HelpCenterSubcategories from './Components/Pages/HelpCenterSubcategories'
 import HelpCenterArticles from './Components/Pages/HelpCenterArticles'
+import Webinars from './Components/Pages/Webinars'
+import WebinarsEvents from './Components/Pages/WebinarsEvents'
+import WebinarsVideos from './Components/Pages/WebinarsVideos'
 
 function App() {
 
@@ -44,9 +47,12 @@ function App() {
         { path: '/requested-demos', element: <ProtectedRoute><DemoRequests /></ProtectedRoute> },
         { path: '/user-setting', element: <ProtectedRoute><UserSetting /></ProtectedRoute> },
         { path: '/help-center', element: <ProtectedRoute><HelpCenter /></ProtectedRoute> },
-        { path: '/help-center/categories', element: <HelpCenterCategories /> },
-        { path: '/help-center/subcategories', element: <HelpCenterSubcategories /> },
-        { path: '/help-center/articles', element: <HelpCenterArticles /> },
+        { path: '/help-center/categories', element: <ProtectedRoute> <HelpCenterCategories /></ProtectedRoute> },
+        { path: '/help-center/subcategories', element: <ProtectedRoute><HelpCenterSubcategories /> </ProtectedRoute> },
+        { path: '/help-center/articles', element: <ProtectedRoute><HelpCenterArticles /></ProtectedRoute> },
+        { path: '/webinars', element: <ProtectedRoute><Webinars /></ProtectedRoute> },
+        { path: '/webinars/events', element: <ProtectedRoute><WebinarsEvents /></ProtectedRoute> },
+        { path: '/webinars/videos', element: <ProtectedRoute><WebinarsVideos /></ProtectedRoute> },
       ]
     },
     { path: '*', element: <Notfound /> }
