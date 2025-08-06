@@ -156,7 +156,7 @@ export default function WebinarsVideosDataTable({ WebinarsVideosData, loading, r
             video_url: video.video_url,
             cover_photo: null
         });
-        setCoverPhotoPreview(video.cover_photo ? `https://api.propxpro.com/storage/${video.cover_photo}` : null);
+        setCoverPhotoPreview(video.cover_photo ? `${video.cover_photo}` : null);
         setShowEditModal(true);
     };
 
@@ -402,7 +402,7 @@ export default function WebinarsVideosDataTable({ WebinarsVideosData, loading, r
                                     <td className="px-3 py-4 whitespace-nowrap">
                                         <div className="flex items-center gap-2">
                                             <a
-                                                href={video.type === 'youtube' ? video.video_url : `https://api.propxpro.com/storage/${video.video_url}`}
+                                                href={video.type === 'youtube' ? video.video_url : `${video.video_url}`}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
                                                 className="text-green-500 hover:text-green-700 p-1"
