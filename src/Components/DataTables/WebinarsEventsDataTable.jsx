@@ -47,7 +47,7 @@ export default function WebinarsEventsDataTable({ WebinarsEventsData, loading, r
         title: '',
         date: '',
         cover_photo: null,
-        host_img: null,
+        host_image: null,
         duration: '',
         presented_by: '',
         description: ''
@@ -141,7 +141,7 @@ export default function WebinarsEventsDataTable({ WebinarsEventsData, loading, r
         if (file) {
             setFormData(prev => ({
                 ...prev,
-                host_img: file
+                host_image: file
             }));
 
             // Create preview
@@ -158,7 +158,7 @@ export default function WebinarsEventsDataTable({ WebinarsEventsData, loading, r
             title: '',
             date: '',
             cover_photo: null,
-            host_img: null,
+            host_image: null,
             duration: '',
             presented_by: '',
             description: ''
@@ -173,13 +173,13 @@ export default function WebinarsEventsDataTable({ WebinarsEventsData, loading, r
             title: event.title,
             date: event.date,
             cover_photo: null,
-            host_img: null,
+            host_image: null,
             duration: event.duration,
             presented_by: event.presented_by,
             description: event.description || ''
         });
         setCoverPhotoPreview(event.cover_photo ? `${event.cover_photo}` : null);
-        setHostImgPreview(event.host_img ? `${event.host_img}` : null);
+        setHostImgPreview(event.host_image ? `${event.host_image}` : null);
         setShowEditModal(true);
     };
 
@@ -196,8 +196,8 @@ export default function WebinarsEventsDataTable({ WebinarsEventsData, loading, r
         if (formData.cover_photo) {
             formDataToSend.append('cover_photo', formData.cover_photo);
         }
-        if (formData.host_img) {
-            formDataToSend.append('host_img', formData.host_img);
+        if (formData.host_image) {
+            formDataToSend.append('host_image', formData.host_image);
         }
 
         try {
@@ -243,8 +243,8 @@ export default function WebinarsEventsDataTable({ WebinarsEventsData, loading, r
         if (formData.cover_photo) {
             formDataToSend.append('cover_photo', formData.cover_photo);
         }
-        if (formData.host_img) {
-            formDataToSend.append('host_img', formData.host_img);
+        if (formData.host_image) {
+            formDataToSend.append('host_image', formData.host_image);
         }
 
 
@@ -598,7 +598,7 @@ export default function WebinarsEventsDataTable({ WebinarsEventsData, loading, r
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Host Image</label>
                                     <input
                                         type="file"
-                                        name="host_img"
+                                        name="host_image"
                                         onChange={handleHostImgChange}
                                         accept="image/*"
                                         className="w-full px-3 py-2 border rounded-md"
@@ -746,7 +746,7 @@ export default function WebinarsEventsDataTable({ WebinarsEventsData, loading, r
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Host Image</label>
                                     <input
                                         type="file"
-                                        name="host_img"
+                                        name="host_image"
                                         onChange={handleHostImgChange}
                                         accept="image/*"
                                         className="w-full px-3 py-2 border rounded-md"
