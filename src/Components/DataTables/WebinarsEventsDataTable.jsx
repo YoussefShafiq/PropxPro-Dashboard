@@ -40,14 +40,17 @@ export default function WebinarsEventsDataTable({ WebinarsEventsData, loading, r
     const [updatingEvent, setUpdatingEvent] = useState(false);
     const [selectedEvent, setSelectedEvent] = useState(null);
     const [coverPhotoPreview, setCoverPhotoPreview] = useState(null);
+    const [hostImgPreview, setHostImgPreview] = useState(null);
 
     // Form states
     const [formData, setFormData] = useState({
         title: '',
         date: '',
         cover_photo: null,
+        host_img: null,
         duration: '',
-        presented_by: ''
+        presented_by: '',
+        description: ''
     });
 
     const { data: currentUser } = useQuery({
@@ -133,27 +136,50 @@ export default function WebinarsEventsDataTable({ WebinarsEventsData, loading, r
         }
     };
 
+    const handleHostImgChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            setFormData(prev => ({
+                ...prev,
+                host_img: file
+            }));
+
+            // Create preview
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setHostImgPreview(reader.result);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
     const resetForm = () => {
         setFormData({
             title: '',
             date: '',
             cover_photo: null,
+            host_img: null,
             duration: '',
-            presented_by: ''
+            presented_by: '',
+            description: ''
         });
         setCoverPhotoPreview(null);
+        setHostImgPreview(null);
     };
 
     const prepareEditForm = (event) => {
         setSelectedEvent(event);
         setFormData({
             title: event.title,
-            date: event.date, // Extract just the date part
-            cover_photo: null, // We'll handle this separately
+            date: event.date,
+            cover_photo: null,
+            host_img: null,
             duration: event.duration,
-            presented_by: event.presented_by
+            presented_by: event.presented_by,
+            description: event.description || ''
         });
-        setCoverPhotoPreview(event.cover_photo ? `https://api.propxpro.com/storage/${event.cover_photo}` : null);
+        setCoverPhotoPreview(event.cover_photo ? `${event.cover_photo}` : null);
+        setHostImgPreview(event.host_img ? `${event.host_img}` : null);
         setShowEditModal(true);
     };
 
@@ -166,8 +192,12 @@ export default function WebinarsEventsDataTable({ WebinarsEventsData, loading, r
         formDataToSend.append('date', formData.date);
         formDataToSend.append('duration', formData.duration);
         formDataToSend.append('presented_by', formData.presented_by);
+        formDataToSend.append('description', formData.description);
         if (formData.cover_photo) {
             formDataToSend.append('cover_photo', formData.cover_photo);
+        }
+        if (formData.host_img) {
+            formDataToSend.append('host_img', formData.host_img);
         }
 
         try {
@@ -209,10 +239,14 @@ export default function WebinarsEventsDataTable({ WebinarsEventsData, loading, r
         formDataToSend.append('date', formData.date);
         formDataToSend.append('duration', formData.duration);
         formDataToSend.append('presented_by', formData.presented_by);
+        formDataToSend.append('description', formData.description);
         if (formData.cover_photo) {
             formDataToSend.append('cover_photo', formData.cover_photo);
         }
-        // Add _method: PUT for Laravel to recognize as PUT request
+        if (formData.host_img) {
+            formDataToSend.append('host_img', formData.host_img);
+        }
+
 
         try {
             await axios.post(
@@ -250,7 +284,8 @@ export default function WebinarsEventsDataTable({ WebinarsEventsData, loading, r
         return (
             (filters.global === '' ||
                 event.title.toLowerCase().includes(filters.global.toLowerCase()) ||
-                event.presented_by.toLowerCase().includes(filters.global.toLowerCase())) &&
+                event.presented_by.toLowerCase().includes(filters.global.toLowerCase()) ||
+                event.description?.toLowerCase().includes(filters.global.toLowerCase())) &&
             (filters.title === '' ||
                 event.title.toLowerCase().includes(filters.title.toLowerCase())) &&
             (filters.date === '' ||
@@ -363,6 +398,9 @@ export default function WebinarsEventsDataTable({ WebinarsEventsData, loading, r
                                 />
                             </th>
                             <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Description
+                            </th>
+                            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 <input
                                     type="text"
                                     placeholder="Subscribers"
@@ -379,7 +417,7 @@ export default function WebinarsEventsDataTable({ WebinarsEventsData, loading, r
                     <tbody className="bg-white divide-y divide-gray-200 text-sm">
                         {loading ? (
                             <tr>
-                                <td colSpan="6" className="px-3 py-4 text-center">
+                                <td colSpan="7" className="px-3 py-4 text-center">
                                     <div className="flex justify-center items-center gap-2">
                                         <FaSpinner className="animate-spin" size={18} />
                                         Loading events...
@@ -388,7 +426,7 @@ export default function WebinarsEventsDataTable({ WebinarsEventsData, loading, r
                             </tr>
                         ) : paginatedEvents.length === 0 ? (
                             <tr>
-                                <td colSpan="6" className="px-3 py-4 text-center">
+                                <td colSpan="7" className="px-3 py-4 text-center">
                                     No events found
                                 </td>
                             </tr>
@@ -415,6 +453,9 @@ export default function WebinarsEventsDataTable({ WebinarsEventsData, loading, r
                                             <FaUserTie className="text-gray-400" />
                                             {event.presented_by}
                                         </div>
+                                    </td>
+                                    <td className="px-3 py-4">
+                                        <div className="line-clamp-2">{event.description}</div>
                                     </td>
                                     <td className="px-3 py-4 whitespace-nowrap">
                                         <div className="flex items-center gap-2">
@@ -526,6 +567,18 @@ export default function WebinarsEventsDataTable({ WebinarsEventsData, loading, r
                                 </div>
 
                                 <div className="mb-4">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Description*</label>
+                                    <textarea
+                                        required
+                                        name="description"
+                                        value={formData.description}
+                                        onChange={handleFormChange}
+                                        className="w-full px-3 py-2 border rounded-md"
+                                        rows="3"
+                                    />
+                                </div>
+
+                                <div className="mb-4">
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Cover Photo</label>
                                     <input
                                         type="file"
@@ -537,6 +590,22 @@ export default function WebinarsEventsDataTable({ WebinarsEventsData, loading, r
                                     {coverPhotoPreview && (
                                         <div className="mt-2">
                                             <img src={coverPhotoPreview} alt="Cover preview" className="h-32 object-contain" />
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="mb-4">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Host Image</label>
+                                    <input
+                                        type="file"
+                                        name="host_img"
+                                        onChange={handleHostImgChange}
+                                        accept="image/*"
+                                        className="w-full px-3 py-2 border rounded-md"
+                                    />
+                                    {hostImgPreview && (
+                                        <div className="mt-2">
+                                            <img src={hostImgPreview} alt="Host preview" className="h-32 object-contain" />
                                         </div>
                                     )}
                                 </div>
@@ -645,6 +714,18 @@ export default function WebinarsEventsDataTable({ WebinarsEventsData, loading, r
                                 </div>
 
                                 <div className="mb-4">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Description*</label>
+                                    <textarea
+                                        required
+                                        name="description"
+                                        value={formData.description}
+                                        onChange={handleFormChange}
+                                        className="w-full px-3 py-2 border rounded-md"
+                                        rows="3"
+                                    />
+                                </div>
+
+                                <div className="mb-4">
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Cover Photo</label>
                                     <input
                                         type="file"
@@ -657,6 +738,23 @@ export default function WebinarsEventsDataTable({ WebinarsEventsData, loading, r
                                         <div className="mt-2">
                                             <img src={coverPhotoPreview} alt="Cover preview" className="h-32 object-contain" />
                                             <p className="text-xs text-gray-500 mt-1">Current cover photo</p>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="mb-4">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Host Image</label>
+                                    <input
+                                        type="file"
+                                        name="host_img"
+                                        onChange={handleHostImgChange}
+                                        accept="image/*"
+                                        className="w-full px-3 py-2 border rounded-md"
+                                    />
+                                    {hostImgPreview && (
+                                        <div className="mt-2">
+                                            <img src={hostImgPreview} alt="Host preview" className="h-32 object-contain" />
+                                            <p className="text-xs text-gray-500 mt-1">Current host image</p>
                                         </div>
                                     )}
                                 </div>
