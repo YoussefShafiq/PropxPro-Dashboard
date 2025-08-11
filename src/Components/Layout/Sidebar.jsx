@@ -4,10 +4,20 @@ import { NavLink, useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import axios from 'axios'
 import { SidebarContext } from '../../Contexts/SidebarContext'
-import { IoHomeOutline } from 'react-icons/io5'
 import { GoSidebarExpand } from 'react-icons/go'
 import { CiLogout } from 'react-icons/ci'
 import { useQuery } from '@tanstack/react-query'
+import {
+    IoHomeOutline,
+    IoLinkOutline,
+    IoPeopleOutline,
+    IoCardOutline,
+    IoDocumentTextOutline,
+    IoNewspaperOutline,
+    IoCalendarOutline,
+    IoHelpBuoyOutline,
+    IoHammerOutline
+} from 'react-icons/io5';
 
 export default function Sidebar() {
     const { sidebarOpen, setSidebarOpen } = useContext(SidebarContext)
@@ -53,6 +63,8 @@ export default function Sidebar() {
         }
     })
 
+
+
     const sidebarPages = [
         {
             title: 'Home',
@@ -63,55 +75,55 @@ export default function Sidebar() {
         {
             title: 'Integrations',
             path: '/integrations',
-            icon: <IoHomeOutline />,
+            icon: <IoLinkOutline />,
             permission: "view_integrations"
         },
         {
             title: 'Admins',
             path: '/admins',
-            icon: <IoHomeOutline />,
+            icon: <IoPeopleOutline />,
             permission: 'view_admins'
         },
         {
             title: 'Plans',
             path: '/plans',
-            icon: <IoHomeOutline />,
+            icon: <IoCardOutline />,
             permission: 'view_plans'
         },
         {
             title: 'Privacy Policy',
             path: '/privacy-Policy',
-            icon: <IoHomeOutline />,
+            icon: <IoDocumentTextOutline />,
             permission: ''
         },
         {
             title: 'Terms of Services',
             path: '/terms-of-Services',
-            icon: <IoHomeOutline />,
+            icon: <IoHammerOutline />,
             permission: ''
         },
         {
             title: 'Blogs',
             path: '/blogs',
-            icon: <IoHomeOutline />,
+            icon: <IoNewspaperOutline />,
             permission: 'view_blogs'
         },
         {
             title: 'Requested demos',
             path: '/requested-demos',
-            icon: <IoHomeOutline />,
+            icon: <IoCalendarOutline />,
             permission: 'view_request_demos'
         },
         {
             title: 'Help center',
             path: '/help-center',
-            icon: <IoHomeOutline />,
+            icon: <IoHelpBuoyOutline />,
             permission: ''
         },
         {
             title: 'Webinars',
             path: '/webinars',
-            icon: <IoHomeOutline />,
+            icon: <IoPeopleOutline />, // or <IoVideocamOutline /> if available
             permission: 'manage_webinars'
         },
     ]
