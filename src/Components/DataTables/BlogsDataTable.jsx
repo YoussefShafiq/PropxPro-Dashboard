@@ -835,14 +835,14 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+                    className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 "
                     onClick={() => setShowAddModal(false)}
                 >
                     <motion.div
                         initial={{ y: -50, opacity: 0 }}
                         animate={{ y: 0, opacity: 1 }}
                         exit={{ y: 50, opacity: 0 }}
-                        className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto"
+                        className="bg-white rounded-lg shadow-xl w-full  h-[100vh] overflow-y-auto"
                         onClick={(e) => e.stopPropagation()}
                     >
                         <div className="p-6">
@@ -1029,18 +1029,30 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+                    className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
                     onClick={() => setShowEditModal(false)}
                 >
                     <motion.div
                         initial={{ y: -50, opacity: 0 }}
                         animate={{ y: 0, opacity: 1 }}
                         exit={{ y: 50, opacity: 0 }}
-                        className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto"
+                        className="bg-white rounded-lg shadow-xl w-full h-[100vh] overflow-y-auto"
                         onClick={(e) => e.stopPropagation()}
                     >
                         <div className="p-6">
-                            <h2 className="text-xl font-bold mb-4">Edit Blog</h2>
+                            <div className="flex items-center mb-4">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowEditModal(false)}
+                                    className="text-blue-600 hover:text-blue-800 font-medium"
+                                >
+                                    Blogs
+                                </button>
+                                <span className="mx-2 text-gray-400">{'>'}</span>
+                                <span className="text-xl font-bold text-gray-900">
+                                    {editFormData.title || 'Untitled Blog'}
+                                </span>
+                            </div>
                             <form onSubmit={handleUpdateBlog}>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                                     <div>

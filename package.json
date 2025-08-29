@@ -19,6 +19,7 @@
     "@tiptap/extension-table-header": "^2.25.0",
     "@tiptap/extension-table-row": "^2.25.0",
     "@tiptap/extension-text-align": "^2.24.2",
+    "@tiptap/extension-underline": "^2.24.2",
     "@tiptap/pm": "^2.24.2",
     "@tiptap/react": "^2.24.2",
     "@tiptap/starter-kit": "^2.24.2",

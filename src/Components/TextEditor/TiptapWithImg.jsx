@@ -1,15 +1,19 @@
 import { EditorProvider, useCurrentEditor, BubbleMenu } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import {
-    Bold, Italic, Strikethrough, List, ListOrdered,
-    Heading1, Heading2, Heading3, Quote, Code,
-    Undo, Redo, Code2, Minus, AlignLeft,
-    AlignCenter, AlignRight, Image as ImageIcon, Link, Unlink,
-    InfoIcon, Table, Table2,
+    Bold, Italic, Underline as UnderlineIcon, Strikethrough, Link, Image, Code, List, ListOrdered,
+    AlignLeft, AlignCenter, AlignRight, AlignJustify, Quote, Minus, Highlighter, Type,
+    InfoIcon, Table, Table2, ChevronDown, Plus, Trash2, Merge, Split,
+    Heading1, Heading2, Heading3, Heading4, Heading5, Heading6,
     Check,
-    X
+    X,
+    Code2,
+    ImageIcon,
+    Undo,
+    Redo
 } from 'lucide-react';
 import TextAlign from '@tiptap/extension-text-align';
+import Underline from '@tiptap/extension-underline';
 import ImageExtension from '@tiptap/extension-image';
 import LinkExtension from '@tiptap/extension-link';
 import { Table as TableExtension } from '@tiptap/extension-table';
@@ -113,14 +117,16 @@ const extensions = [
         heading: false, // Disable default heading
     }),
     HeadingWithId.configure({
-        levels: [1, 2, 3],
+        levels: [1, 2, 3, 4, 5, 6],
         HTMLAttributes: {
             class: 'heading-with-id',
         },
     }),
     TextAlign.configure({
         types: ['heading', 'paragraph'],
+        alignments: ['left', 'center', 'right', 'justify'],
     }),
+    Underline,
     CustomImageExtension.configure({
         inline: true,
         allowBase64: false,
@@ -397,6 +403,22 @@ const MenuBar = ({ uploadImgUrl = '' }) => {
         editor.chain().focus().toggleHeaderColumn().run();
     };
 
+    // Cell alignment handlers
+    const handleCellAlignLeft = (e) => {
+        e.preventDefault();
+        editor.chain().focus().setCellAttribute('textAlign', 'left').run();
+    };
+
+    const handleCellAlignCenter = (e) => {
+        e.preventDefault();
+        editor.chain().focus().setCellAttribute('textAlign', 'center').run();
+    };
+
+    const handleCellAlignRight = (e) => {
+        e.preventDefault();
+        editor.chain().focus().setCellAttribute('textAlign', 'right').run();
+    };
+
     const handleToggleHeaderCell = (e) => {
         e.preventDefault();
         editor.chain().focus().toggleHeaderCell().run();
@@ -438,6 +460,17 @@ const MenuBar = ({ uploadImgUrl = '' }) => {
                 >
                     <Strikethrough size={16} />
                 </button>
+                <button
+                    onClick={(e) => {
+                        e.preventDefault();
+                        editor.chain().focus().toggleUnderline().run();
+                    }}
+                    disabled={!editor.can().chain().focus().toggleUnderline().run()}
+                    className={editor.isActive('underline') ? 'is-active' : ''}
+                    title="Underline"
+                >
+                    <UnderlineIcon size={16} />
+                </button>
             </div>
 
             <div className="toolbar-divider" />
@@ -472,6 +505,36 @@ const MenuBar = ({ uploadImgUrl = '' }) => {
                     title="Heading 3"
                 >
                     <Heading3 size={16} />
+                </button>
+                <button
+                    onClick={(e) => {
+                        e.preventDefault();
+                        editor.chain().focus().toggleHeading({ level: 4 }).run();
+                    }}
+                    className={editor.isActive('heading', { level: 4 }) ? 'is-active' : ''}
+                    title="Heading 4"
+                >
+                    <Heading4 size={16} />
+                </button>
+                <button
+                    onClick={(e) => {
+                        e.preventDefault();
+                        editor.chain().focus().toggleHeading({ level: 5 }).run();
+                    }}
+                    className={editor.isActive('heading', { level: 5 }) ? 'is-active' : ''}
+                    title="Heading 5"
+                >
+                    <Heading5 size={16} />
+                </button>
+                <button
+                    onClick={(e) => {
+                        e.preventDefault();
+                        editor.chain().focus().toggleHeading({ level: 6 }).run();
+                    }}
+                    className={editor.isActive('heading', { level: 6 }) ? 'is-active' : ''}
+                    title="Heading 6"
+                >
+                    <Heading6 size={16} />
                 </button>
             </div>
 
@@ -566,6 +629,16 @@ const MenuBar = ({ uploadImgUrl = '' }) => {
                     title="Align Right"
                 >
                     <AlignRight size={16} />
+                </button>
+                <button
+                    onClick={(e) => {
+                        e.preventDefault();
+                        editor.chain().focus().setTextAlign('justify').run();
+                    }}
+                    className={editor.isActive({ textAlign: 'justify' }) ? 'is-active' : ''}
+                    title="Justify"
+                >
+                    <AlignJustify size={16} />
                 </button>
             </div>
 
@@ -694,33 +767,59 @@ const MenuBar = ({ uploadImgUrl = '' }) => {
             {/* Table Editing Controls (shown when table is active) */}
             {editor?.isActive('table') && (
                 <div className="table-edit-controls">
-                    <button onClick={handleAddRow} title="Add Row">
-                        + Row
-                    </button>
-                    <button onClick={handleAddColumn} title="Add Column">
-                        + Column
-                    </button>
-                    <button onClick={handleDeleteRow} title="Delete Row">
-                        - Row
-                    </button>
-                    <button onClick={handleDeleteColumn} title="Delete Column">
-                        - Column
-                    </button>
-                    <button onClick={handleDeleteTable} title="Delete Table">
-                        Delete Table
-                    </button>
-                    <button onClick={handleMergeCells} title="Merge Cells">
-                        Merge
-                    </button>
-                    <button onClick={handleSplitCell} title="Split Cell">
-                        Split
-                    </button>
-                    <button onClick={handleToggleHeaderRow} title="Toggle Header Row">
-                        Header Row
-                    </button>
-                    <button onClick={handleToggleHeaderColumn} title="Toggle Header Column">
-                        Header Column
-                    </button>
+                    <div className="table-controls-group">
+                        <button onClick={handleAddRow} title="Add Row">
+                            <Plus size={14} />
+                        </button>
+                        <button onClick={handleAddColumn} title="Add Column">
+                            <Plus size={14} style={{transform: 'rotate(90deg)'}} />
+                        </button>
+                        <button onClick={handleDeleteRow} title="Delete Row">
+                            <Trash2 size={14} />
+                        </button>
+                        <button onClick={handleDeleteColumn} title="Delete Column">
+                            <Trash2 size={14} style={{transform: 'rotate(90deg)'}} />
+                        </button>
+                    </div>
+                    
+                    <div className="table-controls-divider"></div>
+                    
+                    <div className="table-controls-group">
+                        <button onClick={handleMergeCells} title="Merge Cells">
+                            <Merge size={14} />
+                        </button>
+                        <button onClick={handleSplitCell} title="Split Cell">
+                            <Split size={14} />
+                        </button>
+                    </div>
+                    
+                    <div className="table-controls-divider"></div>
+                    
+                    <div className="table-controls-group">
+                        <button onClick={handleCellAlignLeft} title="Align Left">
+                            <AlignLeft size={14} />
+                        </button>
+                        <button onClick={handleCellAlignCenter} title="Align Center">
+                            <AlignCenter size={14} />
+                        </button>
+                        <button onClick={handleCellAlignRight} title="Align Right">
+                            <AlignRight size={14} />
+                        </button>
+                    </div>
+                    
+                    <div className="table-controls-divider"></div>
+                    
+                    <div className="table-controls-group">
+                        <button onClick={handleToggleHeaderRow} title="Toggle Header Row">
+                            H
+                        </button>
+                        <button onClick={handleToggleHeaderColumn} title="Toggle Header Column">
+                            H|
+                        </button>
+                        <button onClick={handleDeleteTable} title="Delete Table">
+                            <Trash2 size={14} color="#ef4444" />
+                        </button>
+                    </div>
                 </div>
             )}
 
@@ -950,7 +1049,7 @@ const CustomBubbleMenu = () => {
         >
             <div className="bubble-menu">
                 {/* Always show these buttons */}
-                <div className="flex gap-2">
+                <div className="flex">
                     <button
                         onClick={(e) => {
                             e.preventDefault();
@@ -970,6 +1069,26 @@ const CustomBubbleMenu = () => {
                         title="Italic"
                     >
                         <Italic size={14} />
+                    </button>
+                    <button
+                        onClick={(e) => {
+                            e.preventDefault();
+                            editor.chain().focus().toggleUnderline().run();
+                        }}
+                        className={editor.isActive('underline') ? 'is-active' : ''}
+                        title="Underline"
+                    >
+                        <UnderlineIcon size={14} />
+                    </button>
+                    <button
+                        onClick={(e) => {
+                            e.preventDefault();
+                            editor.chain().focus().toggleStrike().run();
+                        }}
+                        className={editor.isActive('strike') ? 'is-active' : ''}
+                        title="Strikethrough"
+                    >
+                        <Strikethrough size={14} />
                     </button>
                     <button
                         onClick={(e) => {
@@ -1001,6 +1120,58 @@ const CustomBubbleMenu = () => {
                     >
                         H3
                     </button>
+                    <button
+                        onClick={(e) => {
+                            e.preventDefault();
+                            editor.chain().focus().toggleHeading({ level: 4 }).run();
+                        }}
+                        className={editor.isActive('heading', { level: 4 }) ? 'is-active' : ''}
+                        title="Heading 4"
+                    >
+                        H4
+                    </button>
+                    <button
+                        onClick={(e) => {
+                            e.preventDefault();
+                            editor.chain().focus().toggleHeading({ level: 5 }).run();
+                        }}
+                        className={editor.isActive('heading', { level: 5 }) ? 'is-active' : ''}
+                        title="Heading 5"
+                    >
+                        H5
+                    </button>
+                    <button
+                        onClick={(e) => {
+                            e.preventDefault();
+                            editor.chain().focus().toggleHeading({ level: 6 }).run();
+                        }}
+                        className={editor.isActive('heading', { level: 6 }) ? 'is-active' : ''}
+                        title="Heading 6"
+                    >
+                        H6
+                    </button>
+
+                    {/* List buttons */}
+                    <button
+                        onClick={(e) => {
+                            e.preventDefault();
+                            editor.chain().focus().toggleBulletList().run();
+                        }}
+                        className={editor.isActive('bulletList') ? 'is-active' : ''}
+                        title="Bullet List"
+                    >
+                        <List size={14} />
+                    </button>
+                    <button
+                        onClick={(e) => {
+                            e.preventDefault();
+                            editor.chain().focus().toggleOrderedList().run();
+                        }}
+                        className={editor.isActive('orderedList') ? 'is-active' : ''}
+                        title="Numbered List"
+                    >
+                        <ListOrdered size={14} />
+                    </button>
 
                     {/* Link buttons */}
                     <button
@@ -1019,6 +1190,48 @@ const CustomBubbleMenu = () => {
                         title="info icon"
                     >
                         <InfoIcon size={16} />
+                    </button>
+
+                    {/* Text Alignment buttons */}
+                    <button
+                        onClick={(e) => {
+                            e.preventDefault();
+                            editor.chain().focus().setTextAlign('left').run();
+                        }}
+                        className={editor.isActive({ textAlign: 'left' }) ? 'is-active' : ''}
+                        title="Align Left"
+                    >
+                        <AlignLeft size={14} />
+                    </button>
+                    <button
+                        onClick={(e) => {
+                            e.preventDefault();
+                            editor.chain().focus().setTextAlign('center').run();
+                        }}
+                        className={editor.isActive({ textAlign: 'center' }) ? 'is-active' : ''}
+                        title="Align Center"
+                    >
+                        <AlignCenter size={14} />
+                    </button>
+                    <button
+                        onClick={(e) => {
+                            e.preventDefault();
+                            editor.chain().focus().setTextAlign('right').run();
+                        }}
+                        className={editor.isActive({ textAlign: 'right' }) ? 'is-active' : ''}
+                        title="Align Right"
+                    >
+                        <AlignRight size={14} />
+                    </button>
+                    <button
+                        onClick={(e) => {
+                            e.preventDefault();
+                            editor.chain().focus().setTextAlign('justify').run();
+                        }}
+                        className={editor.isActive({ textAlign: 'justify' }) ? 'is-active' : ''}
+                        title="Justify"
+                    >
+                        <AlignJustify size={14} />
                     </button>
                     {editor.isActive('link') && (
                         <button
