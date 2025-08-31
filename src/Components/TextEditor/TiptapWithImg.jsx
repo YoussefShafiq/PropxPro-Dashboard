@@ -11,7 +11,8 @@ import {
     Code2,
     ImageIcon,
     Undo,
-    Redo
+    Redo,
+    Unlink
 } from 'lucide-react';
 import TextAlign from '@tiptap/extension-text-align';
 import Underline from '@tiptap/extension-underline';
