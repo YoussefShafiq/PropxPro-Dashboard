@@ -15,7 +15,10 @@ import {
     FaImage,
     FaEnvelope,
     FaQuestionCircle,
-    FaTimesCircle
+    FaTimesCircle,
+    FaCheckSquare,
+    FaMinusSquare,
+    FaSquare
 } from 'react-icons/fa';
 import TiptapWithImg from '../TextEditor/TiptapWithImg';
 import { Chips } from 'primereact/chips';
@@ -28,6 +31,9 @@ import { useNavigate } from 'react-router-dom';
 export default function BlogsDataTable({ blogs, loading, refetch }) {
     const navigate = useNavigate();
     const queryClient = useQueryClient();
+    const [selectedBlogs, setSelectedBlogs] = useState([]);
+    const [selectAll, setSelectAll] = useState(false);
+    const [isBulkActionLoading, setIsBulkActionLoading] = useState(false);
     const [filters, setFilters] = useState({
         global: '',
         title: '',
@@ -765,6 +771,90 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
         );
     };
 
+    // Handle individual blog selection
+    const handleSelectBlog = (blogId, isSelected) => {
+        if (isSelected) {
+            setSelectedBlogs(prev => [...prev, blogId]);
+        } else {
+            setSelectedBlogs(prev => prev.filter(id => id !== blogId));
+        }
+    };
+
+    // Handle select all
+    const handleSelectAll = (isSelected) => {
+        if (isSelected) {
+            setSelectedBlogs(filteredBlogs.map(blog => blog.id));
+            setSelectAll(true);
+        } else {
+            setSelectedBlogs([]);
+            setSelectAll(false);
+        }
+    };
+
+    // State for delete confirmation modal
+    const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
+
+    // Bulk delete blogs
+    const handleBulkDelete = async () => {
+        if (!selectedBlogs.length) return;
+        setShowBulkDeleteConfirm(true);
+    };
+
+    // Confirm bulk delete
+    const confirmBulkDelete = async () => {
+        setShowBulkDeleteConfirm(false);
+
+        try {
+            setIsBulkActionLoading(true);
+            await axios.post('https://api.propxpro.com/api/admin/blogs/bulk/delete',
+                { ids: selectedBlogs },
+                {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem('userToken')}`
+                    }
+                }
+            );
+            toast.success(`${selectedBlogs.length} blog(s) deleted successfully`);
+            setSelectedBlogs([]);
+            setSelectAll(false);
+            refetch();
+        } catch (error) {
+            console.error('Error deleting blogs:', error);
+            toast.error(error.response?.data?.message || 'Failed to delete blogs');
+        } finally {
+            setIsBulkActionLoading(false);
+        }
+    };
+
+    // Bulk update blog status
+    const handleBulkStatusUpdate = async (status) => {
+        if (!selectedBlogs.length) return;
+
+        try {
+            setIsBulkActionLoading(true);
+            await axios.post('https://api.propxpro.com/api/admin/blogs/bulk/update-status',
+                {
+                    ids: selectedBlogs,
+                    status: status
+                },
+                {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem('userToken')}`
+                    }
+                }
+            );
+            toast.success(`Status updated for ${selectedBlogs.length} blog(s)`);
+            setSelectedBlogs([]);
+            setSelectAll(false);
+            refetch();
+        } catch (error) {
+            console.error('Error updating blog status:', error);
+            toast.error(error.response?.data?.message || 'Failed to update blog status');
+        } finally {
+            setIsBulkActionLoading(false);
+        }
+    };
+
     return (
         <div className="shadow-2xl rounded-2xl overflow-hidden bg-white">
             {/* Global Search and Add Button */}
@@ -790,14 +880,16 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
                 <table className="w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                         <tr>
-                            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                <input
-                                    type="text"
-                                    placeholder="Title"
-                                    value={filters.title}
-                                    onChange={(e) => handleFilterChange('title', e.target.value)}
-                                    className="text-xs p-1 border rounded w-full"
-                                />
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <div className="flex items-center">
+                                    <input
+                                        type="checkbox"
+                                        checked={selectAll && filteredBlogs.length > 0}
+                                        onChange={(e) => handleSelectAll(e.target.checked)}
+                                        className="h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                                    />
+                                    <span className="ml-2">Title</span>
+                                </div>
                             </th>
                             <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Cover Photo
@@ -852,9 +944,18 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
                         ) : (
                             paginatedBlogs.map((blog) => (
                                 <tr key={blog.id} className="hover:bg-gray-50">
-                                    <td className="px-3 py-4 whitespace-nowrap">
-                                        <div className="font-medium">{blog.title}</div>
-                                        <div className="text-xs text-gray-500">{blog.slug}</div>
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        <div className="flex items-center">
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedBlogs.includes(blog.id)}
+                                                onChange={(e) => handleSelectBlog(blog.id, e.target.checked)}
+                                                className="h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                                            />
+                                            <span className="ml-2 text-sm font-medium text-gray-900">
+                                                {blog.title}
+                                            </span>
+                                        </div>
                                     </td>
                                     <td className="px-3 py-4 whitespace-nowrap">
                                         {blog.cover_photo && (
@@ -927,6 +1028,118 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
                     </tbody>
                 </table>
             </div>
+
+            {/* Bulk Delete Confirmation Modal */}
+            {showBulkDeleteConfirm && (
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                    <motion.div
+                        initial={{ scale: 0.9, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        exit={{ scale: 0.9, opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="bg-white rounded-lg p-6 max-w-md w-full">
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="text-lg font-semibold text-gray-900">Confirm Deletion</h3>
+                            <button
+                                onClick={() => setShowBulkDeleteConfirm(false)}
+                                className="text-gray-500 hover:text-gray-700"
+                            >
+                                <FaTimes />
+                            </button>
+                        </div>
+                        <p className="text-gray-700 mb-6">
+                            Are you sure you want to delete {selectedBlogs.length} selected blog(s)? This action cannot be undone.
+                        </p>
+                        <div className="flex justify-end gap-3">
+                            <button
+                                onClick={() => setShowBulkDeleteConfirm(false)}
+                                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                                disabled={isBulkActionLoading}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={confirmBulkDelete}
+                                className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 flex items-center"
+                                disabled={isBulkActionLoading}
+                            >
+                                {isBulkActionLoading ? (
+                                    <>
+                                        <FaSpinner className="animate-spin mr-2" />
+                                        Deleting...
+                                    </>
+                                ) : (
+                                    'Delete'
+                                )}
+                            </button>
+                        </div>
+                    </motion.div>
+                </motion.div>
+            )}
+
+            {/* Bulk Actions Toolbar */}
+            {selectedBlogs.length > 0 && (
+                <div className="bg-blue-50 p-4 rounded-md mb-6 border border-blue-200">
+                    <div className="flex flex-wrap items-center gap-4">
+                        <div className="text-blue-800 font-medium">
+                            {selectedBlogs.length} blog(s) selected
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                            <button
+                                onClick={() => handleBulkStatusUpdate(true)}
+                                disabled={isBulkActionLoading}
+                                className="flex items-center px-3 py-1.5 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50 text-sm"
+                            >
+
+                                <FaCheck className="mr-1.5" />
+
+                                Activate
+                            </button>
+                            <button
+                                onClick={() => handleBulkStatusUpdate(false)}
+                                disabled={isBulkActionLoading}
+                                className="flex items-center px-3 py-1.5 bg-yellow-600 text-white rounded hover:bg-yellow-700 disabled:opacity-50 text-sm"
+                            >
+
+                                <FaTimes className="mr-1.5" />
+
+                                Deactivate
+                            </button>
+                            <button
+                                onClick={handleBulkDelete}
+                                disabled={isBulkActionLoading}
+                                className="flex items-center px-3 py-1.5 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50 text-sm"
+                            >
+
+                                <FaTrashAlt className="mr-1.5" />
+
+                                Delete
+                            </button>
+                            <button
+                                onClick={() => {
+                                    setSelectedBlogs([]);
+                                    setSelectAll(false);
+                                }}
+                                className="flex items-center px-3 py-1.5 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 text-sm"
+                            >
+                                <FaTimes className="mr-1.5" />
+                                Clear Selection
+                            </button>
+
+                            {isBulkActionLoading && (
+                                <div className="flex items-center">
+                                    <FaSpinner className="animate-spin mr-1.5" />
+                                    Loading...
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Pagination */}
             {!loading && renderPagination()}
