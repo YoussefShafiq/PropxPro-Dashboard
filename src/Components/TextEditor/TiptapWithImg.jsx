@@ -1,6 +1,6 @@
 import { EditorProvider, useCurrentEditor, BubbleMenu, Extension } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
-import { mergeAttributes, Node } from '@tiptap/core';
+import { mergeAttributes, Node, Mark } from '@tiptap/core';
 import {
     Bold, Italic, Underline as UnderlineIcon, Strikethrough, Link, Image, Code, List, ListOrdered,
     AlignLeft, AlignCenter, AlignRight, AlignJustify, Quote, Minus, Highlighter, Type,
@@ -14,7 +14,8 @@ import {
     Redo,
     Unlink,
     Video,
-    Youtube
+    Youtube,
+    Calendar
 } from 'lucide-react';
 import TextAlign from '@tiptap/extension-text-align';
 import Underline from '@tiptap/extension-underline';
@@ -351,6 +352,37 @@ const InfoBox = Node.create({
     },
 });
 
+// Custom Dynamic Date mark extension to wrap selected text with <span class="dynamic-date">...</span>
+const DynamicDate = Mark.create({
+    name: 'dynamicDate',
+
+    inclusive() {
+        return false;
+    },
+
+    parseHTML() {
+        return [
+            {
+                tag: 'span.dynamic-date',
+            },
+        ];
+    },
+
+    renderHTML() {
+        return ['span', { class: 'dynamic-date' }, 0];
+    },
+
+    addCommands() {
+        return {
+            toggleDynamicDate:
+                () =>
+                    ({ commands }) => {
+                        return commands.toggleMark(this.name);
+                    },
+        };
+    },
+});
+
 // Custom Video extension
 const VideoExtension = Node.create({
     name: 'video',
@@ -597,6 +629,7 @@ const extensions = [
         alignments: ['left', 'center', 'right', 'justify'],
     }),
     Underline,
+    DynamicDate,
     CustomImageExtension.configure({
         inline: true,
         allowBase64: false,
@@ -1222,6 +1255,17 @@ const MenuBar = ({ uploadImgUrl = '', uploadVideoUrl = 'https://api.propxpro.com
                     title="Underline"
                 >
                     <UnderlineIcon size={16} />
+                </button>
+                <button
+                    onClick={(e) => {
+                        e.preventDefault();
+                        editor.chain().focus().toggleDynamicDate().run();
+                    }}
+                    disabled={!editor.can().chain().focus().toggleDynamicDate().run()}
+                    className={editor.isActive('dynamicDate') ? 'is-active' : ''}
+                    title="Dynamic Date"
+                >
+                    <Calendar size={16} />
                 </button>
             </div>
 
