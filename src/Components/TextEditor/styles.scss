@@ -877,25 +877,52 @@ i[style*="background-color: #f4f6ff"] {
 
         /* Blockquotes */
         blockquote {
-            background-color: #f4f6ff;
-            padding-right: 8px;
-            padding-top: 8px;
-            padding-bottom: 2px;
-            padding-left: 34px;
-            border-radius: 8px;
-            color: black;
-            // font-style: italic;
+            border-left: 4px solid #000;
+            margin: 1.5em 0;
+            padding: 0.5em 1em;
+            padding-left: 1.5em;
+            color: #333;
             position: relative;
+            background-color: #f9f9f9;
+            font-style: normal;
+            font-size: 1.1em;
+            line-height: 1.6;
+
+            p {
+                margin: 0.5em 0;
+            }
+        }
+
+        /* Info Box */
+        .info-box {
+            background-color: #f0f7ff;
+            border-left: 4px solid #3b82f6;
+            border-radius: 4px;
+            margin: 1.5em 0;
+            padding: 1em 1.5em;
+            color: #1e40af;
+            position: relative;
+            font-size: 1em;
+            line-height: 1.6;
 
             &::before {
+                content: 'ℹ️';
                 position: absolute;
-                content: '';
-                left: 12px;
-                top: 12px;
-                width: 16px;
-                height: 16px;
-                background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23245ec1' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'%3E%3C/circle%3E%3Cline x1='12' y1='16' x2='12' y2='12'%3E%3C/line%3E%3Cline x1='12' y1='8' x2='12.01' y2='8'%3E%3C/line%3E%3C/svg%3E");
-                background-repeat: no-repeat;
+                left: 0.75em;
+                top: 0.75em;
+                font-size: 1.2em;
+            }
+
+            p {
+                margin: 0.5em 0 0.5em 1.5em;
+            }
+
+            &:first-child {
+                margin-top: 0;
+            }
+
+            &:last-child {
+                margin-bottom: 0;
             }
         }
 
@@ -918,6 +945,37 @@ i[style*="background-color: #f4f6ff"] {
         .text-align-right {
             text-align: right;
         }
+    }
+}
+
+/* Info Box Styling */
+.info-box,
+[class*="info-box"] {
+    background-color: #eff6ff !important;
+    border-left: 4px solid #3b82f6 !important;
+    color: #1e3a8a !important;
+    padding: 1rem 1.25rem !important;
+    margin: 1rem 0 !important;
+    border-radius: 0.25rem !important;
+    position: relative !important;
+    font-family: inherit !important;
+    white-space: pre-wrap !important;
+    counter-reset: none !important;
+
+    &::before {
+        content: "ℹ️";
+        position: absolute;
+        left: 0.75rem;
+        top: 0.75rem;
+        font-size: 1rem;
+    }
+
+    code {
+        background: transparent !important;
+        color: inherit !important;
+        padding: 0 !important;
+        font-family: inherit !important;
+        font-size: inherit !important;
     }
 }
 

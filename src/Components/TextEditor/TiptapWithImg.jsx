@@ -1,5 +1,6 @@
-import { EditorProvider, useCurrentEditor, BubbleMenu } from '@tiptap/react';
+import { EditorProvider, useCurrentEditor, BubbleMenu, Extension } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
+import { mergeAttributes, Node } from '@tiptap/core';
 import {
     Bold, Italic, Underline as UnderlineIcon, Strikethrough, Link, Image, Code, List, ListOrdered,
     AlignLeft, AlignCenter, AlignRight, AlignJustify, Quote, Minus, Highlighter, Type,
@@ -112,10 +113,80 @@ const CustomImageExtension = ImageExtension.extend({
     },
 });
 
+// Custom paragraph extension to handle info-box class
+const CustomParagraph = {
+    name: 'paragraph',
+    group: 'block',
+    content: 'inline*',
+    parseHTML() {
+        return [
+            {
+                tag: 'p',
+                getAttrs: node => ({
+                    class: node.classList.contains('info-box') ? 'info-box' : ''
+                })
+            }
+        ];
+    },
+    renderHTML({ HTMLAttributes }) {
+        return ['p', HTMLAttributes, 0];
+    },
+    addCommands() {
+        return {
+            setInfoBox:
+                () =>
+                    ({ commands }) => {
+                        return commands.setNode('paragraph', { class: 'info-box' });
+                    },
+        };
+    },
+};
+
+// Custom InfoBox extension
+const InfoBox = Node.create({
+    name: 'infoBox',
+    group: 'block',
+    content: 'inline*',
+    defining: true,
+
+    addAttributes() {
+        return {
+            class: {
+                default: 'info-box',
+            },
+        };
+    },
+
+    parseHTML() {
+        return [
+            {
+                tag: 'div[class*="info-box"]',
+            },
+        ];
+    },
+
+    renderHTML({ HTMLAttributes }) {
+        return ['div', mergeAttributes(HTMLAttributes, { class: 'info-box' }), 0];
+    },
+
+    addCommands() {
+        return {
+            setInfoBox:
+                () =>
+                    ({ commands }) => {
+                        return commands.setNode('infoBox');
+                    },
+        };
+    },
+});
+
 const extensions = [
     StarterKit.configure({
         heading: false, // Disable default heading
+        paragraph: true, // Keep default paragraph
+        blockquote: true, // Keep default blockquote
     }),
+    InfoBox,
     HeadingWithId.configure({
         levels: [1, 2, 3, 4, 5, 6],
         HTMLAttributes: {
@@ -569,10 +640,37 @@ const MenuBar = ({ uploadImgUrl = '' }) => {
                 <button
                     onClick={(e) => {
                         e.preventDefault();
-                        editor.chain().focus().toggleBlockquote().run();
+                        if (editor.isActive('blockquote')) {
+                            // If already a blockquote, remove it
+                            editor.chain().focus().toggleBlockquote().run();
+                        } else {
+                            // Set blockquote with default class
+                            editor.chain()
+                                .focus()
+                                .toggleBlockquote()
+                                .updateAttributes('blockquote', { class: '' })
+                                .run();
+                        }
                     }}
-                    className={editor.isActive('blockquote') ? 'is-active' : ''}
-                    title="info icon"
+                    className={editor.isActive('blockquote') && editor.getAttributes('blockquote').class !== 'info-box' ? 'is-active' : ''}
+                    title="Blockquote"
+                >
+                    <Quote size={16} />
+                </button>
+                <button
+                    onClick={(e) => {
+                        e.preventDefault();
+                        // Toggle info box on/off
+                        if (editor.isActive('infoBox')) {
+                            // If already an info box, remove it
+                            editor.chain().focus().setParagraph().run();
+                        } else {
+                            // If not an info box, set it as one
+                            editor.chain().focus().setInfoBox().run();
+                        }
+                    }}
+                    className={editor.isActive('infoBox') ? 'is-active' : ''}
+                    title="Info Box"
                 >
                     <InfoIcon size={16} />
                 </button>
