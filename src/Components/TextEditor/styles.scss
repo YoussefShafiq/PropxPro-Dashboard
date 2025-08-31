@@ -9,17 +9,17 @@
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         border: 1px solid #000;
         padding: 4px; // Add some padding for the resize handle
-        
+
         &::-webkit-scrollbar {
             height: 8px;
             width: 8px;
         }
-        
+
         &::-webkit-scrollbar-thumb {
             background: #ccc;
             border-radius: 4px;
         }
-        
+
         &::-webkit-scrollbar-track {
             background: #f1f1f1;
             border-radius: 4px;
@@ -47,7 +47,7 @@
             overflow: hidden;
             text-overflow: ellipsis;
 
-            > * {
+            >* {
                 margin-bottom: 0;
                 max-width: 100%;
                 overflow: hidden;
@@ -135,14 +135,14 @@
             max-width: 100%;
             overflow: hidden;
         }
-        
+
         // Make sure the table cells respect their widths
         td[style*="width:"],
         th[style*="width:"] {
             position: relative;
-            
+
             // Ensure content doesn't overflow
-            > * {
+            >* {
                 max-width: 100%;
                 overflow: hidden;
                 text-overflow: ellipsis;
@@ -662,6 +662,13 @@ i[style*="background-color: #f4f6ff"] {
             &.is-active .highlighter-icon {
                 color: #3b82f6;
             }
+
+            /* Video upload button styles */
+            &.is-uploading {
+                background: #fef3c7;
+                color: #d97706;
+                cursor: not-allowed;
+            }
         }
     }
 
@@ -846,6 +853,62 @@ i[style*="background-color: #f4f6ff"] {
             margin: 1rem 0;
             border-radius: 0.25rem;
             border: 1px solid #e2e8f0;
+        }
+
+        /* Help Center Video Style */
+        .help-center-video {
+            max-width: 100%;
+            height: auto;
+            margin: 1rem 0;
+            border-radius: 0.25rem;
+            border: 1px solid #e2e8f0;
+        }
+
+        /* YouTube Iframe Style */
+        .youtube-iframe {
+            max-width: 100%;
+            height: 400px;
+            margin: 1rem 0;
+            border-radius: 0.25rem;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Video Container Styles */
+        .video-container {
+            margin: 1rem 0;
+            border-radius: 0.25rem;
+            border: 1px solid #e2e8f0;
+            overflow: hidden;
+            position: relative;
+
+            &.youtube-video {
+                background: #f8fafc;
+                padding: 1rem;
+                text-align: center;
+
+                iframe {
+                    border-radius: 0.25rem;
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+                }
+            }
+        }
+
+        /* YouTube Video Container */
+        .youtube-video-container {
+            margin: 1rem 0;
+            border-radius: 0.25rem;
+            border: 1px solid #e2e8f0;
+            overflow: hidden;
+            position: relative;
+            background: #f8fafc;
+            padding: 1rem;
+            text-align: center;
+
+            iframe {
+                border-radius: 0.25rem;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            }
         }
 
         /* Heading with ID Style */
@@ -1442,6 +1505,58 @@ i[style*="background-color: #f4f6ff"] {
         margin: 1rem 0;
         border-radius: 0.25rem;
         border: 1px solid #e2e8f0;
+    }
+
+    video {
+        max-width: 100%;
+        height: auto;
+        margin: 1rem 0;
+        border-radius: 0.25rem;
+        border: 1px solid #e2e8f0;
+    }
+
+    iframe.youtube-iframe {
+        max-width: 100%;
+        height: 400px;
+        margin: 1rem 0;
+        border-radius: 0.25rem;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .video-container {
+        margin: 1rem 0;
+        border-radius: 0.25rem;
+        border: 1px solid #e2e8f0;
+        overflow: hidden;
+        position: relative;
+
+        &.youtube-video {
+            background: #f8fafc;
+            padding: 1rem;
+            text-align: center;
+
+            iframe {
+                border-radius: 0.25rem;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            }
+        }
+    }
+
+    .youtube-video-container {
+        margin: 1rem 0;
+        border-radius: 0.25rem;
+        border: 1px solid #e2e8f0;
+        overflow: hidden;
+        position: relative;
+        background: #f8fafc;
+        padding: 1rem;
+        text-align: center;
+
+        iframe {
+            border-radius: 0.25rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
     }
 }
 

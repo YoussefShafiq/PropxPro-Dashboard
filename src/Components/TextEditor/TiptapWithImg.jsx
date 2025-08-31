@@ -12,7 +12,9 @@ import {
     ImageIcon,
     Undo,
     Redo,
-    Unlink
+    Unlink,
+    Video,
+    Youtube
 } from 'lucide-react';
 import TextAlign from '@tiptap/extension-text-align';
 import Underline from '@tiptap/extension-underline';
@@ -349,11 +351,239 @@ const InfoBox = Node.create({
     },
 });
 
+// Custom Video extension
+const VideoExtension = Node.create({
+    name: 'video',
+    group: 'block',
+    atom: true,
+    inline: false,
+
+    addAttributes() {
+        return {
+            src: {
+                default: null,
+            },
+            alt: {
+                default: '',
+            },
+            title: {
+                default: '',
+            },
+            description: {
+                default: '',
+            },
+            type: {
+                default: 'local', // 'local' or 'youtube'
+            },
+            youtubeId: {
+                default: null,
+            },
+            width: {
+                default: '100%',
+            },
+            height: {
+                default: 'auto',
+            },
+        };
+    },
+
+    parseHTML() {
+        return [
+            {
+                tag: 'video',
+                getAttrs: node => ({
+                    src: node.getAttribute('src'),
+                    alt: node.getAttribute('alt'),
+                    title: node.getAttribute('title'),
+                    description: node.getAttribute('data-description'),
+                    type: node.getAttribute('data-type') || 'local',
+                    youtubeId: node.getAttribute('data-youtube-id'),
+                    width: node.getAttribute('width') || '100%',
+                    height: node.getAttribute('height') || 'auto',
+                }),
+            },
+            {
+                tag: 'div[data-video]',
+                getAttrs: node => ({
+                    src: node.getAttribute('data-src'),
+                    alt: node.getAttribute('data-alt'),
+                    title: node.getAttribute('data-title'),
+                    description: node.getAttribute('data-description'),
+                    type: node.getAttribute('data-type') || 'local',
+                    youtubeId: node.getAttribute('data-youtube-id'),
+                    width: node.getAttribute('width') || '100%',
+                    height: node.getAttribute('height') || 'auto',
+                }),
+            },
+        ];
+    },
+
+    renderHTML({ HTMLAttributes }) {
+        const { src, alt, title, description, type, youtubeId, width, height } = HTMLAttributes;
+
+        if (type === 'youtube' && youtubeId) {
+            // Render YouTube embed
+            return [
+                'div',
+                {
+                    class: 'video-container youtube-video',
+                    'data-video': true,
+                    'data-type': 'youtube',
+                    'data-youtube-id': youtubeId,
+                    'data-alt': alt,
+                    'data-title': title,
+                    'data-description': description,
+                    'data-width': width,
+                    'data-height': height,
+                },
+                [
+                    'iframe',
+                    {
+                        src: `https://www.youtube.com/embed/${youtubeId}`,
+                        width: width,
+                        height: height === 'auto' ? '315' : height,
+                        frameborder: '0',
+                        allow: 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture',
+                        allowfullscreen: true,
+                        title: title || alt,
+                    },
+                ],
+            ];
+        } else {
+            // Render local video
+            return [
+                'video',
+                {
+                    src,
+                    alt,
+                    title,
+                    'data-description': description,
+                    'data-type': 'local',
+                    width,
+                    height,
+                    controls: true,
+                    preload: 'metadata',
+                    class: 'help-center-video',
+                },
+            ];
+        }
+    },
+
+    addCommands() {
+        return {
+            setVideo:
+                (attributes) =>
+                    ({ commands }) => {
+                        return commands.insertContent({
+                            type: this.name,
+                            attrs: attributes,
+                        });
+                    },
+        };
+    },
+});
+
+// Custom YouTube Video extension
+const YouTubeVideoExtension = Node.create({
+    name: 'youtubeVideo',
+    group: 'block',
+    atom: true,
+    inline: false,
+    defining: true,
+    content: '',
+
+    addAttributes() {
+        return {
+            videoId: {
+                default: null,
+            },
+            alt: {
+                default: '',
+            },
+            title: {
+                default: '',
+            },
+            description: {
+                default: '',
+            },
+            width: {
+                default: '100%',
+            },
+            height: {
+                default: '400',
+            },
+        };
+    },
+
+    parseHTML() {
+        return [
+            {
+                tag: 'div[data-youtube-video]',
+                getAttrs: node => ({
+                    videoId: node.getAttribute('data-video-id'),
+                    alt: node.getAttribute('data-alt'),
+                    title: node.getAttribute('data-title'),
+                    description: node.getAttribute('data-description'),
+                    width: node.getAttribute('data-width') || '100%',
+                    height: node.getAttribute('data-height') || '400',
+                }),
+            },
+        ];
+    },
+
+    renderHTML({ HTMLAttributes }) {
+        const { videoId, alt, title, description, width, height } = HTMLAttributes;
+
+        return [
+            'div',
+            {
+                'data-youtube-video': true,
+                'data-video-id': videoId,
+                'data-alt': alt,
+                'data-title': title,
+                'data-description': description,
+                'data-width': width,
+                'data-height': height,
+                class: 'youtube-video-container',
+            },
+            [
+                'iframe',
+                {
+                    src: `https://www.youtube.com/embed/${videoId}`,
+                    title: title || 'YouTube video player',
+                    alt: alt,
+                    width,
+                    height,
+                    frameborder: '0',
+                    allow: 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share',
+                    referrerPolicy: 'strict-origin-when-cross-origin',
+                    allowfullscreen: true,
+                    class: 'youtube-iframe',
+                },
+            ],
+        ];
+    },
+
+    addCommands() {
+        return {
+            setYouTubeVideo:
+                (attributes) =>
+                    ({ commands }) => {
+                        return commands.insertContent({
+                            type: this.name,
+                            attrs: attributes,
+                        });
+                    },
+        };
+    },
+});
+
 const extensions = [
     StarterKit.configure({
         heading: false, // Disable default heading
         paragraph: true, // Keep default paragraph
         blockquote: true, // Keep default blockquote
+        codeBlock: true, // Keep code blocks
     }),
     InfoBox,
     HeadingWithId.configure({
@@ -412,12 +642,16 @@ const extensions = [
             class: 'tiptap-table-cell',
         },
     }),
+    VideoExtension,
+    YouTubeVideoExtension,
 ];
 
-const MenuBar = ({ uploadImgUrl = '' }) => {
+const MenuBar = ({ uploadImgUrl = '', uploadVideoUrl = 'https://api.propxpro.com/api/admin/blog-media/upload-video', processYoutubeUrl = 'https://api.propxpro.com/api/admin/blog-media/process-youtube' }) => {
     const { editor } = useCurrentEditor();
     const fileInputRef = useRef(null);
+    const videoFileInputRef = useRef(null);
     const [isUploading, setIsUploading] = useState(false);
+    const [isVideoUploading, setIsVideoUploading] = useState(false);
     const [showLinkInput, setShowLinkInput] = useState(false);
     const [linkUrl, setLinkUrl] = useState('');
     const [showImageMetaInput, setShowImageMetaInput] = useState(false);
@@ -425,11 +659,20 @@ const MenuBar = ({ uploadImgUrl = '' }) => {
     const [imageTitle, setImageTitle] = useState('');
     const [imageContent, setImageContent] = useState('');
     const [currentImagePos, setCurrentImagePos] = useState(null);
+    const [showVideoMetaInput, setShowVideoMetaInput] = useState(false);
+    const [videoAltText, setVideoAltText] = useState('');
+    const [videoTitle, setVideoTitle] = useState('');
+    const [videoDescription, setVideoDescription] = useState('');
+    const [currentVideoPos, setCurrentVideoPos] = useState(null);
+    const [showYoutubeInput, setShowYoutubeInput] = useState(false);
+    const [youtubeUrl, setYoutubeUrl] = useState('');
     const [showTableControls, setShowTableControls] = useState(false);
     const [tableRows, setTableRows] = useState(3);
     const [tableCols, setTableCols] = useState(3);
     const linkInputRef = useRef(null);
     const altInputRef = useRef(null);
+    const videoAltInputRef = useRef(null);
+    const youtubeInputRef = useRef(null);
 
     if (!editor) {
         return null;
@@ -484,6 +727,141 @@ const MenuBar = ({ uploadImgUrl = '' }) => {
         }
     };
 
+    const handleVideoUpload = async (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        // Check file size (100MB limit)
+        if (file.size > 100 * 1024 * 1024) {
+            toast.error('Video file size must be less than 100MB');
+            return;
+        }
+
+        // Check file type
+        const allowedTypes = ['video/mp4', 'video/mov', 'video/avi', 'video/wmv', 'video/webm'];
+        if (!allowedTypes.includes(file.type)) {
+            toast.error('Please select a valid video file (MP4, MOV, AVI, WMV, WebM)');
+            return;
+        }
+
+        setIsVideoUploading(true);
+        try {
+            const formData = new FormData();
+            formData.append('video', file);
+
+            const response = await axios.post(
+                uploadVideoUrl,
+                formData,
+                {
+                    headers: {
+                        'Content-Type': 'multipart/form-data',
+                        'Authorization': `Bearer ${localStorage.getItem('userToken')}`
+                    },
+                }
+            );
+
+            if (response.data.success && response.data.data?.url) {
+                const src = response.data.data.url;
+                editor.chain().focus().setVideo({ src, type: 'local' }).run();
+
+                // After video is inserted, show meta input
+                const { state } = editor;
+                const { selection } = state;
+                const pos = selection.$anchor.pos - 1; // Position of the inserted video
+
+                setCurrentVideoPos(pos);
+                setVideoAltText('');
+                setVideoTitle('');
+                setVideoDescription('');
+                setShowVideoMetaInput(true);
+                setTimeout(() => {
+                    videoAltInputRef.current?.focus();
+                }, 100);
+            } else {
+                throw new Error('Invalid response format');
+            }
+        } catch (error) {
+            console.error('Video upload failed:', error);
+            toast.error('Failed to upload video. Please try again.');
+        } finally {
+            setIsVideoUploading(false);
+            event.target.value = '';
+        }
+    };
+
+    const handleYoutubeSubmit = async (e) => {
+        e.preventDefault();
+        if (!youtubeUrl.trim()) {
+            toast.error('Please enter a YouTube URL');
+            return;
+        }
+
+        // Extract YouTube video ID from URL
+        let youtubeId = null;
+        const url = youtubeUrl.trim();
+
+        // Handle different YouTube URL formats
+        if (url.includes('youtube.com/watch?v=')) {
+            youtubeId = url.split('v=')[1]?.split('&')[0];
+        } else if (url.includes('youtu.be/')) {
+            youtubeId = url.split('youtu.be/')[1]?.split('?')[0];
+        } else if (url.includes('youtube.com/embed/')) {
+            youtubeId = url.split('embed/')[1]?.split('?')[0];
+        }
+
+        if (!youtubeId) {
+            toast.error('Invalid YouTube URL. Please enter a valid YouTube video URL.');
+            return;
+        }
+
+        // Insert YouTube video using the YouTubeVideoExtension
+        try {
+            console.log('Inserting YouTube video for video ID:', youtubeId);
+
+            // Use the YouTubeVideoExtension to insert the YouTube video
+            editor.chain().focus().setYouTubeVideo({
+                videoId: youtubeId,
+                alt: '',
+                title: 'YouTube video player',
+                description: '',
+                width: '100%',
+                height: '400'
+            }).run();
+
+            console.log('YouTube video inserted successfully');
+
+            // Debug: check what was actually inserted
+            setTimeout(() => {
+                const currentContent = editor.getHTML();
+                console.log('Current editor content after insertion:', currentContent);
+            }, 100);
+
+        } catch (error) {
+            console.error('Error inserting YouTube video:', error);
+
+            // Fallback: insert as a simple text placeholder
+            editor.chain().focus().insertContent(`[YouTube Video: ${youtubeId}]`).run();
+            toast.error('Failed to embed YouTube video. Please try again.');
+        }
+
+        // After YouTube video is inserted, show meta input
+        const { state } = editor;
+        const { selection } = state;
+        const pos = selection.$anchor.pos - 1; // Position of the inserted iframe
+
+        setCurrentVideoPos(pos);
+        setVideoAltText('');
+        setVideoTitle('');
+        setVideoDescription('');
+        setShowVideoMetaInput(true);
+        setTimeout(() => {
+            videoAltInputRef.current?.focus();
+        }, 100);
+
+        setYoutubeUrl('');
+        setShowYoutubeInput(false);
+    };
+
     const handleImageMetaSubmit = (e) => {
         e.preventDefault();
         if (!currentImagePos) return;
@@ -513,6 +891,81 @@ const MenuBar = ({ uploadImgUrl = '' }) => {
         setImageTitle('');
         setImageContent('');
         setCurrentImagePos(null);
+    };
+
+    const handleVideoMetaSubmit = (e) => {
+        e.preventDefault();
+        if (!currentVideoPos) return;
+
+        const { state } = editor;
+        const node = state.doc.nodeAt(currentVideoPos);
+
+        // Handle video nodes
+        if (node && node.type.name === 'video') {
+            editor
+                .chain()
+                .focus()
+                .command(({ tr }) => {
+                    const nodeAttrs = {
+                        ...node.attrs,
+                        alt: videoAltText,
+                        title: videoTitle,
+                        description: videoDescription
+                    };
+                    tr.setNodeMarkup(currentVideoPos, undefined, nodeAttrs);
+                    return true;
+                })
+                .run();
+        }
+
+        // Handle YouTube video HTML content
+        const currentContent = editor.getHTML();
+        if (currentContent.includes('data-youtube-video')) {
+            let updatedContent = currentContent;
+
+            // Update YouTube video attributes
+            updatedContent = updatedContent.replace(
+                /<div([^>]*data-youtube-video[^>]*)>/g,
+                (match, attributes) => {
+                    // Remove existing data-alt, data-title, data-description attributes
+                    let newAttributes = attributes
+                        .replace(/data-alt="[^"]*"/g, '')
+                        .replace(/data-title="[^"]*"/g, '')
+                        .replace(/data-description="[^"]*"/g, '');
+
+                    // Add new attributes
+                    if (videoAltText) {
+                        newAttributes += ` data-alt="${videoAltText}"`;
+                    }
+                    if (videoTitle) {
+                        newAttributes += ` data-title="${videoTitle}"`;
+                    }
+                    if (videoDescription) {
+                        newAttributes += ` data-description="${videoDescription}"`;
+                    }
+
+                    return `<div${newAttributes}>`;
+                }
+            );
+
+            // Update editor content
+            editor.commands.setContent(updatedContent);
+        }
+
+        setShowVideoMetaInput(false);
+        setVideoAltText('');
+        setVideoTitle('');
+        setVideoDescription('');
+        setCurrentVideoPos(null);
+    };
+
+    const handleVideoMetaCancel = () => {
+        setShowVideoMetaInput(false);
+        setVideoAltText('');
+        setVideoTitle('');
+        setVideoDescription('');
+        setCurrentVideoPos(null);
+        editor.chain().focus().run();
     };
 
     const handleImageMetaCancel = () => {
@@ -594,6 +1047,47 @@ const MenuBar = ({ uploadImgUrl = '' }) => {
             setTimeout(() => {
                 altInputRef.current?.focus();
             }, 100);
+        }
+    };
+
+    const handleVideoClick = (e) => {
+        e.preventDefault();
+        const { state } = editor;
+        const { selection } = state;
+        const node = state.doc.nodeAt(selection.from - 1);
+
+        // Handle video nodes
+        if (node && node.type.name === 'video') {
+            setCurrentVideoPos(selection.from - 1);
+            setVideoAltText(node.attrs.alt || '');
+            setVideoTitle(node.attrs.title || '');
+            setVideoDescription(node.attrs.description || '');
+            setShowVideoMetaInput(true);
+            setTimeout(() => {
+                videoAltInputRef.current?.focus();
+            }, 100);
+        }
+
+        // Handle YouTube video HTML content
+        const currentContent = editor.getHTML();
+        if (currentContent.includes('data-youtube-video')) {
+            // Extract YouTube video attributes from HTML
+            const videoMatch = currentContent.match(/<div[^>]*data-youtube-video[^>]*>/);
+            if (videoMatch) {
+                const videoHtml = videoMatch[0];
+                const titleMatch = videoHtml.match(/data-title="([^"]*)"/);
+                const altMatch = videoHtml.match(/data-alt="([^"]*)"/);
+                const descriptionMatch = videoHtml.match(/data-description="([^"]*)"/);
+
+                setCurrentVideoPos(selection.from);
+                setVideoAltText(altMatch ? altMatch[1] : '');
+                setVideoTitle(titleMatch ? titleMatch[1] : '');
+                setVideoDescription(descriptionMatch ? descriptionMatch[1] : '');
+                setShowVideoMetaInput(true);
+                setTimeout(() => {
+                    videoAltInputRef.current?.focus();
+                }, 100);
+            }
         }
     };
 
@@ -975,6 +1469,42 @@ const MenuBar = ({ uploadImgUrl = '' }) => {
             <div className="toolbar-divider" />
 
             <div className="toolbar-group">
+                <input
+                    type="file"
+                    ref={videoFileInputRef}
+                    onChange={handleVideoUpload}
+                    accept="video/*"
+                    style={{ display: 'none' }}
+                    disabled={isVideoUploading}
+                />
+                <button
+                    onClick={(e) => {
+                        e.preventDefault();
+                        videoFileInputRef.current.click();
+                    }}
+                    title="Upload Video"
+                    disabled={isVideoUploading}
+                    className={isVideoUploading ? 'is-uploading' : ''}
+                >
+                    {isVideoUploading ? 'Uploading...' : <Video size={16} />}
+                </button>
+                <button
+                    onClick={(e) => {
+                        e.preventDefault();
+                        setShowYoutubeInput(true);
+                        setTimeout(() => {
+                            youtubeInputRef.current?.focus();
+                        }, 100);
+                    }}
+                    title="Add YouTube Video"
+                >
+                    <Youtube size={16} />
+                </button>
+            </div>
+
+            <div className="toolbar-divider" />
+
+            <div className="toolbar-group">
                 <button
                     onClick={handleTableClick}
                     className={editor.isActive('table') ? 'is-active' : ''}
@@ -1193,6 +1723,96 @@ const MenuBar = ({ uploadImgUrl = '' }) => {
                     </div>
                 </div>
             )}
+
+            {/* Video Meta Input Modal */}
+            {showVideoMetaInput && (
+                <div className="link-input-modal">
+                    <div className="link-input-overlay" onClick={handleVideoMetaCancel} />
+                    <div className="link-input-container">
+                        <div className="image-meta-form">
+                            <div className="form-group">
+                                <label>Alt Text</label>
+                                <input
+                                    ref={videoAltInputRef}
+                                    type="text"
+                                    value={videoAltText}
+                                    onChange={(e) => setVideoAltText(e.target.value)}
+                                    placeholder="Enter alt text for accessibility"
+                                    className="link-input"
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label>Title</label>
+                                <input
+                                    type="text"
+                                    value={videoTitle}
+                                    onChange={(e) => setVideoTitle(e.target.value)}
+                                    placeholder="Enter title text (shown on hover)"
+                                    className="link-input"
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label>Description</label>
+                                <textarea
+                                    value={videoDescription}
+                                    onChange={(e) => setVideoDescription(e.target.value)}
+                                    placeholder="Enter video description"
+                                    className="link-input textarea"
+                                    rows={3}
+                                />
+                            </div>
+                            <div className="link-input-buttons">
+                                <button type="button" onClick={handleVideoMetaSubmit} className="link-submit-btn">
+                                    Save Video Details
+                                </button>
+                                <button type="button" onClick={handleVideoMetaCancel} className="link-cancel-btn">
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* YouTube URL Input Modal */}
+            {showYoutubeInput && (
+                <div className="link-input-modal">
+                    <div className="link-input-overlay" onClick={() => setShowYoutubeInput(false)} />
+                    <div className="link-input-container">
+                        <div>
+                            <h4>Add YouTube Video</h4>
+                            <p className="text-sm text-gray-600 mb-3">
+                                Enter a YouTube URL to embed the video directly in your content.
+                            </p>
+                            <input
+                                ref={youtubeInputRef}
+                                type="text"
+                                value={youtubeUrl}
+                                onChange={(e) => setYoutubeUrl(e.target.value)}
+                                placeholder="Enter YouTube URL (e.g., https://www.youtube.com/watch?v=VIDEO_ID)"
+                                className="link-input"
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                        e.preventDefault();
+                                        handleYoutubeSubmit(e);
+                                    }
+                                    if (e.key === 'Escape') {
+                                        setShowYoutubeInput(false);
+                                    }
+                                }}
+                            />
+                            <div className="link-input-buttons">
+                                <button type="button" onClick={handleYoutubeSubmit} className="link-submit-btn">
+                                    Embed Video
+                                </button>
+                                <button type="button" onClick={() => setShowYoutubeInput(false)} className="link-cancel-btn">
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
@@ -1206,10 +1826,16 @@ const CustomBubbleMenu = () => {
     const [imageTitle, setImageTitle] = useState('');
     const [imageContent, setImageContent] = useState('');
     const [currentImagePos, setCurrentImagePos] = useState(null);
+    const [showVideoMetaInput, setShowVideoMetaInput] = useState(false);
+    const [videoAltText, setVideoAltText] = useState('');
+    const [videoTitle, setVideoTitle] = useState('');
+    const [videoDescription, setVideoDescription] = useState('');
+    const [currentVideoPos, setCurrentVideoPos] = useState(null);
     const linkInputRef = useRef(null);
     const altInputRef = useRef(null);
+    const videoAltInputRef = useRef(null);
 
-    return null
+    // return null
 
     if (!editor) {
         return null;
@@ -1317,6 +1943,121 @@ const CustomBubbleMenu = () => {
         editor.chain().focus().run();
     };
 
+    const handleBubbleVideoMetaClick = (e) => {
+        e.preventDefault();
+
+        // Find the video node or iframe HTML at the current selection
+        const { state } = editor;
+        const { from, to } = state.selection;
+
+        // Check all nodes in the current selection range
+        state.doc.nodesBetween(from, to, (node, pos) => {
+            if (node.type.name === 'video') {
+                setCurrentVideoPos(pos);
+                setVideoAltText(node.attrs.alt || '');
+                setVideoTitle(node.attrs.title || '');
+                setVideoDescription(node.attrs.description || '');
+                setShowVideoMetaInput(true);
+                setTimeout(() => {
+                    videoAltInputRef.current?.focus();
+                }, 100);
+                return false; // Stop searching after first video found
+            }
+        });
+
+        // Also check for YouTube video content
+        const selectedContent = editor.getHTML();
+        if (selectedContent.includes('data-youtube-video')) {
+            // Extract YouTube video attributes from HTML
+            const videoMatch = selectedContent.match(/<div[^>]*data-youtube-video[^>]*>/);
+            if (videoMatch) {
+                const videoHtml = videoMatch[0];
+                const titleMatch = videoHtml.match(/data-title="([^"]*)"/);
+                const altMatch = videoHtml.match(/data-alt="([^"]*)"/);
+                const descriptionMatch = videoHtml.match(/data-description="([^"]*)"/);
+
+                setCurrentVideoPos(from);
+                setVideoAltText(altMatch ? altMatch[1] : '');
+                setVideoTitle(titleMatch ? titleMatch[1] : '');
+                setVideoDescription(descriptionMatch ? descriptionMatch[1] : '');
+                setShowVideoMetaInput(true);
+                setTimeout(() => {
+                    videoAltInputRef.current?.focus();
+                }, 100);
+            }
+        }
+    };
+
+    const handleBubbleVideoMetaSubmit = (e) => {
+        e.preventDefault();
+
+        if (currentVideoPos === null) return;
+
+        // Handle video nodes
+        editor.chain().focus().command(({ tr }) => {
+            const node = tr.doc.nodeAt(currentVideoPos);
+            if (node && node.type.name === 'video') {
+                tr.setNodeMarkup(currentVideoPos, undefined, {
+                    ...node.attrs,
+                    alt: videoAltText,
+                    title: videoTitle,
+                    description: videoDescription
+                });
+                return true;
+            }
+            return false;
+        }).run();
+
+        // Handle YouTube video HTML content
+        const currentContent = editor.getHTML();
+        if (currentContent.includes('data-youtube-video')) {
+            let updatedContent = currentContent;
+
+            // Update YouTube video attributes
+            updatedContent = updatedContent.replace(
+                /<div([^>]*data-youtube-video[^>]*)>/g,
+                (match, attributes) => {
+                    // Remove existing data-alt, data-title, data-description attributes
+                    let newAttributes = attributes
+                        .replace(/data-alt="[^"]*"/g, '')
+                        .replace(/data-title="[^"]*"/g, '')
+                        .replace(/data-description="[^"]*"/g, '');
+
+                    // Add new attributes
+                    if (videoAltText) {
+                        newAttributes += ` data-alt="${videoAltText}"`;
+                    }
+                    if (videoTitle) {
+                        newAttributes += ` data-title="${videoTitle}"`;
+                    }
+                    if (videoDescription) {
+                        newAttributes += ` data-description="${videoDescription}"`;
+                    }
+
+                    return `<div${newAttributes}>`;
+                }
+            );
+
+            // Update editor content
+            editor.commands.setContent(updatedContent);
+        }
+
+        setShowVideoMetaInput(false);
+        setVideoAltText('');
+        setVideoTitle('');
+        setVideoDescription('');
+        setCurrentVideoPos(null);
+    };
+
+    const handleBubbleVideoMetaCancel = () => {
+        setShowVideoMetaInput(false);
+        setVideoAltText('');
+        setVideoTitle('');
+        setVideoDescription('');
+        setCurrentVideoPos(null);
+        editor.chain().focus().run();
+    };
+
     return (
         <BubbleMenu
             editor={editor}
@@ -1326,18 +2067,24 @@ const CustomBubbleMenu = () => {
                     // Reset inputs when bubble menu hides
                     setShowLinkInput(false);
                     setShowImageMetaInput(false);
+                    setShowVideoMetaInput(false);
                     setLinkUrl('');
                     setImageAltText('');
                     setImageTitle('');
                     setImageContent('');
                     setCurrentImagePos(null);
+                    setVideoAltText('');
+                    setVideoTitle('');
+                    setVideoDescription('');
+                    setCurrentVideoPos(null);
                 }
             }}
         >
             <div className="bubble-menu">
                 {/* Always show these buttons */}
+
                 <div className="flex">
-                    <button
+                    {/* <button
                         onClick={(e) => {
                             e.preventDefault();
                             editor.chain().focus().toggleBold().run();
@@ -1436,10 +2183,10 @@ const CustomBubbleMenu = () => {
                         title="Heading 6"
                     >
                         H6
-                    </button>
+                    </button> */}
 
                     {/* List buttons */}
-                    <button
+                    {/* <button
                         onClick={(e) => {
                             e.preventDefault();
                             editor.chain().focus().toggleBulletList().run();
@@ -1458,7 +2205,7 @@ const CustomBubbleMenu = () => {
                         title="Numbered List"
                     >
                         <ListOrdered size={14} />
-                    </button>
+                    </button> */}
 
                     {/* Link buttons */}
                     <button
@@ -1468,7 +2215,7 @@ const CustomBubbleMenu = () => {
                     >
                         <Link size={14} />
                     </button>
-                    <button
+                    {/* <button
                         onClick={(e) => {
                             e.preventDefault();
                             editor.chain().focus().toggleBlockquote().run();
@@ -1477,10 +2224,10 @@ const CustomBubbleMenu = () => {
                         title="info icon"
                     >
                         <InfoIcon size={16} />
-                    </button>
+                    </button> */}
 
                     {/* Text Alignment buttons */}
-                    <button
+                    {/* <button
                         onClick={(e) => {
                             e.preventDefault();
                             editor.chain().focus().setTextAlign('left').run();
@@ -1519,7 +2266,7 @@ const CustomBubbleMenu = () => {
                         title="Justify"
                     >
                         <AlignJustify size={14} />
-                    </button>
+                    </button> */}
                     {editor.isActive('link') && (
                         <button
                             onClick={handleBubbleUnlink}
@@ -1536,6 +2283,16 @@ const CustomBubbleMenu = () => {
                             title="Edit Image Details"
                         >
                             <ImageIcon size={14} />
+                        </button>
+                    )}
+
+                    {/* Video Meta button - shown when video is selected or YouTube video content is present */}
+                    {(editor.isActive('video') || editor.getHTML().includes('data-youtube-video')) && (
+                        <button
+                            onClick={handleBubbleVideoMetaClick}
+                            title="Edit Video Details"
+                        >
+                            <Video size={14} />
                         </button>
                     )}
                 </div>
@@ -1633,6 +2390,61 @@ const CustomBubbleMenu = () => {
                         </div>
                     </div>
                 )}
+
+                {/* Video Meta Input */}
+                {showVideoMetaInput && (
+                    <div className="bubble-link-input">
+                        <div className="image-meta-form">
+                            <div className="form-group">
+                                <label>Alt:</label>
+                                <input
+                                    ref={videoAltInputRef}
+                                    type="text"
+                                    value={videoAltText}
+                                    onChange={(e) => setVideoAltText(e.target.value)}
+                                    placeholder="Alt text"
+                                    className="bubble-link-field !w-full"
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label>Title:</label>
+                                <input
+                                    type="text"
+                                    value={videoTitle}
+                                    onChange={(e) => setVideoTitle(e.target.value)}
+                                    placeholder="Title"
+                                    className="bubble-link-field !w-full"
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label>Desc:</label>
+                                <textarea
+                                    value={videoDescription}
+                                    onChange={(e) => setVideoDescription(e.target.value)}
+                                    placeholder="Description"
+                                    className="bubble-link-field textarea"
+                                    rows={2}
+                                />
+                            </div>
+                            <div className="form-buttons">
+                                <button
+                                    type="button"
+                                    onClick={handleBubbleVideoMetaSubmit}
+                                    className="bubble-link-submit"
+                                >
+                                    <Check size={16} color='green' />
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={handleBubbleVideoMetaCancel}
+                                    className="bubble-link-cancel"
+                                >
+                                    <X size={16} color='red' />
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         </BubbleMenu>
     );
@@ -1677,7 +2489,14 @@ const ensureHeadingIds = (htmlContent) => {
     return updated ? doc.body.innerHTML : htmlContent;
 };
 
-const TiptapWithImg = ({ content = '', onUpdate, onHeadingsUpdate, uploadImgUrl = 'https://api.propxpro.com/api/admin/blogs/images/upload' }) => {
+const TiptapWithImg = ({
+    content = '',
+    onUpdate,
+    onHeadingsUpdate,
+    uploadImgUrl = 'https://api.propxpro.com/api/admin/blogs/images/upload',
+    uploadVideoUrl = 'https://api.propxpro.com/api/admin/blog-media/upload-video',
+    processYoutubeUrl = 'https://api.propxpro.com/api/admin/blog-media/process-youtube'
+}) => {
     const [initialized, setInitialized] = useState(false);
     const [editor, setEditor] = useState(null);
     const updateTimeoutRef = useRef(null);
@@ -1762,7 +2581,11 @@ const TiptapWithImg = ({ content = '', onUpdate, onHeadingsUpdate, uploadImgUrl 
                 onUpdate={handleUpdate}
                 onCreate={handleCreate}
             >
-                <MenuBar uploadImgUrl={uploadImgUrl} />
+                <MenuBar
+                    uploadImgUrl={uploadImgUrl}
+                    uploadVideoUrl={uploadVideoUrl}
+                    processYoutubeUrl={processYoutubeUrl}
+                />
                 <CustomBubbleMenu />
             </EditorProvider>
         </div>
