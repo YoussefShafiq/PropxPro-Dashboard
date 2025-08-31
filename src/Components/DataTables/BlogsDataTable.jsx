@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -491,6 +491,11 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
     const handleUpdateBlog = async (e) => {
         e.preventDefault();
 
+        // Clear the auto-save interval when manually submitting
+        if (autoSubmitInterval.current) {
+            clearInterval(autoSubmitInterval.current);
+        }
+
         setUpdatingBlog(true);
         try {
             const formDataToSend = new FormData();
@@ -536,6 +541,78 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
             }
         }
     };
+
+    const handleAutoUpdateBlog = async () => {
+        // Don't submit if already updating or if form is empty
+        if (updatingBlog || !editFormData.title || !editFormData.content) return;
+
+        setUpdatingBlog(true);
+
+        try {
+            const formDataToSend = new FormData();
+            formDataToSend.append('title', editFormData.title);
+            formDataToSend.append('slug', editFormData.slug);
+            formDataToSend.append('category', editFormData.category);
+            formDataToSend.append('is_active', editFormData.is_active ? 1 : 0);
+            formDataToSend.append('mark_as_hero', editFormData.mark_as_hero ? 1 : 0);
+            formDataToSend.append('content', editFormData.content);
+            formDataToSend.append('headings', JSON.stringify(editFormData.headings));
+            editFormData.tags.forEach(skill => {
+                formDataToSend.append('tags[]', skill);
+            });
+            formDataToSend.append('_method', 'POST');
+            if (editFormData.cover_photo) {
+                formDataToSend.append('cover_photo', editFormData.cover_photo);
+            }
+
+            await axios.post(
+                `https://api.propxpro.com/api/admin/blogs/${editFormData.id}`,
+                formDataToSend,
+                {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('userToken')}`,
+                        'Content-Type': 'multipart/form-data'
+                    }
+                }
+            );
+
+            // Show subtle notification for auto-save
+            toast.success('Auto-saved successfully', {
+                duration: 2000,
+                icon: '✅'
+            });
+
+        } catch (error) {
+            console.error('Auto-save failed:', error);
+            // Don't show error toast for auto-save to avoid annoying the user
+        } finally {
+            setUpdatingBlog(false);
+        }
+    };
+
+    const autoSubmitInterval = useRef(null);
+
+    // Set up the auto-submit interval
+    useEffect(() => {
+        if (showEditModal) {
+            // Start auto-submitting every 30 seconds only when edit modal is open
+            autoSubmitInterval.current = setInterval(() => {
+                handleAutoUpdateBlog();
+            }, 30000); // 30 seconds
+        } else {
+            // Clear interval when modal closes
+            if (autoSubmitInterval.current) {
+                clearInterval(autoSubmitInterval.current);
+            }
+        }
+
+        // Clean up the interval when component unmounts
+        return () => {
+            if (autoSubmitInterval.current) {
+                clearInterval(autoSubmitInterval.current);
+            }
+        };
+    }, [showEditModal, editFormData]); // Re-run when modal visibility changes
 
     // Open FAQ modal and set current blog ID
     const handleOpenFaqModal = (blogId) => {
@@ -1525,9 +1602,14 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
                                 </div>
 
                                 <div className="flex justify-end gap-3 mt-6">
+                                    {/* Add this inside your edit form, before the submit button */}
+                                    <div className="text-xs text-gray-500 mt-2 flex items-center">
+                                        <FaSpinner className={`animate-spin mr-1 ${updatingBlog ? 'opacity-100' : 'opacity-0'}`} size={12} />
+                                        {updatingBlog ? 'Auto-saving...' : 'Form will auto-save every 30 seconds'}
+                                    </div>
                                     <button
                                         type="button"
-                                        onClick={() => setShowEditModal(false)}
+                                        onClick={() => { setShowEditModal(false); refetch(); }}
                                         className="px-4 py-2 border rounded-md text-gray-700 hover:bg-gray-50"
                                     >
                                         Cancel
