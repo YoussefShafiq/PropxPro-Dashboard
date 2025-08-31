@@ -69,53 +69,53 @@ const TableCell = TableCellExtension.extend({
             const cell = document.createElement('td');
             const content = document.createElement('div');
             const resizeHandle = document.createElement('div');
-            
+
             // Add content
             content.contentEditable = 'true';
             cell.appendChild(content);
-            
+
             // Add resize handle
             resizeHandle.classList.add('column-resize-handle');
             cell.appendChild(resizeHandle);
-            
+
             // Store the column index
             const colIndex = Array.from(cell.parentElement?.children || []).indexOf(cell);
             if (colIndex !== -1) {
                 cell.setAttribute('data-colindex', colIndex);
             }
-            
+
             // Handle resizing
             let startX, startWidth, isResizing = false;
-            
+
             const onMouseDown = (e) => {
                 if (e.button !== 0) return; // Only left click
                 e.preventDefault();
                 e.stopPropagation();
-                
+
                 isResizing = true;
                 startX = e.clientX;
                 startWidth = cell.offsetWidth;
-                
+
                 document.addEventListener('mousemove', onMouseMove);
                 document.addEventListener('mouseup', onMouseUp);
-                
+
                 document.body.style.cursor = 'col-resize';
                 document.body.style.userSelect = 'none';
                 resizeHandle.classList.add('is-resizing');
             };
-            
+
             const onMouseMove = (e) => {
                 if (!isResizing) return;
-                
+
                 const dx = e.clientX - startX;
                 const newWidth = Math.max(50, startWidth + dx);
-                
+
                 // Update all cells in the column
                 const table = cell.closest('table');
                 if (table) {
                     const colIndex = Array.from(cell.parentElement.children).indexOf(cell);
                     const rows = table.querySelectorAll('tr');
-                    
+
                     rows.forEach(row => {
                         const cells = row.querySelectorAll('td, th');
                         if (cells[colIndex]) {
@@ -125,36 +125,36 @@ const TableCell = TableCellExtension.extend({
                     });
                 }
             };
-            
+
             const onMouseUp = () => {
                 if (!isResizing) return;
-                
+
                 isResizing = false;
                 document.body.style.cursor = '';
                 document.body.style.userSelect = '';
                 resizeHandle.classList.remove('is-resizing');
-                
+
                 document.removeEventListener('mousemove', onMouseMove);
                 document.removeEventListener('mouseup', onMouseUp);
-                
+
                 // Update the column width in the editor state
                 if (typeof getPos === 'function') {
                     const pos = getPos();
                     const colIndex = Array.from(cell.parentElement.children).indexOf(cell);
                     const width = cell.offsetWidth;
-                    
+
                     // Update all cells in the column
                     const transaction = view.state.tr;
                     const $pos = view.state.doc.resolve(pos);
                     const table = $pos.node(-1);
                     const tablePos = $pos.start(-1);
-                    
+
                     table.descendants((node, pos) => {
                         if (node.type.name === 'tableCell' || node.type.name === 'tableHeader') {
-                            const cellColIndex = node.attrs.colspan > 1 ? 
+                            const cellColIndex = node.attrs.colspan > 1 ?
                                 pos - 1 : // Handle merged cells
                                 (node.attrs['data-colindex'] || 0);
-                                
+
                             if (cellColIndex === colIndex) {
                                 transaction.setNodeMarkup(
                                     tablePos + pos,
@@ -168,16 +168,16 @@ const TableCell = TableCellExtension.extend({
                             }
                         }
                     });
-                    
+
                     if (transaction.steps.length > 0) {
                         view.dispatch(transaction);
                     }
                 }
             };
-            
+
             // Add event listeners
             resizeHandle.addEventListener('mousedown', onMouseDown);
-            
+
             return {
                 dom: cell,
                 contentDOM: content,
@@ -1208,6 +1208,8 @@ const CustomBubbleMenu = () => {
     const [currentImagePos, setCurrentImagePos] = useState(null);
     const linkInputRef = useRef(null);
     const altInputRef = useRef(null);
+
+    return null
 
     if (!editor) {
         return null;
