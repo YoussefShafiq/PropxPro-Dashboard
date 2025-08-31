@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import toast from 'react-hot-toast';
 import axios from 'axios';
-import { motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
     FaSpinner,
     FaPlus,
@@ -15,7 +14,8 @@ import {
     FaEye,
     FaImage,
     FaEnvelope,
-    FaQuestionCircle
+    FaQuestionCircle,
+    FaTimesCircle
 } from 'react-icons/fa';
 import TiptapWithImg from '../TextEditor/TiptapWithImg';
 import { Chips } from 'primereact/chips';
@@ -23,6 +23,7 @@ import 'primereact/resources/themes/lara-light-indigo/theme.css';
 import 'primereact/resources/primereact.min.css';
 import 'primeicons/primeicons.css';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 
 export default function BlogsDataTable({ blogs, loading, refetch }) {
     const navigate = useNavigate();
@@ -56,6 +57,8 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
     const [editingFaqId, setEditingFaqId] = useState(null);
     const [showDeleteFaqConfirm, setShowDeleteFaqConfirm] = useState(false);
     const [faqToDelete, setFaqToDelete] = useState(null);
+    const [previewBlog, setPreviewBlog] = useState(null);
+
     // Form states
     const [formData, setFormData] = useState({
         title: '',
@@ -672,6 +675,96 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
         );
     };
 
+    // Preview Modal Component
+    const PreviewModal = ({ blog, onClose }) => {
+        if (!blog) return null;
+
+        return (
+            <div
+                className="fixed inset-0 z-50 overflow-y-auto">
+                <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+                    {/* Overlay */}
+                    <div className="fixed inset-0 transition-opacity" onClick={onClose}>
+                        <div className="absolute inset-0 bg-black opacity-75"></div>
+                    </div>
+
+                    {/* Modal Content */}
+                    <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-5xl m-auto sm:w-full max-h-[90vh] flex flex-col">
+                        <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4 flex-grow overflow-y-auto">
+                            <div className="sm:flex sm:items-start justify-between">
+                                <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
+                                    Blog Preview
+                                </h3>
+                                <button
+                                    onClick={onClose}
+                                    className="text-gray-400 hover:text-gray-500 focus:outline-none"
+                                >
+                                    <FaTimesCircle className="h-6 w-6" />
+                                </button>
+                            </div>
+
+                            {/* Blog Content */}
+                            <div className="content-container">
+                                {/* Hero Section */}
+                                <div className="flex flex-col lg:flex-row gap-8 mb-12">
+                                    <div className="lg:w-1/2 font-bold">
+                                        <span className='text-blue-600 capitalize'>{blog.category}</span>
+                                        <h1 className='lg:text-[54px] text-3xl font-extrabold lg:leading-[67px]'>{blog.title}</h1>
+                                        <div className="mt-5">
+                                            <p>By Admin</p>
+                                            <div className="flex gap-2 items-center text-sm font-medium mt-3">
+                                                <p>5 minutes read</p>
+                                                <div className="h-full w-[1px] bg-gray-400"></div>
+                                                <p>Published {new Date(blog.created_at).toLocaleDateString()}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="lg:w-1/2">
+                                        {blog.cover_photo && (
+                                            <div className="flex justify-center">
+                                                <img
+                                                    src={blog.cover_photo}
+                                                    alt='cover photo'
+                                                    className='w-full max-h-[500px] object-contain rounded-lg'
+                                                />
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Blog Content */}
+                                <div className="content" dangerouslySetInnerHTML={{ __html: blog.content }} />
+
+                                {/* Tags */}
+                                {blog.tags && blog.tags.length > 0 && (
+                                    <div className="flex flex-wrap gap-3 mt-8">
+                                        {blog.tags.map((tag, index) => (
+                                            <span
+                                                key={index}
+                                                className="px-3 py-1 bg-gray-100 text-gray-800 text-sm rounded-full"
+                                            >
+                                                {tag}
+                                            </span>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                        <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                            <button
+                                type="button"
+                                onClick={onClose}
+                                className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm"
+                            >
+                                Close Preview
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
     return (
         <div className="shadow-2xl rounded-2xl overflow-hidden bg-white">
             {/* Global Search and Add Button */}
@@ -804,6 +897,7 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
                                                 className="text-red-500 hover:text-red-700 p-1"
                                                 onClick={() => handleDeleteClick(blog.id)}
                                                 disabled={deletingBlogId === blog.id}
+                                                title="Delete"
                                             >
                                                 {deletingBlogId === blog.id ? (
                                                     <FaSpinner className="animate-spin" size={18} />
@@ -812,10 +906,18 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
                                                 )}
                                             </button>}
                                             <button
-                                                className="text-purple-500 hover:text-purple-700 p-1"
+                                                className="text-blue-500 hover:text-blue-700 p-1"
                                                 onClick={() => handleOpenFaqModal(blog.id)}
+                                                title="Manage FAQs"
                                             >
                                                 <FaQuestionCircle size={18} />
+                                            </button>
+                                            <button
+                                                className="text-green-500 hover:text-green-700 p-1"
+                                                onClick={() => setPreviewBlog(blog)}
+                                                title="Preview Blog"
+                                            >
+                                                <FaEye size={18} />
                                             </button>
                                         </div>
                                     </td>
@@ -1503,6 +1605,16 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
                     </motion.div>
                 </motion.div>
             )}
+
+            {/* Preview Modal */}
+            <AnimatePresence>
+                {previewBlog && (
+                    <PreviewModal
+                        blog={previewBlog}
+                        onClose={() => setPreviewBlog(null)}
+                    />
+                )}
+            </AnimatePresence>
         </div>
     );
 }
