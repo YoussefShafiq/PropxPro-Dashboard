@@ -20,8 +20,176 @@ import ImageExtension from '@tiptap/extension-image';
 import LinkExtension from '@tiptap/extension-link';
 import { Table as TableExtension } from '@tiptap/extension-table';
 import { TableRow } from '@tiptap/extension-table-row';
-import { TableCell } from '@tiptap/extension-table-cell';
+import { TableCell as TableCellExtension } from '@tiptap/extension-table-cell';
 import { TableHeader } from '@tiptap/extension-table-header';
+
+// Custom TableCell extension with resizing support
+const TableCell = TableCellExtension.extend({
+    addAttributes() {
+        return {
+            ...this.parent?.(),
+            style: {
+                default: null,
+                parseHTML: element => element.getAttribute('style'),
+                renderHTML: attributes => {
+                    return {
+                        style: attributes.style,
+                    };
+                },
+            },
+            'data-colwidth': {
+                default: null,
+                parseHTML: element => element.getAttribute('data-colwidth'),
+                renderHTML: attributes => ({
+                    'data-colwidth': attributes['data-colwidth'],
+                }),
+            },
+            'data-colindex': {
+                default: null,
+                parseHTML: element => element.getAttribute('data-colindex'),
+                renderHTML: attributes => ({
+                    'data-colindex': attributes['data-colindex'],
+                }),
+            },
+        };
+    },
+    renderHTML({ node, HTMLAttributes }) {
+        const attrs = {
+            ...HTMLAttributes,
+            class: 'tiptap-table-cell',
+            'data-colwidth': node.attrs.colwidth ? node.attrs.colwidth.join(',') : null,
+            'data-colindex': node.attrs['data-colindex'] || null,
+        };
+
+        return ['td', attrs, 0];
+    },
+    addNodeView() {
+        return ({ node, getPos, editor }) => {
+            const { view } = editor;
+            const cell = document.createElement('td');
+            const content = document.createElement('div');
+            const resizeHandle = document.createElement('div');
+            
+            // Add content
+            content.contentEditable = 'true';
+            cell.appendChild(content);
+            
+            // Add resize handle
+            resizeHandle.classList.add('column-resize-handle');
+            cell.appendChild(resizeHandle);
+            
+            // Store the column index
+            const colIndex = Array.from(cell.parentElement?.children || []).indexOf(cell);
+            if (colIndex !== -1) {
+                cell.setAttribute('data-colindex', colIndex);
+            }
+            
+            // Handle resizing
+            let startX, startWidth, isResizing = false;
+            
+            const onMouseDown = (e) => {
+                if (e.button !== 0) return; // Only left click
+                e.preventDefault();
+                e.stopPropagation();
+                
+                isResizing = true;
+                startX = e.clientX;
+                startWidth = cell.offsetWidth;
+                
+                document.addEventListener('mousemove', onMouseMove);
+                document.addEventListener('mouseup', onMouseUp);
+                
+                document.body.style.cursor = 'col-resize';
+                document.body.style.userSelect = 'none';
+                resizeHandle.classList.add('is-resizing');
+            };
+            
+            const onMouseMove = (e) => {
+                if (!isResizing) return;
+                
+                const dx = e.clientX - startX;
+                const newWidth = Math.max(50, startWidth + dx);
+                
+                // Update all cells in the column
+                const table = cell.closest('table');
+                if (table) {
+                    const colIndex = Array.from(cell.parentElement.children).indexOf(cell);
+                    const rows = table.querySelectorAll('tr');
+                    
+                    rows.forEach(row => {
+                        const cells = row.querySelectorAll('td, th');
+                        if (cells[colIndex]) {
+                            cells[colIndex].style.width = `${newWidth}px`;
+                            cells[colIndex].style.minWidth = `${newWidth}px`;
+                        }
+                    });
+                }
+            };
+            
+            const onMouseUp = () => {
+                if (!isResizing) return;
+                
+                isResizing = false;
+                document.body.style.cursor = '';
+                document.body.style.userSelect = '';
+                resizeHandle.classList.remove('is-resizing');
+                
+                document.removeEventListener('mousemove', onMouseMove);
+                document.removeEventListener('mouseup', onMouseUp);
+                
+                // Update the column width in the editor state
+                if (typeof getPos === 'function') {
+                    const pos = getPos();
+                    const colIndex = Array.from(cell.parentElement.children).indexOf(cell);
+                    const width = cell.offsetWidth;
+                    
+                    // Update all cells in the column
+                    const transaction = view.state.tr;
+                    const $pos = view.state.doc.resolve(pos);
+                    const table = $pos.node(-1);
+                    const tablePos = $pos.start(-1);
+                    
+                    table.descendants((node, pos) => {
+                        if (node.type.name === 'tableCell' || node.type.name === 'tableHeader') {
+                            const cellColIndex = node.attrs.colspan > 1 ? 
+                                pos - 1 : // Handle merged cells
+                                (node.attrs['data-colindex'] || 0);
+                                
+                            if (cellColIndex === colIndex) {
+                                transaction.setNodeMarkup(
+                                    tablePos + pos,
+                                    null,
+                                    {
+                                        ...node.attrs,
+                                        style: `width: ${width}px; min-width: ${width}px;`,
+                                        'data-colindex': colIndex,
+                                    }
+                                );
+                            }
+                        }
+                    });
+                    
+                    if (transaction.steps.length > 0) {
+                        view.dispatch(transaction);
+                    }
+                }
+            };
+            
+            // Add event listeners
+            resizeHandle.addEventListener('mousedown', onMouseDown);
+            
+            return {
+                dom: cell,
+                contentDOM: content,
+                destroy: () => {
+                    resizeHandle.removeEventListener('mousedown', onMouseDown);
+                    document.removeEventListener('mousemove', onMouseMove);
+                    document.removeEventListener('mouseup', onMouseUp);
+                },
+            };
+        };
+    },
+});
 import { useCallback, useRef, useState, useEffect } from 'react';
 import axios from 'axios';
 import './styles.scss';
@@ -213,8 +381,26 @@ const extensions = [
             rel: 'noopener noreferrer',
         },
     }),
-    TableExtension.configure({
+    TableExtension.extend({
+        content: 'tableRow+',
+        tableRole: 'table',
+        isolating: true,
+        group: 'block',
+        parseHTML() {
+            return [{ tag: 'table' }];
+        },
+        renderHTML({ HTMLAttributes }) {
+            return ['div', { class: 'table-wrapper' }, ['table', { ...HTMLAttributes, class: 'tiptap-table' }, ['tbody', 0]]];
+        },
+        addKeyboardShortcuts() {
+            return {
+                'Mod-Alt-0': () => this.editor.commands.insertTable({ rows: 3, cols: 3, withHeaderRow: true }),
+            };
+        },
+    }).configure({
         resizable: true,
+        lastColumnResizable: true,
+        allowTableNodeSelection: true,
         HTMLAttributes: {
             class: 'tiptap-table',
         },

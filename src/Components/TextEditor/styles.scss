@@ -1,52 +1,153 @@
 /* src/components/TextEditor/styles.scss */
 /* Table Styles */
-.tiptap-table-cell {
-    border-collapse: collapse;
-    margin: 1rem 0;
-    width: 100%;
-    overflow: hidden;
-    table-layout: fixed;
-    border-radius: 0.5rem;
-    border: 1px solid #000;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-
-    th,
-    td {
-        border: 1px solid #000;
-        padding: 0.75rem;
-        min-width: 100px;
+.tiptap {
+    .table-wrapper {
         position: relative;
-        vertical-align: top;
-        box-sizing: border-box;
-
-        >* {
-            margin-bottom: 0;
+        overflow-x: auto;
+        margin: 1rem 0;
+        border-radius: 0.5rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        border: 1px solid #000;
+        padding: 4px; // Add some padding for the resize handle
+        
+        &::-webkit-scrollbar {
+            height: 8px;
+            width: 8px;
+        }
+        
+        &::-webkit-scrollbar-thumb {
+            background: #ccc;
+            border-radius: 4px;
+        }
+        
+        &::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
         }
     }
 
+    table {
+        border-collapse: collapse;
+        table-layout: fixed;
+        width: 100%;
+        margin: 0;
+        position: relative;
+        background: white;
 
-    .selectedCell {
-        background-color: #999;
-    }
+        th,
+        td {
+            border: 1px solid #000;
+            padding: 0.75rem;
+            min-width: 80px;
+            position: relative;
+            vertical-align: top;
+            box-sizing: border-box;
+            transition: all 0.2s ease;
+            background-clip: padding-box;
+            overflow: hidden;
+            text-overflow: ellipsis;
 
-    .resize-handle {
-        position: absolute;
-        right: -4px;
-        top: 0;
-        bottom: 0;
-        width: 8px;
-        background-color: #3b82f6;
-        opacity: 0;
-        cursor: col-resize;
-        transition: opacity 0.2s ease;
+            > * {
+                margin-bottom: 0;
+                max-width: 100%;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
 
-        &:hover {
+            p {
+                margin: 0;
+                padding: 0;
+                word-break: break-word;
+            }
+        }
+
+        th {
+            font-weight: bold;
+            text-align: left;
+            background-color: #f8f9fa;
+            user-select: none;
+            position: relative;
+            white-space: nowrap;
+        }
+
+        .selectedCell {
+            background-color: rgba(200, 200, 255, 0.4);
+        }
+
+        .column-resize-handle {
+            position: absolute;
+            right: -4px;
+            top: 0;
+            bottom: 0;
+            width: 8px;
+            background-color: transparent;
+            opacity: 0;
+            transition: opacity 0.2s;
+            z-index: 50;
+            pointer-events: auto;
+            cursor: col-resize;
+            touch-action: none;
+            user-select: none;
+            transform: translateX(50%);
+
+            &::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                bottom: 0;
+                left: 50%;
+                width: 2px;
+                margin-left: -1px;
+                background-color: #4e9eff;
+                transition: all 0.2s ease;
+            }
+
+            &:hover,
+            &.is-resizing {
+                &::before {
+                    background-color: #0d6efd;
+                    width: 4px;
+                    margin-left: -2px;
+                }
+            }
+
+            &.is-resizing {
+                opacity: 1;
+            }
+        }
+
+        th:hover .column-resize-handle,
+        td:hover .column-resize-handle,
+        .column-resize-handle.is-resizing {
             opacity: 1;
         }
+
+        // Improve table cell selection
+        .ProseMirror-selectednode {
+            outline: 2px solid #4e9eff;
+            outline-offset: -2px;
+        }
     }
 
-    &:hover .resize-handle {
-        opacity: 0.5;
+    // Ensure tables don't overflow their container
+    .ProseMirror {
+        table {
+            max-width: 100%;
+            overflow: hidden;
+        }
+        
+        // Make sure the table cells respect their widths
+        td[style*="width:"],
+        th[style*="width:"] {
+            position: relative;
+            
+            // Ensure content doesn't overflow
+            > * {
+                max-width: 100%;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+        }
     }
 }
 
@@ -410,7 +511,7 @@ i[style*="background-color: #f4f6ff"] {
     border-radius: 0.5rem;
     background: white;
     margin: 1rem 0;
-    overflow-x: hidden;
+    overflow: auto;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     max-height: 90vh;
     overscroll-behavior: none;
