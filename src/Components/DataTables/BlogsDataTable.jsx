@@ -18,7 +18,9 @@ import {
     FaTimesCircle,
     FaCheckSquare,
     FaMinusSquare,
-    FaSquare
+    FaSquare,
+    FaSave,
+    FaFolderOpen
 } from 'react-icons/fa';
 import TiptapWithImg from '../TextEditor/TiptapWithImg';
 import { Chips } from 'primereact/chips';
@@ -64,6 +66,11 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
     const [showDeleteFaqConfirm, setShowDeleteFaqConfirm] = useState(false);
     const [faqToDelete, setFaqToDelete] = useState(null);
     const [previewBlog, setPreviewBlog] = useState(null);
+
+    // Drafts (client-side only)
+    const DRAFTS_STORAGE_KEY = 'blogDrafts';
+    const [drafts, setDrafts] = useState([]);
+    const [activeDraftId, setActiveDraftId] = useState(null);
 
     // Form states
     const [formData, setFormData] = useState({
@@ -201,6 +208,136 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
         setFormData(prev => ({ ...prev, headings: extractedHeadings }));
     };
 
+    // -------- Drafts utilities (localStorage) --------
+    const loadDrafts = () => {
+        try {
+            const raw = localStorage.getItem(DRAFTS_STORAGE_KEY);
+            const parsed = raw ? JSON.parse(raw) : [];
+            if (Array.isArray(parsed)) setDrafts(parsed);
+        } catch (_) {
+            // ignore
+        }
+    };
+
+    const persistDrafts = (list) => {
+        try {
+            localStorage.setItem(DRAFTS_STORAGE_KEY, JSON.stringify(list));
+        } catch (_) { /* ignore quota errors */ }
+    };
+
+    const upsertDraft = (draft) => {
+        setDrafts(prev => {
+            const idx = prev.findIndex(d => d.id === draft.id);
+            let next;
+            if (idx >= 0) {
+                next = [...prev];
+                next[idx] = { ...prev[idx], ...draft, updatedAt: new Date().toISOString() };
+            } else {
+                next = [...prev, { ...draft, updatedAt: new Date().toISOString() }];
+            }
+            persistDrafts(next);
+            return next;
+        });
+    };
+
+    const deleteDraft = (id) => {
+        setDrafts(prev => {
+            const next = prev.filter(d => d.id !== id);
+            persistDrafts(next);
+            return next;
+        });
+        if (activeDraftId === id) setActiveDraftId(null);
+    };
+
+    const clearMatchingDraftBySlug = (slug) => {
+        if (!slug) return;
+        setDrafts(prev => {
+            const next = prev.filter(d => d.slug !== slug);
+            persistDrafts(next);
+            return next;
+        });
+    };
+
+    useEffect(() => {
+        loadDrafts();
+    }, []);
+
+    const makeDraftFromForm = () => {
+        // Avoid saving empty drafts
+        const hasContent = (formData.title && formData.title.trim() !== '') || (formData.content && formData.content.trim() !== '');
+        if (!hasContent) return null;
+        return {
+            id: activeDraftId || `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+            title: formData.title,
+            slug: formData.slug,
+            category: formData.category,
+            is_active: formData.is_active,
+            mark_as_hero: formData.mark_as_hero,
+            content: formData.content,
+            // cover_photo cannot be persisted; store only name/type hint
+            cover_photo_meta: formData.cover_photo ? { name: formData.cover_photo.name, type: formData.cover_photo.type, size: formData.cover_photo.size } : null,
+            tags: formData.tags,
+            headings: formData.headings
+        };
+    };
+
+    const saveCurrentAsDraft = () => {
+        const draft = makeDraftFromForm();
+        if (!draft) return;
+        setActiveDraftId(draft.id);
+        upsertDraft(draft);
+        toast.success('Draft saved locally');
+    };
+
+    const resumeDraft = (draft) => {
+        setFormData({
+            title: draft.title || '',
+            slug: draft.slug || '',
+            category: draft.category || 'guides',
+            is_active: draft.is_active ?? true,
+            mark_as_hero: draft.mark_as_hero ?? false,
+            content: draft.content || '',
+            cover_photo: null, // user must reattach file
+            tags: draft.tags || [],
+            headings: draft.headings || []
+        });
+        setHeadings(draft.headings || []);
+        setIsSlugManuallyEdited(true);
+        setActiveDraftId(draft.id);
+        setShowAddModal(true);
+        toast('Draft loaded');
+    };
+
+    // Auto-save while Add modal is open
+    const addAutoSaveInterval = useRef(null);
+    useEffect(() => {
+        if (showAddModal) {
+            // start interval
+            addAutoSaveInterval.current = setInterval(() => {
+                const draft = makeDraftFromForm();
+                if (draft) {
+                    setActiveDraftId(prev => prev || draft.id);
+                    upsertDraft(draft);
+                }
+            }, 10000); // 10s
+
+            const onBeforeUnload = () => {
+                const draft = makeDraftFromForm();
+                if (draft) {
+                    upsertDraft(draft);
+                }
+            };
+            window.addEventListener('beforeunload', onBeforeUnload);
+
+            return () => {
+                if (addAutoSaveInterval.current) clearInterval(addAutoSaveInterval.current);
+                window.removeEventListener('beforeunload', onBeforeUnload);
+            };
+        } else {
+            if (addAutoSaveInterval.current) clearInterval(addAutoSaveInterval.current);
+        }
+    }, [showAddModal, formData]);
+
     const handleEditHeadingsUpdate = (extractedHeadings) => {
         setEditHeadings(extractedHeadings);
         setEditFormData(prev => ({ ...prev, headings: extractedHeadings }));
@@ -308,6 +445,7 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
                 ...prev,
                 [name]: files[0]
             }));
+            // We cannot persist files reliably in localStorage; user will need to reattach on resume.
         } else {
             setFormData(prev => ({
                 ...prev,
@@ -474,6 +612,9 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
             setShowAddModal(false);
             resetForm();
             refetch();
+            // Remove matching draft by slug if exists
+            clearMatchingDraftBySlug(formData.slug);
+            setActiveDraftId(null);
         } catch (error) {
             setUpdatingBlog(false);
             toast.error(error.response?.data?.message || 'An unexpected error occurred', { duration: 3000 });
@@ -1221,6 +1362,60 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
             {/* Pagination */}
             {!loading && renderPagination()}
 
+            {/* Drafts Table (client-side) */}
+            <div className="p-4 border-t">
+                <div className="flex items-center justify-between mb-3">
+                    <h2 className="text-lg font-semibold">Drafts</h2>
+                    <div className="text-xs text-gray-500">Drafts are stored locally in your browser</div>
+                </div>
+                {drafts.length === 0 ? (
+                    <div className="text-sm text-gray-500">No drafts yet</div>
+                ) : (
+                    <div className="overflow-x-auto">
+                        <table className="w-full divide-y divide-gray-200 text-sm">
+                            <thead className="bg-gray-50">
+                                <tr>
+                                    <th className="px-4 py-2 text-left">Title</th>
+                                    <th className="px-4 py-2 text-left">Category</th>
+                                    <th className="px-4 py-2 text-left">Updated</th>
+                                    <th className="px-4 py-2 text-left">Note</th>
+                                    <th className="px-4 py-2 text-left">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-200">
+                                {drafts
+                                    .slice()
+                                    .sort((a,b) => new Date(b.updatedAt) - new Date(a.updatedAt))
+                                    .map(d => (
+                                    <tr key={d.id} className="hover:bg-gray-50">
+                                        <td className="px-4 py-2">{d.title || <span className="italic text-gray-400">Untitled</span>}</td>
+                                        <td className="px-4 py-2 capitalize">{d.category || '-'}</td>
+                                        <td className="px-4 py-2">{new Date(d.updatedAt).toLocaleString()}</td>
+                                        <td className="px-4 py-2 text-xs text-gray-500">{d.cover_photo_meta ? `Attachment: ${d.cover_photo_meta.name} (re-attach required)` : 'No attachment'}</td>
+                                        <td className="px-4 py-2">
+                                            <div className="flex gap-2">
+                                                <button
+                                                    className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center gap-1"
+                                                    onClick={() => resumeDraft(d)}
+                                                >
+                                                    <FaFolderOpen /> Resume
+                                                </button>
+                                                <button
+                                                    className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700"
+                                                    onClick={() => deleteDraft(d.id)}
+                                                >
+                                                    Delete
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+            </div>
+
             {/* Add Blog Modal */}
             {showAddModal && (
                 <motion.div
@@ -1228,7 +1423,12 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 "
-                    onClick={() => setShowAddModal(false)}
+                    onClick={() => {
+                        // Ensure we keep user's work in a draft when closing modal by clicking overlay
+                        const draft = makeDraftFromForm();
+                        if (draft) upsertDraft(draft);
+                        setShowAddModal(false);
+                    }}
                 >
                     <motion.div
                         initial={{ y: -50, opacity: 0 }}
@@ -1381,9 +1581,22 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
                                 </div>
 
                                 <div className="flex justify-end gap-3 mt-6">
+                                    <div className="text-xs text-gray-500 mt-2 flex items-center">
+                                        <FaSpinner className={`animate-spin mr-1 ${updatingBlog ? 'opacity-100' : 'opacity-0'}`} size={12} />
+                                        Auto-saves to drafts every 10s
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={saveCurrentAsDraft}
+                                        className="px-4 py-2 border rounded-md text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                                    >
+                                        <FaSave size={16} /> Save as Draft
+                                    </button>
                                     <button
                                         type="button"
                                         onClick={() => {
+                                            const draft = makeDraftFromForm();
+                                            if (draft) upsertDraft(draft);
                                             setShowAddModal(false);
                                             resetForm();
                                         }}
