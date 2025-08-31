@@ -772,18 +772,18 @@ const MenuBar = ({ uploadImgUrl = '' }) => {
                             <Plus size={14} />
                         </button>
                         <button onClick={handleAddColumn} title="Add Column">
-                            <Plus size={14} style={{transform: 'rotate(90deg)'}} />
+                            <Plus size={14} style={{ transform: 'rotate(90deg)' }} />
                         </button>
                         <button onClick={handleDeleteRow} title="Delete Row">
                             <Trash2 size={14} />
                         </button>
                         <button onClick={handleDeleteColumn} title="Delete Column">
-                            <Trash2 size={14} style={{transform: 'rotate(90deg)'}} />
+                            <Trash2 size={14} style={{ transform: 'rotate(90deg)' }} />
                         </button>
                     </div>
-                    
+
                     <div className="table-controls-divider"></div>
-                    
+
                     <div className="table-controls-group">
                         <button onClick={handleMergeCells} title="Merge Cells">
                             <Merge size={14} />
@@ -792,9 +792,9 @@ const MenuBar = ({ uploadImgUrl = '' }) => {
                             <Split size={14} />
                         </button>
                     </div>
-                    
+
                     <div className="table-controls-divider"></div>
-                    
+
                     <div className="table-controls-group">
                         <button onClick={handleCellAlignLeft} title="Align Left">
                             <AlignLeft size={14} />
@@ -806,9 +806,9 @@ const MenuBar = ({ uploadImgUrl = '' }) => {
                             <AlignRight size={14} />
                         </button>
                     </div>
-                    
+
                     <div className="table-controls-divider"></div>
-                    
+
                     <div className="table-controls-group">
                         <button onClick={handleToggleHeaderRow} title="Toggle Header Row">
                             H
