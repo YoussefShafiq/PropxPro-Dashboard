@@ -29,6 +29,7 @@ import 'primereact/resources/primereact.min.css';
 import 'primeicons/primeicons.css';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
+import localforage from 'localforage';
 
 export default function BlogsDataTable({ blogs, loading, refetch }) {
     const navigate = useNavigate();
@@ -208,39 +209,71 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
         setFormData(prev => ({ ...prev, headings: extractedHeadings }));
     };
 
-    // -------- Drafts utilities (localStorage) --------
-    const loadDrafts = () => {
+    // -------- Drafts utilities (IndexedDB via localforage) --------
+    const DRAFTS_FALLBACK_KEY = 'blogDrafts_beforeunload_fallback';
+    const loadDrafts = async () => {
         try {
-            const raw = localStorage.getItem(DRAFTS_STORAGE_KEY);
-            const parsed = raw ? JSON.parse(raw) : [];
-            if (Array.isArray(parsed)) setDrafts(parsed);
+            const list = await localforage.getItem(DRAFTS_STORAGE_KEY);
+            const parsed = Array.isArray(list) ? list : [];
+            setDrafts(parsed);
+
+            // Merge any synchronous fallback saved during beforeunload
+            const fbRaw = localStorage.getItem(DRAFTS_FALLBACK_KEY);
+            if (fbRaw) {
+                try {
+                    const fb = JSON.parse(fbRaw);
+                    if (fb && typeof fb === 'object') {
+                        upsertDraft(fb);
+                    }
+                } catch (_) { /* ignore */ }
+                localStorage.removeItem(DRAFTS_FALLBACK_KEY);
+            }
         } catch (_) {
             // ignore
         }
     };
 
-    const persistDrafts = (list) => {
+    const persistDrafts = async (list) => {
         try {
-            localStorage.setItem(DRAFTS_STORAGE_KEY, JSON.stringify(list));
-        } catch (_) { /* ignore quota errors */ }
+            await localforage.setItem(DRAFTS_STORAGE_KEY, list);
+        } catch (e) {
+            console.error('Persist drafts failed', e);
+            toast.error('Could not save drafts locally');
+        }
     };
 
-    const upsertDraft = (draft) => {
+    const upsertDraft = async (draft) => {
         setDrafts(prev => {
-            const idx = prev.findIndex(d => d.id === draft.id);
-            let next;
-            if (idx >= 0) {
-                next = [...prev];
-                next[idx] = { ...prev[idx], ...draft, updatedAt: new Date().toISOString() };
+            const byId = prev.findIndex(d => d.id === draft.id);
+            let next = [...prev];
+            const now = new Date().toISOString();
+            if (byId >= 0) {
+                next[byId] = { ...prev[byId], ...draft, updatedAt: now };
             } else {
-                next = [...prev, { ...draft, updatedAt: new Date().toISOString() }];
+                // Try merge by slug to avoid duplicates when autosaving repeatedly
+                const bySlugIdx = draft.slug ? prev.findIndex(d => d.slug === draft.slug && d.slug) : -1;
+                if (bySlugIdx >= 0) {
+                    next[bySlugIdx] = { ...prev[bySlugIdx], ...draft, id: prev[bySlugIdx].id, updatedAt: now };
+                } else {
+                    next.push({ ...draft, updatedAt: now });
+                }
             }
+
+            // Cap to 20 most recent drafts
+            if (next.length > 20) {
+                next = next
+                    .slice()
+                    .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
+                    .slice(0, 20);
+            }
+
+            // fire-and-forget persist
             persistDrafts(next);
             return next;
         });
     };
 
-    const deleteDraft = (id) => {
+    const deleteDraft = async (id) => {
         setDrafts(prev => {
             const next = prev.filter(d => d.id !== id);
             persistDrafts(next);
@@ -249,7 +282,7 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
         if (activeDraftId === id) setActiveDraftId(null);
     };
 
-    const clearMatchingDraftBySlug = (slug) => {
+    const clearMatchingDraftBySlug = async (slug) => {
         if (!slug) return;
         setDrafts(prev => {
             const next = prev.filter(d => d.slug !== slug);
@@ -259,6 +292,7 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
     };
 
     useEffect(() => {
+        // async load
         loadDrafts();
     }, []);
 
@@ -266,8 +300,14 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
         // Avoid saving empty drafts
         const hasContent = (formData.title && formData.title.trim() !== '') || (formData.content && formData.content.trim() !== '');
         if (!hasContent) return null;
+        // Reuse existing draft id by preference: activeDraftId, then existing by slug
+        let id = activeDraftId;
+        if (!id && formData.slug) {
+            const existing = drafts.find(d => d.slug === formData.slug);
+            if (existing) id = existing.id;
+        }
         return {
-            id: activeDraftId || `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+            id: id || `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
             title: formData.title,
             slug: formData.slug,
             category: formData.category,
@@ -319,12 +359,17 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
                     setActiveDraftId(prev => prev || draft.id);
                     upsertDraft(draft);
                 }
-            }, 10000); // 10s
+            }, 5000); // 5s
 
             const onBeforeUnload = () => {
                 const draft = makeDraftFromForm();
                 if (draft) {
+                    // Best-effort async persist
                     upsertDraft(draft);
+                    // Guaranteed synchronous fallback for page unload
+                    try {
+                        localStorage.setItem(DRAFTS_FALLBACK_KEY, JSON.stringify(draft));
+                    } catch (_) { /* ignore */ }
                 }
             };
             window.addEventListener('beforeunload', onBeforeUnload);
@@ -1385,31 +1430,31 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
                             <tbody className="divide-y divide-gray-200">
                                 {drafts
                                     .slice()
-                                    .sort((a,b) => new Date(b.updatedAt) - new Date(a.updatedAt))
+                                    .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
                                     .map(d => (
-                                    <tr key={d.id} className="hover:bg-gray-50">
-                                        <td className="px-4 py-2">{d.title || <span className="italic text-gray-400">Untitled</span>}</td>
-                                        <td className="px-4 py-2 capitalize">{d.category || '-'}</td>
-                                        <td className="px-4 py-2">{new Date(d.updatedAt).toLocaleString()}</td>
-                                        <td className="px-4 py-2 text-xs text-gray-500">{d.cover_photo_meta ? `Attachment: ${d.cover_photo_meta.name} (re-attach required)` : 'No attachment'}</td>
-                                        <td className="px-4 py-2">
-                                            <div className="flex gap-2">
-                                                <button
-                                                    className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center gap-1"
-                                                    onClick={() => resumeDraft(d)}
-                                                >
-                                                    <FaFolderOpen /> Resume
-                                                </button>
-                                                <button
-                                                    className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700"
-                                                    onClick={() => deleteDraft(d.id)}
-                                                >
-                                                    Delete
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))}
+                                        <tr key={d.id} className="hover:bg-gray-50">
+                                            <td className="px-4 py-2">{d.title || <span className="italic text-gray-400">Untitled</span>}</td>
+                                            <td className="px-4 py-2 capitalize">{d.category || '-'}</td>
+                                            <td className="px-4 py-2">{new Date(d.updatedAt).toLocaleString()}</td>
+                                            <td className="px-4 py-2 text-xs text-gray-500">{d.cover_photo_meta ? `Attachment: ${d.cover_photo_meta.name} (re-attach required)` : 'No attachment'}</td>
+                                            <td className="px-4 py-2">
+                                                <div className="flex gap-2">
+                                                    <button
+                                                        className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center gap-1"
+                                                        onClick={() => resumeDraft(d)}
+                                                    >
+                                                        <FaFolderOpen /> Resume
+                                                    </button>
+                                                    <button
+                                                        className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700"
+                                                        onClick={() => deleteDraft(d.id)}
+                                                    >
+                                                        Delete
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
                             </tbody>
                         </table>
                     </div>
