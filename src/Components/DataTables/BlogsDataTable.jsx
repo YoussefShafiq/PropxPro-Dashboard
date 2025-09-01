@@ -23,6 +23,7 @@ import {
     FaFolderOpen
 } from 'react-icons/fa';
 import TiptapWithImg from '../TextEditor/TiptapWithImg';
+import DateRangePicker from './DateRangePicker';
 import { Chips } from 'primereact/chips';
 import 'primereact/resources/themes/lara-light-indigo/theme.css';
 import 'primereact/resources/primereact.min.css';
@@ -41,7 +42,10 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
         global: '',
         title: '',
         category: '',
-        status: ''
+        status: '',
+        author: '',
+        created_from: '', // YYYY-MM-DD
+        created_to: '' // YYYY-MM-DD
     });
     const [currentPage, setCurrentPage] = useState(1);
     const [rowsPerPage] = useState(10);
@@ -856,16 +860,34 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
 
     // Filter blogs based on all filter criteria
     const filteredBlogs = blogs?.filter(blog => {
-        return (
-            (filters.global === '' ||
-                blog.title.toLowerCase().includes(filters.global.toLowerCase()) ||
-                blog.category.toLowerCase().includes(filters.global.toLowerCase())) &&
-            (filters.title === '' ||
-                blog.title.toLowerCase().includes(filters.title.toLowerCase())) &&
-            (filters.category === '' || blog.category.includes(filters.category.toLowerCase())) &&
-            (filters.status === '' ||
-                (filters.status === 'active' ? blog.is_active : !blog.is_active))
-        );
+        // Text filters
+        const matchesGlobal =
+            filters.global === '' ||
+            blog.title.toLowerCase().includes(filters.global.toLowerCase()) ||
+            blog.category.toLowerCase().includes(filters.global.toLowerCase()) ||
+            (blog.author?.name ? blog.author.name.toLowerCase().includes(filters.global.toLowerCase()) : false);
+
+        const matchesTitle = filters.title === '' || blog.title.toLowerCase().includes(filters.title.toLowerCase());
+        const matchesCategory = filters.category === '' || blog.category.includes(filters.category.toLowerCase());
+        const matchesStatus = filters.status === '' || (filters.status === 'active' ? blog.is_active : !blog.is_active);
+        const matchesAuthor =
+            filters.author === '' || (blog.author?.name ? blog.author.name.toLowerCase().includes(filters.author.toLowerCase()) : false);
+
+        // Date range filter on created_at
+        let matchesDate = true;
+        if (blog.created_at) {
+            const createdDate = new Date(blog.created_at);
+            if (filters.created_from) {
+                const start = new Date(`${filters.created_from}T00:00:00`);
+                if (createdDate < start) matchesDate = false;
+            }
+            if (matchesDate && filters.created_to) {
+                const end = new Date(`${filters.created_to}T23:59:59.999`);
+                if (createdDate > end) matchesDate = false;
+            }
+        }
+
+        return matchesGlobal && matchesTitle && matchesCategory && matchesStatus && matchesAuthor && matchesDate;
     }) || [];
 
     // Pagination logic
@@ -1155,6 +1177,15 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
                                 </div>
                             </th>
                             <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <input
+                                    type="text"
+                                    value={filters.author}
+                                    onChange={(e) => handleFilterChange('author', e.target.value)}
+                                    placeholder="Author"
+                                    className="text-xs p-1 border rounded w-full"
+                                />
+                            </th>
+                            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Cover Photo
                             </th>
                             <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -1181,6 +1212,25 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
                                 </select>
                             </th>
                             <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <DateRangePicker
+                                    initialRange={{
+                                        startDate: filters.created_from ? new Date(`${filters.created_from}T00:00:00`) : null,
+                                        endDate: filters.created_to ? new Date(`${filters.created_to}T00:00:00`) : null
+                                    }}
+                                    onDateChange={({ startDate, endDate }) => {
+                                        const toYMD = (d) => {
+                                            if (!(d instanceof Date) || isNaN(d)) return '';
+                                            const y = d.getFullYear();
+                                            const m = String(d.getMonth() + 1).padStart(2, '0');
+                                            const da = String(d.getDate()).padStart(2, '0');
+                                            return `${y}-${m}-${da}`;
+                                        };
+                                        handleFilterChange('created_from', startDate ? toYMD(startDate) : '');
+                                        handleFilterChange('created_to', endDate ? toYMD(endDate) : '');
+                                    }}
+                                />
+                            </th>
+                            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Emails Sent
                             </th>
                             <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -1191,7 +1241,7 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
                     <tbody className="bg-white divide-y divide-gray-200 text-sm">
                         {loading ? (
                             <tr>
-                                <td colSpan="7" className="px-3 py-4 text-center">
+                                <td colSpan="8" className="px-3 py-4 text-center">
                                     <div className="flex justify-center items-center gap-2">
                                         <FaSpinner className="animate-spin" size={18} />
                                         Loading blogs...
@@ -1200,7 +1250,7 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
                             </tr>
                         ) : paginatedBlogs.length === 0 ? (
                             <tr>
-                                <td colSpan="7" className="px-3 py-4 text-center">
+                                <td colSpan="8" className="px-3 py-4 text-center">
                                     No blogs found
                                 </td>
                             </tr>
@@ -1221,6 +1271,9 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
                                         </div>
                                     </td>
                                     <td className="px-3 py-4 whitespace-nowrap">
+                                        {blog.author?.name || '-'}
+                                    </td>
+                                    <td className="px-3 py-4 whitespace-nowrap">
                                         {blog.cover_photo && (
                                             <img
                                                 src={blog.cover_photo}
@@ -1234,6 +1287,9 @@ export default function BlogsDataTable({ blogs, loading, refetch }) {
                                     </td>
                                     <td className="px-3 py-4 whitespace-nowrap">
                                         {statusBadge(blog.is_active)}
+                                    </td>
+                                    <td className="px-3 py-4 whitespace-nowrap">
+                                        {blog.created_at ? new Date(blog.created_at).toLocaleDateString() : '-'}
                                     </td>
                                     <td className="px-3 py-4 whitespace-nowrap">
                                         {emailsCountBadge(blog.emails_sent_count)}
