@@ -67,12 +67,6 @@ export default function Sidebar() {
 
     const sidebarPages = [
         {
-            title: 'Home',
-            path: '/',
-            icon: <IoHomeOutline />,
-            permission: ''
-        },
-        {
             title: 'Integrations',
             path: '/integrations',
             icon: <IoLinkOutline />,

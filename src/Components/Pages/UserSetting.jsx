@@ -137,10 +137,55 @@ export default function UserSetting() {
     // Enhanced loading state with spinner
     if (isCurrentUserLoading) {
         return (
-            <div className="flex justify-center items-center h-screen">
-                <div className="flex flex-col items-center gap-4">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-                    <p className="text-gray-600">Loading user settings...</p>
+            <div className="mx-auto p-6">
+                {/* Header Skeleton */}
+                <div className="h-8 bg-gray-200 rounded w-1/4 mb-8 animate-pulse"></div>
+
+                <div className="flex flex-col gap-8">
+                    {/* Profile Card Skeleton */}
+                    <div className="bg-white rounded-xl shadow-lg p-6">
+                        <div className="flex items-center mb-8">
+                            <div className="relative">
+                                <div className="w-24 h-24 rounded-full bg-gray-200 animate-pulse"></div>
+                            </div>
+                            <div className="ml-6 space-y-2">
+                                <div className="h-6 bg-gray-200 rounded w-40 animate-pulse"></div>
+                                <div className="h-4 bg-gray-200 rounded w-48 animate-pulse"></div>
+                                <div className="h-3 bg-gray-200 rounded w-32 animate-pulse"></div>
+                            </div>
+                        </div>
+
+                        {/* Form Fields Skeleton */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {[1, 2, 3, 4].map((item) => (
+                                <div key={item}>
+                                    <div className="h-4 bg-gray-200 rounded w-1/3 mb-1 animate-pulse"></div>
+                                    <div className="h-10 bg-gray-100 rounded-md animate-pulse"></div>
+                                </div>
+                            ))}
+
+                            {/* Bio Field Skeleton */}
+                            <div className="md:col-span-2">
+                                <div className="h-4 bg-gray-200 rounded w-1/6 mb-1 animate-pulse"></div>
+                                <div className="h-20 bg-gray-100 rounded-md animate-pulse"></div>
+                            </div>
+                        </div>
+
+                        {/* Button Skeleton */}
+                        <div className="mt-8 flex justify-end">
+                            <div className="h-10 bg-gray-200 rounded w-32 animate-pulse"></div>
+                        </div>
+                    </div>
+
+                    {/* Permissions Card Skeleton */}
+                    <div className="bg-white rounded-xl shadow-lg p-6">
+                        <div className="h-6 bg-gray-200 rounded w-1/4 mb-6 animate-pulse"></div>
+                        <div className="flex flex-wrap gap-3">
+                            {[1, 2, 3, 4, 5].map((item) => (
+                                <div key={item} className="h-8 bg-gray-100 rounded-xl w-24 animate-pulse"></div>
+                            ))}
+                        </div>
+                    </div>
                 </div>
             </div>
         );
@@ -148,7 +193,7 @@ export default function UserSetting() {
 
     return (
         <div className="mx-auto p-6">
-            <h1 className="text-3xl font-bold text-gray-800 mb-8">User Settings</h1>
+            <h1 className="text-3xl font-bold text-gray-800 mb-8">Welcome {currentUser?.data?.data?.user?.name.split(' ')[0]}</h1>
 
             <div className="flex flex-col gap-8">
                 <div className="bg-white rounded-xl shadow-lg p-6">

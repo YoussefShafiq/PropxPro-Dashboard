@@ -35,7 +35,6 @@ function App() {
     {
       path: '/', element: <ProtectedRoute><Layout /></ProtectedRoute>, children: [
         { index: true, element: <ProtectedRoute><Home /></ProtectedRoute> },
-        { path: '/home', element: <ProtectedRoute><Home /></ProtectedRoute> },
         { path: '/integrations', element: <ProtectedRoute><Integrations /></ProtectedRoute> },
         { path: '/admins', element: <ProtectedRoute><Admins /></ProtectedRoute> },
         { path: '/plans', element: <ProtectedRoute><Plans /></ProtectedRoute> },
